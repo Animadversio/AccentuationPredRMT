@@ -87,7 +87,8 @@ def _extract_patches(img, patch_hw, n_patches, rng):
 
 
 def vanhateren_spectrum(patch_hw=8, n_patches_per_image=200, n_images=50,
-                        log_luminance=True, center=True, rng=None):
+                        log_luminance=True, center=True, rng=None,
+                        top_k=None, use_randomized_svd=False, svd_oversampling=10):
     """Compute eigenspectrum of Van Hateren natural image patches.
 
     Loads .iml files from VANHATEREN_DIR, extracts patches, computes the
@@ -106,11 +107,18 @@ def vanhateren_spectrum(patch_hw=8, n_patches_per_image=200, n_images=50,
     center : bool
         Subtract mean patch before computing covariance.
     rng : np.random.Generator or None
+    top_k : int or None
+        If set, return only the top-k eigenvectors (via randomized SVD).
+        Automatically set to min(d, N//2) if use_randomized_svd=True.
+    use_randomized_svd : bool
+        Use torch randomized SVD instead of full eigh. Required for d > ~3000.
+    svd_oversampling : int
+        Extra columns for randomized SVD (larger = more accurate, slower).
 
     Returns
     -------
-    eigenvalues : np.ndarray, shape (d,)   descending
-    eigenvectors: np.ndarray, shape (d, d) columns = eigenvectors
+    eigenvalues : np.ndarray, shape (d,) or (top_k,)   descending
+    eigenvectors: np.ndarray, shape (d, d) or (d, top_k) columns = eigenvectors
     patches_flat : np.ndarray, shape (N, d)  the raw (centered) patches
     """
     if rng is None:
@@ -136,20 +144,38 @@ def vanhateren_spectrum(patch_hw=8, n_patches_per_image=200, n_images=50,
         patches = _extract_patches(img, patch_hw, n_patches_per_image, rng)
         all_patches.append(patches.reshape(n_patches_per_image, -1))
 
-    patches_flat = np.concatenate(all_patches, axis=0).astype(float)  # (N, d)
+    patches_flat = np.concatenate(all_patches, axis=0).astype(np.float32)  # (N, d)
+    N, d = patches_flat.shape
 
     if center:
         patches_flat -= patches_flat.mean(axis=0, keepdims=True)
 
-    # Empirical covariance (d x d)
-    d = patches_flat.shape[1]
-    cov = patches_flat.T @ patches_flat / (len(patches_flat) - 1)
-
-    # Eigendecomposition — descending order
-    eigvals, eigvecs = np.linalg.eigh(cov)
-    idx = np.argsort(eigvals)[::-1]
-    eigvals = eigvals[idx]
-    eigvecs = eigvecs[:, idx]
+    # For large d, use randomized SVD on the data matrix directly (avoids d×d cov)
+    # The covariance is patches_flat.T @ patches_flat / (N-1)
+    # Its eigendecomposition = V @ diag(σ²/(N-1)) @ Vᵀ from the SVD of patches_flat
+    if use_randomized_svd or (d > 2000):
+        import torch
+        k = top_k if top_k is not None else min(d, N) - 1
+        k = min(k, min(d, N) - 1)
+        print(f"  Randomized SVD: d={d}, N={N}, k={k} ...")
+        X_t = torch.tensor(patches_flat, dtype=torch.float32)
+        if torch.cuda.is_available():
+            X_t = X_t.cuda()
+        # torch.linalg.svd is too slow for huge matrices; use torch.svd_lowrank
+        # torch.svd_lowrank returns (U, S, V) where V is (d, q) — columns are right sing. vecs
+        U, S, V = torch.svd_lowrank(X_t, q=k + svd_oversampling)
+        eigvals = (S[:k] ** 2 / (N - 1)).cpu().numpy().astype(float)
+        eigvecs = V[:, :k].cpu().numpy().astype(float)  # (d, k)
+    else:
+        # Full eigendecomposition of d×d covariance
+        cov = patches_flat.T @ patches_flat / (N - 1)
+        eigvals, eigvecs = np.linalg.eigh(cov.astype(float))
+        idx = np.argsort(eigvals)[::-1]
+        eigvals = eigvals[idx]
+        eigvecs = eigvecs[:, idx]
+        if top_k is not None:
+            eigvals = eigvals[:top_k]
+            eigvecs = eigvecs[:, :top_k]
 
     return eigvals, eigvecs, patches_flat
 
@@ -183,10 +209,8 @@ def get_spectrum(name, d=64, alpha=1.0, rng=None, **kwargs):
         return lam, Q
 
     elif name == 'vanhateren':
-        patch_hw = kwargs.get('patch_hw', 8)  # 8x8 → d=64
-        lam, eigvecs, _ = vanhateren_spectrum(patch_hw=patch_hw, rng=rng,
-                                              **{k: v for k, v in kwargs.items()
-                                                 if k != 'patch_hw'})
+        patch_hw = kwargs.pop('patch_hw', 8)  # 8x8 → d=64
+        lam, eigvecs, _ = vanhateren_spectrum(patch_hw=patch_hw, rng=rng, **kwargs)
         return lam, eigvecs
 
     else:

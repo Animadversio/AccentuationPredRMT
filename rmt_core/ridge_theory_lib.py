@@ -73,15 +73,16 @@ def _c_sig(eigenvalues, beta_proj, kappa, weights=None):
 # ──────────────────────────────────────────────
 
 def ridge_error_per_pc_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
-                               weights=None):
+                               weights=None,
+                               eigenvalues_full=None, beta_proj_full=None):
     """RMT theory prediction for E[(uₖᵀ(β̂ - β*))²] for each PC k.
 
     Parameters
     ----------
-    eigenvalues : array_like, shape (d,)
-        Population eigenvalues λ_k (sorted descending or any order).
-    beta_proj : array_like, shape (d,)
-        True coefficient projections β*ᵀuₖ for each k.
+    eigenvalues : array_like, shape (K,)
+        Eigenvalues for the PCs we want to evaluate (top-K or all d).
+    beta_proj : array_like, shape (K,)
+        True coefficient projections β*ᵀuₖ for those PCs.
     kappa : float
         Deterministic equivalent κ(λ) at the ridge penalty λ.
     sigma_noise : float
@@ -89,23 +90,35 @@ def ridge_error_per_pc_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
     n : int
         Number of samples.
     weights : array_like or None
+    eigenvalues_full : array_like, shape (d,) or None
+        Full spectrum for computing global quantities df₂ and C_sig.
+        If None, uses eigenvalues (assumes evaluated PCs cover the full spectrum).
+    beta_proj_full : array_like, shape (d,) or None
+        Full β* projections onto all d eigenvectors (for C_sig).
+        If None, uses beta_proj.
 
     Returns
     -------
-    error : np.ndarray, shape (d,)
+    error : np.ndarray, shape (K,)
         Theory prediction per PC.
-    term1, term2, term3 : np.ndarray, shape (d,)
+    term1, term2, term3 : np.ndarray, shape (K,)
         Individual contributions.
     """
     eigenvalues = np.asarray(eigenvalues, dtype=float)
     beta_proj = np.asarray(beta_proj, dtype=float)
 
-    df2 = compute_df2(eigenvalues, kappa, weights)
-    denom = n - df2  # effective sample size
-    c_sig = _c_sig(eigenvalues, beta_proj, kappa, weights)
+    # Use full spectrum for global quantities if provided
+    eigs_full = np.asarray(eigenvalues_full, dtype=float) if eigenvalues_full is not None \
+        else eigenvalues
+    bproj_full = np.asarray(beta_proj_full, dtype=float) if beta_proj_full is not None \
+        else beta_proj
 
-    aniso = eigenvalues / (eigenvalues + kappa) ** 2  # λ_k/(λ_k+κ)²
-    shrink = kappa ** 2 / (eigenvalues + kappa) ** 2   # κ²/(λ_k+κ)²
+    df2 = compute_df2(eigs_full, kappa)        # uses full spectrum
+    denom = n - df2
+    c_sig = _c_sig(eigs_full, bproj_full, kappa)  # uses full spectrum
+
+    aniso = eigenvalues / (eigenvalues + kappa) ** 2
+    shrink = kappa ** 2 / (eigenvalues + kappa) ** 2
 
     term1 = shrink * beta_proj ** 2
     term2 = kappa ** 2 * aniso * c_sig / denom

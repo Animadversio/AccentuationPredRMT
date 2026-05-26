@@ -47,7 +47,12 @@ def solve_kappa(z, eigenvalues, gamma, weights=None, initial_guess=None):
         val = 1.0 - gamma * np.sum(weights * eigenvalues ** 2 / (kappa[0] + eigenvalues) ** 2)
         return np.array([[val]])
 
-    x0 = np.array([z if initial_guess is None else initial_guess], dtype=float)
+    if initial_guess is None:
+        # Asymptotic: κ ≈ λ + γ·mean(λ_k) works as a safe initial guess for γ≥1
+        mean_eig = float(np.sum(weights * eigenvalues))
+        x0 = np.array([z + gamma * mean_eig], dtype=float)
+    else:
+        x0 = np.array([initial_guess], dtype=float)
     result = fsolve(F, x0, fprime=Fprime, full_output=False)
     return float(result[0])
 
