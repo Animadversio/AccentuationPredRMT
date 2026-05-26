@@ -182,11 +182,60 @@ def accentuation_alignment(eigenvalues, beta_proj, kappa, sigma_noise, n,
     return R_det, num, denom
 
 
+def accentuation_var_R(eigenvalues, beta_proj, kappa, sigma_noise, n, R_det, D_det,
+                       weights=None):
+    """Deterministic equivalent for Var(R) = E[R²] - (E[R])².
+
+    From accentuation_var_correction.tex, eq. (varR_det):
+
+      Var(R) ≍  [σ²/n · (C_sig - 4·R_det·M₁ + 4·R_det²·M₂)
+                 + 2·R_det²·σ⁴/n² · Σ_k λ_k²/(λ_k+κ)⁴]  /  D_det²
+
+    where:
+      C_sig = Σ_k λ_k·bk² / (λ_k+κ)²
+      M₁    = Σ_k λ_k²·bk² / (λ_k+κ)³
+      M₂    = Σ_k λ_k³·bk² / (λ_k+κ)⁴
+
+    Parameters
+    ----------
+    R_det : float   — deterministic equivalent E[R]
+    D_det : float   — denominator E[β̂ᵀβ̂]
+
+    Returns
+    -------
+    var_R : float
+    var_lin : float   — linear (noise) contribution
+    var_quad : float  — quadratic correction
+    """
+    eigenvalues = np.asarray(eigenvalues, dtype=float)
+    beta_proj = np.asarray(beta_proj, dtype=float)
+    lk = eigenvalues
+    bk = beta_proj
+    kp = kappa
+
+    C_sig = np.sum(lk / (lk + kp) ** 2 * bk ** 2)
+    M1    = np.sum(lk ** 2 / (lk + kp) ** 3 * bk ** 2)
+    M2    = np.sum(lk ** 3 / (lk + kp) ** 4 * bk ** 2)
+    T_quad_spec = np.sum(lk ** 2 / (lk + kp) ** 4)   # Tr[H²]
+
+    var_lin  = (sigma_noise ** 2 / n) * (C_sig - 4 * R_det * M1 + 4 * R_det ** 2 * M2)
+    var_quad = 2 * R_det ** 2 * (sigma_noise ** 4 / n ** 2) * T_quad_spec
+
+    var_R = (var_lin + var_quad) / D_det ** 2
+    return var_R, var_lin / D_det ** 2, var_quad / D_det ** 2
+
+
 def accentuation_error_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
-                               weights=None):
+                               weights=None, include_var_R=False):
     """Theory prediction for accentuation evaluation error.
 
-    E_acc ≍ (β*ᵀΣβ*) · (1 - R_det)²
+    Leading order:  E_acc ≍ (β*ᵀΣβ*) · (1 - R_det)²
+    With Var(R):    E_acc ≍ (β*ᵀΣβ*) · [(1 - R_det)² + Var(R)]
+
+    Parameters
+    ----------
+    include_var_R : bool
+        If True, add the Var(R) second-order correction (eq. varR_det).
 
     Returns
     -------
@@ -198,7 +247,15 @@ def accentuation_error_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
     beta_proj = np.asarray(beta_proj, dtype=float)
 
     signal_power = np.sum(eigenvalues * beta_proj ** 2)  # β*ᵀΣβ*
-    R_det, _, _ = accentuation_alignment(
+    R_det, _, D_det = accentuation_alignment(
         eigenvalues, beta_proj, kappa, sigma_noise, n, weights)
-    error = signal_power * (1 - R_det) ** 2
+    bias_sq = (1 - R_det) ** 2
+
+    if include_var_R:
+        var_R, _, _ = accentuation_var_R(
+            eigenvalues, beta_proj, kappa, sigma_noise, n, R_det, D_det)
+        error = signal_power * (bias_sq + var_R)
+    else:
+        error = signal_power * bias_sq
+
     return error, R_det, signal_power
