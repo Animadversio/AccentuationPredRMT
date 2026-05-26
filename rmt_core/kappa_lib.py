@@ -40,12 +40,14 @@ def solve_kappa(z, eigenvalues, gamma, weights=None, initial_guess=None):
         weights = np.asarray(weights, dtype=float)
 
     def F(kappa):
-        return kappa - z - gamma * np.sum(weights * kappa * eigenvalues / (kappa + eigenvalues))
+        val = kappa[0] - z - gamma * np.sum(weights * kappa[0] * eigenvalues / (kappa[0] + eigenvalues))
+        return np.array([val])
 
     def Fprime(kappa):
-        return 1.0 - gamma * np.sum(weights * eigenvalues ** 2 / (kappa + eigenvalues) ** 2)
+        val = 1.0 - gamma * np.sum(weights * eigenvalues ** 2 / (kappa[0] + eigenvalues) ** 2)
+        return np.array([[val]])
 
-    x0 = z if initial_guess is None else initial_guess
+    x0 = np.array([z if initial_guess is None else initial_guess], dtype=float)
     result = fsolve(F, x0, fprime=Fprime, full_output=False)
     return float(result[0])
 

@@ -15,3 +15,9 @@ from .simulation_lib import (
     accentuation_error_simulation,
     run_monte_carlo,
 )
+from .spectrum_lib import (
+    isotropic_spectrum,
+    powerlaw_spectrum,
+    vanhateren_spectrum,
+    get_spectrum,
+)
