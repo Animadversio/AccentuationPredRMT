@@ -35,8 +35,14 @@ Global quantities:
 ### 2. Accentuation alignment
 
 ```
-R_det ≍ β*ᵀ(Σ+κI)⁻¹Σβ* / [β*ᵀΣ²(Σ+κI)⁻²β*  +  (σ²/n)·Tr(Σ(Σ+κI)⁻²)]
+R_det  =  E[β̂ᵀβ*] / E[β̂ᵀβ̂]
+
+       ≍  Σ_k λₖ/(λₖ+κ)·(β*ᵀuₖ)²
+          ─────────────────────────────────────────────────────────────
+          Σ_k (λₖ/(λₖ+κ))²·(β*ᵀuₖ)²  +  (κ²·C_sig + σ²)·df₂' / (n−df₂)
 ```
+
+where `df₂' = Tr(Σ(Σ+κI)⁻²) = Σ_k λₖ/(λₖ+κ)²`.
 
 ### 3. Accentuation error
 
@@ -86,12 +92,9 @@ Theory and MC tracked across σ ∈ [0.05, 3.0] at d=256, n=512, λ=0.05.
 - Theory matches MC to < 1% across the full noise range for both power-law and van Hateren.
 
 **Accentuation alignment R**:
-- Theory (R_det) has a ~3–8% upward bias vs MC.
-- This is the concentration approximation: E[a/b] ≠ E[a]/E[b].
-  The formula uses the ratio of means rather than the mean of the ratio.
-- The qualitative trend (R decreases as σ increases) is correctly predicted.
+- After the formula bug fix (see below), theory matches MC to < 0.1%.
 
-See `figures/nb_sigma_sweep.png` and `tables/sigma_sweep_*.npz`.
+See `figures/sigma_sweep_fixed_accentuation.png` and `tables/sigma_sweep_*.npz`.
 
 ### λ sweep: varying ridge penalty
 
@@ -105,7 +108,89 @@ See `figures/nb_lambda_sweep.png`.
 
 ---
 
-## Key fixes and insights during implementation
+## Bug fix: incorrect `E[β̂ᵀβ̂]` formula in accentuation alignment
+
+### What was wrong
+
+The original denominator formula for R_det was:
+
+```
+❌ WRONG:
+E[β̂ᵀβ̂]  ≍  β*ᵀΣ²(Σ+κI)⁻²β*  +  (σ²/n) · Tr(Σ(Σ+κI)⁻²)
+          =  Σ_k λₖ²/(λₖ+κ)² · (β*ᵀuₖ)²  +  (σ²/n) · Σ_k λₖ/(λₖ+κ)²
+```
+
+This caused a **~3% overestimate of R_det** (theory 1.256 vs MC 1.217 at d=256, n=512, σ=1).
+
+### Diagnostic
+
+Decomposing MC into signal-only and noise-only components revealed:
+
+| Component | Theory (wrong) | MC | Ratio |
+|---|---|---|---|
+| E[β̂ᵀβ*] (numerator) | 176.14 | 176.13 | **0.9999** ✓ |
+| E[β̂ᵀβ̂] signal part  | 139.39 | 143.40 | 1.029 ✗ |
+| E[β̂ᵀβ̂] noise part   | 0.876  | 1.300  | 1.485 ✗ |
+| E[β̂ᵀβ̂] total        | 140.27 | 144.73 | 1.032 ✗ |
+
+The numerator was **exact**. Both parts of the denominator were underestimated.
+
+### Root cause
+
+`E[β̂ᵀβ̂]` must be computed as `Σ_k E[(uₖᵀβ̂)²]`, not `Σ_k (E[uₖᵀβ̂])²`.
+
+The correct expansion via the second-moment identity:
+
+```
+E[(uₖᵀβ̂)²]  =  E[(uₖᵀβ*)² of (λₖ/(λₖ+κ))²]   ← mean-squared
+              +  E[(uₖᵀΔβ)²]                     ← variance (per-PC error)
+              −  (bias of uₖᵀβ̂)²                 ← subtract squared bias back
+
+= (λₖ/(λₖ+κ))²·(β*ᵀuₖ)²  +  (κ²·C_sig + σ²) · λₖ/(λₖ+κ)² / (n−df₂)
+```
+
+where the `κ²·C_sig / (n−df₂)` and the `/(n−df₂)` (not `/n`) both come from
+summing Terms 2 and 3 of the per-PC error formula and canceling with the bias² term.
+
+### Correct formula
+
+```
+✓ CORRECT:
+E[β̂ᵀβ̂]  =  Σ_k (λₖ/(λₖ+κ))²·(β*ᵀuₖ)²
+           +  (κ²·C_sig + σ²) · Tr(Σ(Σ+κI)⁻²) / (n − df₂)
+
+         =  Σ_k (λₖ/(λₖ+κ))²·(β*ᵀuₖ)²
+           +  (κ²·C_sig + σ²) · df₂' / (n − df₂)
+```
+
+where `df₂' = Σ_k λₖ/(λₖ+κ)²` and `df₂ = Σ_k λₖ²/(λₖ+κ)²`.
+
+### What was missing from the original formula
+
+Two missing terms:
+
+1. **The finite-sample signal variance** `κ²·C_sig·df₂'/(n−df₂)`:
+   This accounts for the random variation of β̂ in the signal subspace
+   (the same term that appears as Term 2 in the per-PC error). At d=256, n=512:
+   `κ²·C_sig·df₂'/(n−df₂) ≈ 4.02` — the dominant missing piece.
+
+2. **Wrong denominator in the noise term**: `σ²/n → σ²/(n−df₂)`.
+   The effective sample size is `n−df₂` (degrees of freedom remaining after
+   the ridge fit), not n. At this setting, `df₂ = 169` so `n−df₂ = 343` vs n=512 — a factor of 1.49.
+
+### After fix
+
+| Quantity | Theory (fixed) | MC | Gap |
+|---|---|---|---|
+| E[β̂ᵀβ̂] | 144.72 | 144.73 | **0.006%** |
+| R_det | 1.2171 | 1.2174 | **0.02%** |
+
+Theory/MC gap on R_det drops from **3% → 0.02%** across all σ values.
+See `figures/sigma_sweep_fixed_accentuation.png`.
+
+---
+
+## Other implementation notes
 
 1. **κ solver initial guess for γ > 1 (over-parameterized regime):**
    Starting from κ_init = λ leads to the wrong (negative) branch. Fix: κ_init = λ + γ·mean(λ_k).
