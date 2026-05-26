@@ -229,6 +229,104 @@ AccentuationPredRMT/
 
 ---
 
+## Theory vs reality: accentuation error and the Var(R) gap
+
+### What the theory computes
+
+`accentuation_error_theory` returns:
+
+```
+E_acc_theory  =  (β*ᵀΣβ*) · (1 − R_det)²
+```
+
+where `R_det` is the deterministic equivalent of the alignment ratio
+`R = β̂ᵀβ* / β̂ᵀβ̂`.  This is a leading-order approximation that captures
+only the squared-mean term.
+
+### The full second-moment decomposition
+
+The Monte Carlo estimator computes `E[(1−R)²]`.  By the bias-variance
+decomposition:
+
+```
+E[(1−R)²]  =  (1 − E[R])²  +  Var(R)
+            ┗━━━━━━━━━━━━━┛    ┗━━━━━┛
+               theory term     missing term
+```
+
+Theory gives the exact `E[R]` (to leading order in 1/d), but has **no
+Var(R) term**.  When `R ≈ 1` (well-aligned β̂), `(1−E[R])²` becomes
+tiny and `Var(R)` dominates.
+
+### Numerical diagnosis — van Hateren 16×16, n=512, optimal λ*(σ)
+
+At each σ, 500 MC trials were run at the theory-optimal λ*(σ).
+`std(R)` is the trial-to-trial fluctuation of the alignment ratio.
+
+| σ | lam* | E[R]_det | E[R]_MC | std(R) | (β*ᵀΣβ*)·(1−E[R])² | (β*ᵀΣβ*)·Var(R) | Var/bias² |
+|---|---|---|---|---|---|---|---|
+| 0.10 | 0.001 | 1.170 | 1.170 | 0.009 | 1.856 | 0.005 | 0.003 |
+| 0.30 | 0.001 | 1.140 | 1.142 | 0.013 | 1.285 | 0.010 | 0.008 |
+| 0.58 | 0.001 | 1.058 | 1.058 | 0.018 | 0.214 | 0.021 | 0.099 |
+| 1.00 | 0.002 | 1.010 | 1.011 | 0.026 | 0.007 | 0.042 | 5.7 |
+| 2.00 | 0.007 | 0.995 | 0.998 | 0.038 | 0.0004 | 0.093 | 252 |
+
+Key observations:
+- `E[R]` is predicted accurately at all σ (theory tracks MC).
+- `std(R)` grows slowly with σ (O(1/√n) fluctuations).
+- At σ ≲ 0.3, the bias² term dominates and theory matches MC to < 1%.
+- At σ ≳ 1, `Var(R)` is 5–250× larger than bias² — theory is off by
+  an order of magnitude for E_acc.
+- This is a **fundamental limitation** of leading-order deterministic
+  equivalents, not a code bug. A Var(R) correction would require the
+  next order in the 1/d expansion.
+
+---
+
+## Generalization error vs accentuation error: crossing analysis
+
+### Fixed λ
+
+For a fixed ridge penalty, both errors grow with σ but at different
+rates.  Generalization error grows as σ² (noise-dominated at large σ),
+while accentuation error saturates (R → 0 as σ → ∞, but the Var term
+keeps E_acc finite).
+
+See `figures/gen_vs_acc_error_crossing.png`.
+
+### Optimal λ*(σ)
+
+At each σ the ridge penalty is chosen to minimize theory generalization
+error.  The key question: is there a noise level σ* where accentuation
+error overtakes generalization error?
+
+**Van Hateren 16×16 (d=256, n=512):**
+
+| | Theory | MC |
+|---|---|---|
+| Crossing σ* | 0.572 | 0.582 |
+
+Theory and MC agree to **~1.7%** at the crossing.  The agreement holds
+because at the crossing point σ≈0.58, `Var(R)/bias² ≈ 0.10` — Var(R)
+contributes only ~10% to E_acc, so the theory is still a good
+approximation.
+
+At σ > 0.58 theory underestimates E_acc badly (Var dominates), but that
+regime is _above_ the crossing and does not affect the location of σ*.
+
+See `figures/gen_vs_acc_optimal_lambda_vh.png`.
+
+**Interpretation:**
+- At low noise (σ < σ*): accentuation error is the larger concern.
+  The estimator is biased toward high-variance PCs (overshrinkage), so
+  the accentuation of β̂ is inflated relative to β*.
+- At high noise (σ > σ*): generalization error dominates.  Too much
+  noise washes out the signal, and regularization cannot help.
+- The crossing σ* moves with the spectrum: spiky spectra (van Hateren)
+  have large accentuation bias even at moderate λ, shifting σ* higher.
+
+---
+
 ## How to reproduce
 
 ```bash
