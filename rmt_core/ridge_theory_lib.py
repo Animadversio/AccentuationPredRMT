@@ -147,42 +147,37 @@ def accentuation_alignment(eigenvalues, beta_proj, kappa, sigma_noise, n,
                             weights=None):
     """Compute R_det ≍ E[β̂ᵀβ*] / E[β̂ᵀβ̂].
 
-    Parameters
-    ----------
-    eigenvalues : array_like, shape (d,)
-    beta_proj : array_like, shape (d,)
-        β*ᵀuₖ projections.
-    kappa : float
-    sigma_noise : float
-    n : int
+    E[β̂ᵀβ*] = Σ_k λ_k/(λ_k+κ) · (β*ᵀuₖ)²
+
+    E[β̂ᵀβ̂] = Σ_k (λ_k/(λ_k+κ))²·(β*ᵀuₖ)²  +  (κ²·C_sig + σ²)·df₂_deriv / (n − df₂)
+
+    This follows from E[‖β̂‖²] = Σ_k E[(uₖᵀβ̂)²] and
+    E[(uₖᵀβ̂)²] = (λ_k/(λ_k+κ))²·(β*ᵀuₖ)² + (κ²·C_sig + σ²)·λ_k/(λ_k+κ)² / (n−df₂)
 
     Returns
     -------
     R_det : float
-        Cosine-like alignment between β̂ and β*.
     numerator, denominator : float
     """
     eigenvalues = np.asarray(eigenvalues, dtype=float)
     beta_proj = np.asarray(beta_proj, dtype=float)
 
-    df2 = compute_df2(eigenvalues, kappa, weights)
+    df2 = compute_df2(eigenvalues, kappa)
     denom_eff = n - df2
 
-    # E[β̂ᵀβ*] ≍ β*ᵀ(Σ+κI)⁻¹Σβ* = Σ_k λ_k/(λ_k+κ) · (β*ᵀuₖ)²
+    # E[β̂ᵀβ*] ≍ Σ_k λ_k/(λ_k+κ) · (β*ᵀuₖ)²
     num = np.sum(eigenvalues / (eigenvalues + kappa) * beta_proj ** 2)
 
-    # E[β̂ᵀβ̂] signal term: β*ᵀΣ²(Σ+κI)⁻²β* = Σ_k λ_k²/(λ_k+κ)² · (β*ᵀuₖ)²
+    # E[β̂ᵀβ̂] — three parts:
+    # (1) squared-mean signal: Σ_k (λ_k/(λ_k+κ))² · (β*ᵀuₖ)²
     signal_sq = np.sum(eigenvalues ** 2 / (eigenvalues + kappa) ** 2 * beta_proj ** 2)
 
-    # E[β̂ᵀβ̂] noise term: (σ²/n) · Tr[(Σ+κI)⁻²Σ]  = (σ²/n) · df₂_deriv
-    # df₂_deriv here = Tr[(Σ+κI)⁻²Σ] = Σ_k λ_k/(λ_k+κ)²
-    d = len(eigenvalues)
-    weights_arr = (np.ones(d) / d if weights is None else np.asarray(weights, dtype=float))
-    df2_deriv = d * np.sum(weights_arr * eigenvalues / (eigenvalues + kappa) ** 2)
+    # (2+3) variance from per-PC error: (κ²·C_sig + σ²) · Tr(Σ(Σ+κI)⁻²) / (n−df₂)
+    c_sig = _c_sig(eigenvalues, beta_proj, kappa)
+    df2_deriv = np.sum(eigenvalues / (eigenvalues + kappa) ** 2)   # Tr(Σ(Σ+κI)⁻²)
+    variance_term = (kappa ** 2 * c_sig + sigma_noise ** 2) * df2_deriv / denom_eff
 
-    noise_sq = sigma_noise ** 2 / n * df2_deriv
-
-    denom = signal_sq + noise_sq
+    denom = signal_sq + variance_term
     R_det = num / denom if denom > 0 else 0.0
     return R_det, num, denom
 
