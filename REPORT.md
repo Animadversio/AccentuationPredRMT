@@ -684,6 +684,32 @@ rather than subtracting two nearly equal vectors `y-Hy`, makes the selector
 agree with scikit-learn on the original FFHQ design. A regression test now
 compares this stable path with brute-force leave-one-out fits.
 
+### High-noise extension
+
+The cached sweep now contains 26 noise levels and reaches exact population
+noise/signal variance ratios `sigma²/S` of 0.1, 1, and 10, where
+`S=6778.3`. Every condition uses 100 actual natural-image RidgeCV fits. The
+comparison figure has synchronized axes: response-noise SD `sigma` below and
+noise/signal variance ratio above. It also shows the decade-spaced selected
+alpha, which explains the nonmonotone transitions in weight and accentuation
+metrics.
+
+| sigma²/S | sigma | alpha DE / MC median [IQR] | R²_gen DE / MC | slope_acc DE / MC | R²_acc DE / MC mean (median) |
+|---:|---:|---:|---:|---:|---:|
+| 0.1 | 26.04 | 1000 / 100 [100,1000] | 0.980 / 0.980 | 1.103 / 0.675 | 0.991 / -1.164 (-2.344) |
+| 1 | 82.33 | 1000 / 1000 [1000,1000] | 0.944 / 0.943 | 0.501 / 0.501 | -0.011 / -0.017 (-0.007) |
+| 10 | 260.35 | 10000 / 10000 [10000,10000] | 0.803 / 0.798 | 0.832 / 0.811 | 0.947 / -4.966 (0.969) |
+
+Generalization remains well predicted across this extreme range. Own-path R²
+requires more care. At ratio 0.1 the empirical CV argmin is split across two
+adjacent decade-grid penalties, while the leading DE chooses only one; this
+produces a large discrepancy. At ratio 10, the DE and mean slope remain close,
+and the DE is close to the median own-path R², but rare near-singular alignment
+ratios make the empirical *mean* R² strongly negative. Thus the first-order DE
+continues to predict typical calibration but no longer predicts the heavy-tail
+mean of the nonlinear own-path R². The plot includes both MC mean with standard
+error and MC median with IQR to make this distinction explicit.
+
 ---
 
 ## How to reproduce

@@ -19,7 +19,11 @@ from rmt_core.simulation_lib import (
     run_paired_cv_monte_carlo,
 )
 from rmt_core.teacher_lib import make_spectral_teacher
-from scripts.validate_ffhq_disk_teacher import fit_metrics, ridge_loocv_fit
+from scripts.validate_ffhq_disk_teacher import (
+    fit_metrics,
+    interpolated_crossing,
+    ridge_loocv_fit,
+)
 
 
 def test_generalization_metrics_use_natural_signal_variance():
@@ -227,3 +231,14 @@ def test_ffhq_evaluation_slopes_use_true_on_fitted_orientation():
     expected_acc = float((weight * beta).sum() / weight.square().sum())
     assert np.isclose(metrics['slope_gen'], expected_gen)
     assert np.isclose(metrics['slope_acc'], expected_acc)
+
+
+def test_crossing_interpolation_uses_log_noise_axis():
+    crossing = interpolated_crossing(
+        np.array([0.1, 1.0]), np.array([0.0, 1.0]),
+        np.array([0.2, 0.8]))
+
+    assert crossing is not None
+    crossing_x, crossing_y = crossing
+    assert np.isclose(crossing_x, np.sqrt(0.1))
+    assert np.isclose(crossing_y, 0.5)

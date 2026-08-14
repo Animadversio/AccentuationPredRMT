@@ -68,6 +68,11 @@ GAP_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_gen_acc_gap.png'
 WEIGHT_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_weights.png'
 SPECTRAL_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_eigenbasis.png'
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_disk_teacher_de.log'
+DEFAULT_BASE_SIGMAS = np.asarray(
+    [0.0, 0.01, 0.03, 0.1, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0,
+     5.0, 10.0, 20.0, 30.0, 40.0, 60.0, 100.0, 180.0])
+DEFAULT_HIGH_NOISE_RATIOS = np.asarray(
+    [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0])
 
 
 def create_disk_teacher(img_size: int = 100, radius: float = 0.3) -> np.ndarray:
@@ -409,6 +414,18 @@ def load_case(path: Path) -> tuple[dict[str, object], dict[str, np.ndarray]]:
     return row, arrays
 
 
+def add_distribution_quantiles(
+        row: dict[str, object], arrays: dict[str, np.ndarray]) -> None:
+    for metric in ['r2_acc', 'slope_gen', 'slope_acc']:
+        key = f'trial_{metric}'
+        if key not in arrays:
+            continue
+        values = arrays[key]
+        row[f'mc_{metric}_median'] = float(np.median(values))
+        row[f'mc_{metric}_q25'] = float(np.quantile(values, 0.25))
+        row[f'mc_{metric}_q75'] = float(np.quantile(values, 0.75))
+
+
 def write_summary(rows: list[dict[str, object]]) -> None:
     SUMMARY_PATH.parent.mkdir(parents=True, exist_ok=True)
     with SUMMARY_PATH.open('w', newline='') as handle:
@@ -424,6 +441,9 @@ def read_summary() -> list[dict[str, object]]:
         rows: list[dict[str, object]] = list(csv.DictReader(handle))
     for row in rows:
         for key, value in list(row.items()):
+            if value in (None, ''):
+                row[key] = np.nan
+                continue
             try:
                 row[key] = float(value)
             except (TypeError, ValueError):
@@ -508,11 +528,37 @@ def interpolated_crossing(x: np.ndarray, first: np.ndarray,
     return None
 
 
+def add_noise_ratio_axis(ax: plt.Axes, signal_power: float,
+                         max_sigma: float) -> None:
+    """Add a top x-axis for noise variance divided by signal variance."""
+    ratio_ticks = np.asarray(
+        [0.0, 1e-8, 1e-6, 1e-4, 1e-2, 0.1, 1.0, 10.0])
+    sigma_ticks = np.sqrt(ratio_ticks * signal_power)
+    visible = sigma_ticks <= max_sigma * 1.001
+    ratio_ticks = ratio_ticks[visible]
+    sigma_ticks = sigma_ticks[visible]
+    ratio_labels = [
+        '0' if value == 0 else rf'$10^{{{int(np.log10(value))}}}$'
+        if np.isclose(np.log10(value), round(np.log10(value)))
+        else f'{value:g}'
+        for value in ratio_ticks
+    ]
+    top = ax.twiny()
+    top.set_xscale('symlog', linthresh=0.01)
+    top.set_xlim(ax.get_xlim())
+    top.set_xticks(sigma_ticks)
+    top.set_xticklabels(ratio_labels)
+    top.set_xlabel(r'noise variance / signal variance  $\sigma^2/S$')
+    top.tick_params(axis='x', labelsize=7, pad=1)
+
+
 def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
     """Overlay natural-image and accentuation metrics to expose their gap."""
     rows = sorted(rows, key=lambda row: float(row['sigma']))
     sigma = np.asarray([float(row['sigma']) for row in rows])
-    fig, axes = plt.subplots(1, 3, figsize=(15.2, 4.4))
+    signal_power = float(rows[0]['theory_signal_power'])
+    fig, axes_grid = plt.subplots(2, 2, figsize=(11.8, 8.7))
+    axes = axes_grid.ravel()
 
     # Weight recovery remains as the shared reference panel.
     ax = axes[0]
@@ -533,9 +579,32 @@ def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
     ax.set_title('Weight recovery')
     ax.legend(fontsize=8)
 
+    # The decade-spaced CV grid creates visible phase transitions at high
+    # noise, so show the selected alpha beside the resulting metrics.
+    ax = axes[1]
+    mc_alpha_median = np.asarray(
+        [float(row['mc_alpha_cv_median']) for row in rows])
+    mc_alpha_q25 = np.asarray([float(row['mc_alpha_cv_q25']) for row in rows])
+    mc_alpha_q75 = np.asarray([float(row['mc_alpha_cv_q75']) for row in rows])
+    de_alpha = np.asarray([float(row['theory_alpha_cv']) for row in rows])
+    saved_alpha = np.asarray(
+        [float(row.get('historical_alpha_inferred', np.nan)) for row in rows])
+    ax.errorbar(
+        sigma, mc_alpha_median,
+        yerr=np.vstack((mc_alpha_median - mc_alpha_q25,
+                        mc_alpha_q75 - mc_alpha_median)),
+        fmt='o-', color='black', capsize=3, label='MC median / IQR')
+    ax.plot(sigma, de_alpha, 's--', color='C0', label='DE')
+    ax.plot(sigma, saved_alpha, '*', color='C3', ms=9,
+            label='original saved fit')
+    ax.set_yscale('log')
+    ax.set_ylabel(r'RidgeCV $\alpha=n\lambda$')
+    ax.set_title('Cross-validated regularization')
+    ax.legend(fontsize=8)
+
     comparison_specs = [
-        (axes[1], 'r2', r'$R^2$', r'$R^2_{gen}$ vs $R^2_{acc}$'),
-        (axes[2], 'slope', 'true-on-fitted slope',
+        (axes[2], 'r2', r'$R^2$', r'$R^2_{gen}$ vs $R^2_{acc}$'),
+        (axes[3], 'slope', 'true-on-fitted slope',
          r'slope$_{gen}$ vs slope$_{acc}$'),
     ]
     path_colors = {'gen': 'C0', 'acc': 'C1'}
@@ -566,18 +635,60 @@ def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
         ax.set_ylabel(ylabel)
         ax.set_title(title)
 
+    mc_r2_acc_median = np.asarray(
+        [float(row['mc_r2_acc_median']) for row in rows])
+    mc_r2_acc_q25 = np.asarray(
+        [float(row['mc_r2_acc_q25']) for row in rows])
+    mc_r2_acc_q75 = np.asarray(
+        [float(row['mc_r2_acc_q75']) for row in rows])
+    axes[2].fill_between(
+        sigma, mc_r2_acc_q25, mc_r2_acc_q75, color='C1', alpha=0.10,
+        zorder=0)
+    axes[2].plot(
+        sigma, mc_r2_acc_median, '^:', color='C1', ms=4, lw=1.2,
+        zorder=4)
+
     crossing = interpolated_crossing(
         sigma, np.asarray([float(row['mc_r2_gen']) for row in rows]),
         np.asarray([float(row['mc_r2_acc']) for row in rows]))
     if crossing is not None:
         crossing_x, crossing_y = crossing
-        axes[1].axvline(crossing_x, color='0.35', lw=0.9, ls=':')
-        axes[1].plot(crossing_x, crossing_y, 'D', color='0.25', ms=5, zorder=5)
-        axes[1].annotate(
-            rf'MC crossing $\sigma\approx{crossing_x:.2f}$',
-            xy=(crossing_x, crossing_y), xytext=(8, -28),
-            textcoords='offset points', fontsize=8,
-            arrowprops={'arrowstyle': '-', 'color': '0.35', 'lw': 0.8})
+        axes[2].axvline(crossing_x, color='0.35', lw=0.9, ls=':')
+        axes[2].plot(crossing_x, crossing_y, 'D', color='0.25', ms=5, zorder=5)
+
+    # The full high-noise range sends R²_acc far below zero.  Retain that main
+    # axis while adding a low-noise inset where the first crossing is legible.
+    inset = axes[2].inset_axes([0.48, 0.51, 0.49, 0.43])
+    for path_name in ['gen', 'acc']:
+        color = path_colors[path_name]
+        mc_key = f'mc_r2_{path_name}'
+        theory_key = f'theory_r2_{path_name}'
+        history_key = ('historical_r2_gen_population'
+                       if path_name == 'gen' else 'historical_r2_acc')
+        mc = np.asarray([float(row[mc_key]) for row in rows])
+        theory = np.asarray([float(row[theory_key]) for row in rows])
+        historical = np.asarray(
+            [float(row.get(history_key, np.nan)) for row in rows])
+        inset.plot(sigma, mc, 'o-', color=color, ms=3, lw=1)
+        inset.plot(sigma, theory, 's--', color=color, ms=3, lw=1)
+        inset.plot(sigma, historical, '*', color=color, ms=5)
+    inset.plot(
+        sigma, mc_r2_acc_median, '^:', color='C1', ms=2.5, lw=0.8)
+    inset.axhline(1.0, color='0.5', lw=0.6, ls=':')
+    inset.set_xscale('log')
+    inset.set_xlim(0.1, 3.2)
+    inset.set_ylim(0.955, 1.0005)
+    inset.set_xticks([0.1, 0.3, 1.0, 3.0])
+    inset.set_xticklabels(['0.1', '0.3', '1', '3'])
+    inset.tick_params(labelsize=6)
+    inset.grid(alpha=0.15)
+    inset.set_title('low-noise crossing', fontsize=7)
+    if crossing is not None:
+        inset.axvline(crossing_x, color='0.35', lw=0.7, ls=':')
+        inset.plot(crossing_x, crossing_y, 'D', color='0.25', ms=3)
+        inset.text(
+            crossing_x * 1.12, 0.957,
+            rf'$\sigma\approx{crossing_x:.2f}$', fontsize=6)
 
     path_handles = [
         Line2D([0], [0], color='C0', lw=2, label='generalization'),
@@ -591,18 +702,23 @@ def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
         Line2D([0], [0], color='0.25', marker='*', ms=9, lw=0,
                label='original saved fit'),
     ]
-    path_legend = axes[1].legend(handles=path_handles, loc='lower left',
+    median_handle = Line2D(
+        [0], [0], color='C1', marker='^', lw=1.2, ls=':',
+        label=r'MC median $R^2_{acc}$ / IQR')
+    path_legend = axes[2].legend(
+        handles=path_handles + [median_handle], loc='lower left',
                                  fontsize=8)
-    axes[1].add_artist(path_legend)
-    axes[2].legend(handles=path_handles + source_handles, loc='lower left',
+    axes[2].add_artist(path_legend)
+    axes[3].legend(handles=path_handles + source_handles, loc='lower left',
                    fontsize=8, ncol=2)
     for ax in axes:
         ax.set_xscale('symlog', linthresh=0.01)
         ax.set_xlim(0, max(sigma) * 1.15)
         ax.set_xlabel(r'response noise $\sigma$')
         ax.grid(alpha=0.2)
+        add_noise_ratio_axis(ax, signal_power, max(sigma) * 1.15)
     fig.suptitle('FFHQ disk teacher: generalization--accentuation gap')
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 0.95), h_pad=2.5)
     GAP_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(GAP_FIGURE_PATH, dpi=180, bbox_inches='tight')
     GAP_FIGURE_PATH.chmod(0o644)
@@ -705,6 +821,7 @@ def render_all(rows: list[dict[str, object]], img_size: int) -> None:
     for row in rows:
         sigma = float(row['sigma'])
         _, arrays = load_case(Path(str(row['case_path'])))
+        add_distribution_quantiles(row, arrays)
         cases[sigma] = arrays
     plot_metrics(rows)
     plot_gen_acc_comparison(rows)
@@ -720,7 +837,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--train-pool-size', type=int, default=10000)
     parser.add_argument('--population-size', type=int, default=20000)
     parser.add_argument('--sigmas', type=float, nargs='+',
-                        default=[0.0, 0.01, 0.1, 1.0, 3.0, 10.0])
+                        default=None,
+                        help='Explicit response-noise SDs. By default, combine '
+                             'a low-noise grid with NSR targets through 10.')
     parser.add_argument('--n-trials', type=int, default=100)
     parser.add_argument('--benchmark-trials', type=int, default=3)
     parser.add_argument('--seed', type=int, default=20260814)
@@ -768,6 +887,13 @@ def main() -> None:
     signal_power = float((eigval * beta_proj_t.square()).sum())
     logger.info('Disk teacher: norm²=%.1f, population signal power=%.6g',
                 float(beta @ beta), signal_power)
+    if args.sigmas is None:
+        ratio_sigmas = np.sqrt(DEFAULT_HIGH_NOISE_RATIOS * signal_power)
+        args.sigmas = sorted(np.unique(np.concatenate(
+            [DEFAULT_BASE_SIGMAS, ratio_sigmas])).tolist())
+        logger.info(
+            'Default sigma curve has %d points through sigma=%.3g (NSR=10)',
+            len(args.sigmas), max(args.sigmas))
 
     train_pool = torch.from_numpy(
         np.asarray(staged[:args.train_pool_size], dtype=np.float32)).to(device)
@@ -801,7 +927,10 @@ def main() -> None:
         cache = case_path(args, sigma)
         if cache.exists() and not args.force:
             logger.info('[%d/%d] Loading %s', case_index, len(args.sigmas), cache)
-            row, _ = load_case(cache)
+            row, arrays = load_case(cache)
+            row['noise_signal_ratio'] = (
+                sigma ** 2 / float(row['theory_signal_power']))
+            add_distribution_quantiles(row, arrays)
             rows.append(row)
             continue
 
@@ -856,6 +985,7 @@ def main() -> None:
             'seed': args.seed,
             'case_path': str(cache),
             'mc_elapsed_seconds': elapsed,
+            'noise_signal_ratio': sigma ** 2 / signal_power,
         }
         row.update(theoretical)
         for name, values in trials.items():
@@ -894,6 +1024,7 @@ def main() -> None:
             'de_cv_risk_path': de_risk_path,
             'alpha_grid': alphas_np,
         }
+        add_distribution_quantiles(row, arrays)
         save_case(cache, row, **arrays)
         rows.append(row)
         logger.info(
