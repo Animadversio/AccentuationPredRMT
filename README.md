@@ -92,4 +92,7 @@ python scripts/validate_ffhq_disk_teacher.py
 
 # Restyle the four FFHQ figures from cached summaries (no images/GPU needed)
 python scripts/validate_ffhq_disk_teacher.py --plot-only
+
+# Align the preserved coarse-alpha stages with error, R2, and slope metrics
+python scripts/plot_ffhq_coarse_alpha_diagnostics.py
 ```

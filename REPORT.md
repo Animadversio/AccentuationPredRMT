@@ -715,6 +715,20 @@ nonlinear alignment ratio leaves the empirical mean lower and increasingly
 uncertain. The plot therefore retains both MC mean with standard error and MC
 median with IQR.
 
+An aligned audit of the preserved coarse-grid cases separates two effects. The
+first negative accentuation-R² trough spans the `alpha=100` to `alpha=1000`
+transition: at `sigma=26.0`, 56/100 trials still select 100 and 44/100 select
+1000, with conditional mean accentuation R² values -2.86 and 0.991. At
+`sigma=30`, only 18/100 trials retain alpha 100, yet those trials keep the
+unconditional mean negative while the median is 0.997. By `sigma=40`, all
+trials select 1000 and the mean returns to 0.994. However, negative values at
+`sigma=82.3` and 100 occur entirely within the fixed `alpha=1000` stage, so a
+regularization jump is not necessary. Around the later 1000-to-10000
+transition, the empirical median recovers near one while rare under-regularized
+fits keep the nonlinear mean strongly negative. See
+`figures/ffhq_disk_teacher_coarse_alpha_aligned.png`; its plot-ready values are
+in `tables/ffhq_disk_teacher_coarse_alpha_aligned.csv`.
+
 ---
 
 ## How to reproduce
