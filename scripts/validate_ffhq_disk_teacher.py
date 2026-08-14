@@ -36,6 +36,7 @@ os.environ.setdefault('XDG_CACHE_HOME', '/tmp/accentuationpredrmt-xdg-cache')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.lines import Line2D
 from PIL import Image
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +64,7 @@ SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_de_summary.csv'
 SPECTRUM_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_spectrum.npz'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_cases'
 METRIC_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_de_validation.png'
+GAP_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_gen_acc_gap.png'
 WEIGHT_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_weights.png'
 SPECTRAL_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_eigenbasis.png'
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_disk_teacher_de.log'
@@ -483,6 +485,130 @@ def plot_metrics(rows: list[dict[str, object]]) -> None:
     plt.close(fig)
 
 
+def interpolated_crossing(x: np.ndarray, first: np.ndarray,
+                          second: np.ndarray) -> tuple[float, float] | None:
+    """Interpolate the first crossing, using log-x away from zero."""
+    difference = first - second
+    for index in range(len(x) - 1):
+        if difference[index] == 0:
+            return float(x[index]), float(first[index])
+        if difference[index] * difference[index + 1] < 0:
+            fraction = -difference[index] / (
+                difference[index + 1] - difference[index])
+            if x[index] > 0 and x[index + 1] > 0:
+                log_x = np.log10(x[index]) + fraction * (
+                    np.log10(x[index + 1]) - np.log10(x[index]))
+                crossing_x = 10 ** log_x
+            else:
+                crossing_x = x[index] + fraction * (
+                    x[index + 1] - x[index])
+            crossing_y = first[index] + fraction * (
+                first[index + 1] - first[index])
+            return float(crossing_x), float(crossing_y)
+    return None
+
+
+def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
+    """Overlay natural-image and accentuation metrics to expose their gap."""
+    rows = sorted(rows, key=lambda row: float(row['sigma']))
+    sigma = np.asarray([float(row['sigma']) for row in rows])
+    fig, axes = plt.subplots(1, 3, figsize=(15.2, 4.4))
+
+    # Weight recovery remains as the shared reference panel.
+    ax = axes[0]
+    mc_weight = np.asarray([float(row['mc_weight_error']) for row in rows])
+    mc_weight_se = np.asarray(
+        [float(row['mc_weight_error_se']) for row in rows])
+    de_weight = np.asarray(
+        [float(row['theory_weight_error']) for row in rows])
+    saved_weight = np.asarray(
+        [float(row.get('historical_weight_error', np.nan)) for row in rows])
+    ax.errorbar(sigma, mc_weight, yerr=2 * mc_weight_se, fmt='o-',
+                color='black', capsize=3, label='MC mean +/- 2 SE')
+    ax.plot(sigma, de_weight, 's--', color='C0', label='DE')
+    ax.plot(sigma, saved_weight, '*', color='C3', ms=9,
+            label='original saved fit')
+    ax.set_yscale('log')
+    ax.set_ylabel(r'$\|\hat\beta-\beta^*\|^2$')
+    ax.set_title('Weight recovery')
+    ax.legend(fontsize=8)
+
+    comparison_specs = [
+        (axes[1], 'r2', r'$R^2$', r'$R^2_{gen}$ vs $R^2_{acc}$'),
+        (axes[2], 'slope', 'true-on-fitted slope',
+         r'slope$_{gen}$ vs slope$_{acc}$'),
+    ]
+    path_colors = {'gen': 'C0', 'acc': 'C1'}
+    for ax, metric, ylabel, title in comparison_specs:
+        mc_paths: dict[str, np.ndarray] = {}
+        for path_name in ['gen', 'acc']:
+            mc_key = f'mc_{metric}_{path_name}'
+            theory_key = f'theory_{metric}_{path_name}'
+            history_key = (
+                'historical_r2_gen_population'
+                if metric == 'r2' and path_name == 'gen'
+                else f'historical_{metric}_{path_name}')
+            mc = np.asarray([float(row[mc_key]) for row in rows])
+            se = np.asarray([float(row[f'{mc_key}_se']) for row in rows])
+            theory = np.asarray([float(row[theory_key]) for row in rows])
+            historical = np.asarray(
+                [float(row.get(history_key, np.nan)) for row in rows])
+            color = path_colors[path_name]
+            mc_paths[path_name] = mc
+            ax.errorbar(sigma, mc, yerr=2 * se, fmt='o-', color=color,
+                        capsize=3, zorder=3)
+            ax.plot(sigma, theory, 's--', color=color, zorder=2)
+            ax.plot(sigma, historical, '*', color=color, ms=9, zorder=4)
+        ax.fill_between(
+            sigma, mc_paths['gen'], mc_paths['acc'], color='0.6', alpha=0.16,
+            zorder=0)
+        ax.axhline(1.0, color='0.5', lw=0.8, ls=':', zorder=0)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+
+    crossing = interpolated_crossing(
+        sigma, np.asarray([float(row['mc_r2_gen']) for row in rows]),
+        np.asarray([float(row['mc_r2_acc']) for row in rows]))
+    if crossing is not None:
+        crossing_x, crossing_y = crossing
+        axes[1].axvline(crossing_x, color='0.35', lw=0.9, ls=':')
+        axes[1].plot(crossing_x, crossing_y, 'D', color='0.25', ms=5, zorder=5)
+        axes[1].annotate(
+            rf'MC crossing $\sigma\approx{crossing_x:.2f}$',
+            xy=(crossing_x, crossing_y), xytext=(8, -28),
+            textcoords='offset points', fontsize=8,
+            arrowprops={'arrowstyle': '-', 'color': '0.35', 'lw': 0.8})
+
+    path_handles = [
+        Line2D([0], [0], color='C0', lw=2, label='generalization'),
+        Line2D([0], [0], color='C1', lw=2, label='accentuation'),
+    ]
+    source_handles = [
+        Line2D([0], [0], color='0.25', marker='o', lw=1.5,
+               label='MC mean +/- 2 SE'),
+        Line2D([0], [0], color='0.25', marker='s', lw=1.5, ls='--',
+               label='DE'),
+        Line2D([0], [0], color='0.25', marker='*', ms=9, lw=0,
+               label='original saved fit'),
+    ]
+    path_legend = axes[1].legend(handles=path_handles, loc='lower left',
+                                 fontsize=8)
+    axes[1].add_artist(path_legend)
+    axes[2].legend(handles=path_handles + source_handles, loc='lower left',
+                   fontsize=8, ncol=2)
+    for ax in axes:
+        ax.set_xscale('symlog', linthresh=0.01)
+        ax.set_xlim(0, max(sigma) * 1.15)
+        ax.set_xlabel(r'response noise $\sigma$')
+        ax.grid(alpha=0.2)
+    fig.suptitle('FFHQ disk teacher: generalization--accentuation gap')
+    fig.tight_layout()
+    GAP_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(GAP_FIGURE_PATH, dpi=180, bbox_inches='tight')
+    GAP_FIGURE_PATH.chmod(0o644)
+    plt.close(fig)
+
+
 def representative_sigmas(rows: list[dict[str, object]]) -> list[float]:
     available = sorted(float(row['sigma']) for row in rows)
     targets = [0.1, 1.0, 10.0]
@@ -581,6 +707,7 @@ def render_all(rows: list[dict[str, object]], img_size: int) -> None:
         _, arrays = load_case(Path(str(row['case_path'])))
         cases[sigma] = arrays
     plot_metrics(rows)
+    plot_gen_acc_comparison(rows)
     plot_weights(rows, cases, img_size)
     plot_spectrum(rows, cases)
 
@@ -614,7 +741,7 @@ def main() -> None:
     if args.plot_only:
         rows = read_summary()
         render_all(rows, args.img_size)
-        logger.info('Replotted three figures from cached summaries/cases')
+        logger.info('Replotted four figures from cached summaries/cases')
         return
     if not torch.cuda.is_available():
         raise RuntimeError('The exact d=10,000 experiment requires a CUDA GPU.')
@@ -783,8 +910,9 @@ def main() -> None:
                 time.perf_counter() - run_start)
     logger.info('Summary: %s', SUMMARY_PATH)
     logger.info('Cases: %s', CASE_DIR)
-    logger.info('Figures: %s, %s, %s',
-                METRIC_FIGURE_PATH, WEIGHT_FIGURE_PATH, SPECTRAL_FIGURE_PATH)
+    logger.info('Figures: %s, %s, %s, %s',
+                METRIC_FIGURE_PATH, GAP_FIGURE_PATH, WEIGHT_FIGURE_PATH,
+                SPECTRAL_FIGURE_PATH)
 
 
 if __name__ == '__main__':

@@ -87,6 +87,6 @@ python scripts/validate_powerlaw_teacher_alignment.py --plot-only
 # The script benchmarks first, stages the image archive locally, and caches cases.
 python scripts/validate_ffhq_disk_teacher.py
 
-# Restyle the three FFHQ figures from cached summaries (no images/GPU needed)
+# Restyle the four FFHQ figures from cached summaries (no images/GPU needed)
 python scripts/validate_ffhq_disk_teacher.py --plot-only
 ```

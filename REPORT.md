@@ -660,6 +660,7 @@ prediction/accentuation dissociation in the note, now observed beyond the
 Gaussian-design assumption using real natural images.
 
 See `figures/ffhq_disk_teacher_de_validation.png`,
+`figures/ffhq_disk_teacher_gen_acc_gap.png`,
 `figures/ffhq_disk_teacher_weights.png`, and
 `figures/ffhq_disk_teacher_eigenbasis.png`. Plot-ready results are in
 `tables/ffhq_disk_teacher_de_summary.csv`; reusable per-condition arrays are
