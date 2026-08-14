@@ -656,9 +656,10 @@ def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
         axes[2].axvline(crossing_x, color='0.35', lw=0.9, ls=':')
         axes[2].plot(crossing_x, crossing_y, 'D', color='0.25', ms=5, zorder=5)
 
-    # The full high-noise range sends R²_acc far below zero.  Retain that main
-    # axis while adding a low-noise inset where the first crossing is legible.
-    inset = axes[2].inset_axes([0.48, 0.51, 0.49, 0.43])
+    # The full high-noise range sends R²_acc far below zero.  Put the low-noise
+    # zoom in the otherwise empty negative-R² region so it does not hide the
+    # main curves near R²=1.
+    inset = axes[2].inset_axes([0.43, 0.08, 0.43, 0.32])
     for path_name in ['gen', 'acc']:
         color = path_colors[path_name]
         mc_key = f'mc_r2_{path_name}'
