@@ -86,6 +86,7 @@ python scripts/validate_powerlaw_teacher_alignment.py --plot-only
 # Reproduce the 100x100 FFHQ unit-disk teacher experiment on a CUDA GPU.
 # The default 26-point curve reaches noise/signal variance ratio 10; figures
 # show response-noise SD on the lower x-axis and variance ratio on the upper.
+# RidgeCV and DE share a 181-point log-alpha grid (20 intervals per decade).
 # The script benchmarks first, stages the image archive locally, and caches cases.
 python scripts/validate_ffhq_disk_teacher.py
 

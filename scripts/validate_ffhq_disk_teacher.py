@@ -6,7 +6,7 @@ This reproduces the natural-image linear-regression experiment from
 * 100 x 100 grayscale FFHQ images;
 * a binary radius-0.3 disk as the teacher weight;
 * a fitted intercept;
-* RidgeCV over scikit-learn alphas ``10**[-4, ..., 5]``.
+* RidgeCV over a dense log-spaced alpha grid from ``10**-4`` to ``10**5``.
 
 Scikit's objective uses ``X.T X + alpha I``. The RMT library uses
 ``X.T X + n lambda I``, so the final-refit conversion is ``lambda=alpha/n``.
@@ -391,7 +391,9 @@ def summarize_historical(
 def case_path(args: argparse.Namespace, sigma: float) -> Path:
     return CASE_DIR / (
         f'ffhq_disk_d{args.img_size ** 2}_n{args.n}_sigma{float_tag(sigma)}'
-        f'_trials{args.n_trials}_pop{args.population_size}_seed{args.seed}.npz')
+        f'_trials{args.n_trials}_pop{args.population_size}_seed{args.seed}'
+        f'_alpha{args.alpha_grid_size}_emin{float_tag(args.alpha_min_exp)}'
+        f'_emax{float_tag(args.alpha_max_exp)}.npz')
 
 
 def save_case(path: Path, row: dict[str, object], **arrays: np.ndarray) -> None:
@@ -579,8 +581,8 @@ def plot_gen_acc_comparison(rows: list[dict[str, object]]) -> None:
     ax.set_title('Weight recovery')
     ax.legend(fontsize=8)
 
-    # The decade-spaced CV grid creates visible phase transitions at high
-    # noise, so show the selected alpha beside the resulting metrics.
+    # Show the selected alpha beside the resulting metrics so any residual CV
+    # transitions remain visible even with the dense log-spaced grid.
     ax = axes[1]
     mc_alpha_median = np.asarray(
         [float(row['mc_alpha_cv_median']) for row in rows])
@@ -843,6 +845,13 @@ def parse_args() -> argparse.Namespace:
                              'a low-noise grid with NSR targets through 10.')
     parser.add_argument('--n-trials', type=int, default=100)
     parser.add_argument('--benchmark-trials', type=int, default=3)
+    parser.add_argument('--alpha-grid-size', type=int, default=181,
+                        help='Number of log-spaced RidgeCV alpha candidates. '
+                             'The default gives 20 intervals per decade.')
+    parser.add_argument('--alpha-min-exp', type=float, default=-4.0,
+                        help='Base-10 exponent of the smallest alpha.')
+    parser.add_argument('--alpha-max-exp', type=float, default=5.0,
+                        help='Base-10 exponent of the largest alpha.')
     parser.add_argument('--seed', type=int, default=20260814)
     parser.add_argument('--zip-path', type=Path, default=FFHQ_ZIP)
     parser.add_argument('--scratch-dir', type=Path,
@@ -850,6 +859,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--force-spectrum', action='store_true')
     parser.add_argument('--force', action='store_true')
     parser.add_argument('--plot-only', action='store_true')
+    parser.add_argument('--benchmark-only', action='store_true',
+                        help='Run the exact-size timing probe and exit before '
+                             'any Monte Carlo cases are generated.')
     parser.add_argument('--no-progress', action='store_true')
     parser.add_argument('--log-file', type=Path, default=DEFAULT_LOG_PATH)
     return parser.parse_args()
@@ -857,6 +869,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    if args.alpha_grid_size < 2:
+        raise ValueError('--alpha-grid-size must be at least 2')
+    if args.alpha_min_exp >= args.alpha_max_exp:
+        raise ValueError('--alpha-min-exp must be smaller than --alpha-max-exp')
     logger = configure_logger(args.log_file)
     if args.plot_only:
         rows = read_summary()
@@ -900,8 +916,14 @@ def main() -> None:
         np.asarray(staged[:args.train_pool_size], dtype=np.float32)).to(device)
     train_pool.div_(255.0)
     X_original = train_pool[:args.n]
-    alphas_np = np.logspace(-4, 5, 10)
+    alphas_np = np.logspace(
+        args.alpha_min_exp, args.alpha_max_exp, args.alpha_grid_size)
     alphas = torch.from_numpy(alphas_np.astype(np.float32)).to(device)
+    logger.info(
+        'RidgeCV alpha grid: %d log-spaced values from %.3g to %.3g '
+        '(adjacent ratio %.4f)',
+        len(alphas_np), alphas_np[0], alphas_np[-1],
+        alphas_np[1] / alphas_np[0])
 
     # Small-scale timing test using the exact n and d before the full loop.
     benchmark_generator = torch.Generator(device=device).manual_seed(args.seed)
@@ -921,6 +943,9 @@ def main() -> None:
         'Benchmark: %.4fs/trial; projected simulation %.1fs (%.1fmin) for %d cases x %d trials',
         seconds_per_trial, projected, projected / 60,
         len(args.sigmas), args.n_trials)
+    if args.benchmark_only:
+        logger.info('Benchmark-only run complete; no case or summary files written')
+        return
 
     rows: list[dict[str, object]] = []
     run_start = time.perf_counter()
@@ -984,6 +1009,9 @@ def main() -> None:
             'population_size': args.population_size,
             'n_trials': args.n_trials,
             'seed': args.seed,
+            'alpha_grid_size': args.alpha_grid_size,
+            'alpha_min_exp': args.alpha_min_exp,
+            'alpha_max_exp': args.alpha_max_exp,
             'case_path': str(cache),
             'mc_elapsed_seconds': elapsed,
             'noise_signal_ratio': sigma ** 2 / signal_power,

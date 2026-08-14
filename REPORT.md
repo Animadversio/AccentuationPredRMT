@@ -600,6 +600,9 @@ grayscale FFHQ images (`d=10,000`), the binary radius-0.3 central disk as
 are under `AdvExampleLinearRegr/circ_mask_weights`. The downstream natural
 image accentuation code is in
 `Closed-loop-visual-insilico/scripts/accentuation_theory/exp2_accentuation.py`.
+The reproduction below replaces the original ten decade-spaced candidates
+with 181 log-spaced values over the same range (20 intervals per decade).
+DE and empirical LOOCV always select from this identical dense grid.
 
 Scikit-learn solves with `X.T X + alpha I`, whereas this repository uses
 `X.T X + n lambda I`; hence the final-fit conversion is
@@ -635,18 +638,17 @@ when the low-noise CV risk curve is flat.
 
 | sigma | alpha DE / MC median / saved inferred | squared weight error DE / MC / saved | accentuation error DE / MC / saved |
 |---:|---:|---:|---:|
-| 0.1 | 1e-4 / 1e-4 / 1e-3 | 69.9 / 69.7 / 67.5 | 0.00181 / 0.00272 / 0.00197 |
-| 1 | 1e-4 / 1e-4 / 1 | 101.0 / 105.0 / 98.8 | 15.7 / 20.6 / 14.4 |
-| 3 | 10 / 10 / 10 | 198.1 / 200.7 / 194.0 | 169.7 / 175.0 / 154.7 |
-| 10 | 100 / 100 / 100 | 269.6 / 267.1 / 270.5 | 234.3 / 220.0 / 252.4 |
+| 0.1 | 1e-4 / 1e-4 / 8.9e-4 | 69.9 / 69.0 / 67.5 | 0.00181 / 0.00295 / 0.00197 |
+| 1 | 1e-4 / 1e-4 / 1 | 101.0 / 104.7 / 98.8 | 15.7 / 20.0 / 14.4 |
+| 3 | 15.8 / 15.8 / 10 | 167.3 / 169.3 / 194.0 | 87.3 / 91.2 / 154.7 |
+| 10 | 100 / 100 / 100 | 269.6 / 273.1 / 270.5 | 234.3 / 249.3 / 252.4 |
 
-Across all six tested noise levels, DE matched the actual-CV median alpha on
-the candidate grid. Mean absolute relative gaps were 1.3% for squared weight
-error and 4.3% for natural-image generalization error. For accentuation error,
-the mean relative gap was 11.2% over `sigma>=1`; the largest gap there was 24%
-at `sigma=1`, where the selected-alpha distribution is broad and the nonlinear
-alignment ratio has appreciable finite-sample variance. At very low noise the
-relative accentuation gap looks large only because both errors are nearly zero.
+DE closely tracks the actual-CV median alpha on the dense candidate grid. At
+`sigma=3`, for example, both select 15.8 rather than being quantized to the
+original decade value 10. The fitted metrics remain close; residual gaps are
+largest for nonlinear accentuation quantities, whose finite-sample alignment
+ratio has appreciable variance. At very low noise relative accentuation gaps
+look large only because both errors are nearly zero.
 
 This gives a direct explanation of the visual result. Even at zero noise,
 `n=1,000` observations cannot identify all 10,000 raw pixels: the squared
@@ -664,8 +666,9 @@ See `figures/ffhq_disk_teacher_de_validation.png`,
 `figures/ffhq_disk_teacher_weights.png`, and
 `figures/ffhq_disk_teacher_eigenbasis.png`. Plot-ready results are in
 `tables/ffhq_disk_teacher_de_summary.csv`; reusable per-condition arrays are
-cached under `tables/ffhq_disk_teacher_cases/`. The processing log is
-`logs/ffhq_disk_teacher_de.log`.
+cached under `tables/ffhq_disk_teacher_cases/`. The default processing log is
+`logs/ffhq_disk_teacher_de.log`; the dense-grid run reported here is preserved
+in `logs/ffhq_disk_teacher_dense_alpha.log`.
 
 ### Computational audit
 
@@ -673,10 +676,12 @@ Loading separate PNG files was I/O-bound at about 16 images/s (roughly 12
 minutes for 12,000 images). Sequential reads from the contiguous FFHQ zip
 reached 251 images/s, staging 30,000 resized images to node-local scratch in
 119 seconds. Once staged, the H100 covariance and eigendecomposition took 1.2
-seconds and the 600 fitted trials took 9.1 seconds. Both the staged array and
-eigenvectors are cached on node-local scratch; compact spectrum, per-case
-numerical summaries, and plot-ready CSV are cached separately so figures can
-be restyled without recomputation.
+seconds. An exact-size 10-trial timing probe projected 2.5 minutes for the
+dense grid; the complete 2,600 fitted trials actually took about 40 seconds,
+and the full post-spectrum workload including figures took 50.4 seconds. Both
+the staged array and eigenvectors are cached on node-local scratch; compact
+spectrum, per-case numerical summaries, and plot-ready CSV are cached
+separately so figures can be restyled without recomputation.
 
 An implementation audit also found and fixed float32 cancellation in analytic
 LOOCV at very small alpha. Forming `(I-H)y` directly in the sample eigensystem,
@@ -686,29 +691,29 @@ compares this stable path with brute-force leave-one-out fits.
 
 ### High-noise extension
 
-The cached sweep now contains 26 noise levels and reaches exact population
+The cached dense-grid sweep contains 26 noise levels and reaches exact population
 noise/signal variance ratios `sigma²/S` of 0.1, 1, and 10, where
 `S=6778.3`. Every condition uses 100 actual natural-image RidgeCV fits. The
 comparison figure has synchronized axes: response-noise SD `sigma` below and
-noise/signal variance ratio above. It also shows the decade-spaced selected
-alpha, which explains the nonmonotone transitions in weight and accentuation
-metrics.
+noise/signal variance ratio above. Both DE and empirical LOOCV select from 181
+log-spaced alphas between `1e-4` and `1e5`; adjacent candidates differ by only
+1.122x.
 
 | sigma²/S | sigma | alpha DE / MC median [IQR] | R²_gen DE / MC | slope_acc DE / MC | R²_acc DE / MC mean (median) |
 |---:|---:|---:|---:|---:|---:|
-| 0.1 | 26.04 | 1000 / 100 [100,1000] | 0.980 / 0.980 | 1.103 / 0.675 | 0.991 / -1.164 (-2.344) |
-| 1 | 82.33 | 1000 / 1000 [1000,1000] | 0.944 / 0.943 | 0.501 / 0.501 | -0.011 / -0.017 (-0.007) |
-| 10 | 260.35 | 10000 / 10000 [10000,10000] | 0.803 / 0.798 | 0.832 / 0.811 | 0.947 / -4.966 (0.969) |
+| 0.1 | 26.04 | 355 / 336 [316,355] | 0.986 / 0.986 | 0.762 / 0.749 | 0.902 / 0.874 (0.896) |
+| 1 | 82.33 | 1585 / 1585 [1259,1778] | 0.947 / 0.946 | 0.706 / 0.685 | 0.822 / 0.654 (0.817) |
+| 10 | 260.35 | 7079 / 7079 [5623,7943] | 0.812 / 0.805 | 0.636 / 0.643 | 0.639 / 0.261 (0.612) |
 
-Generalization remains well predicted across this extreme range. Own-path R²
-requires more care. At ratio 0.1 the empirical CV argmin is split across two
-adjacent decade-grid penalties, while the leading DE chooses only one; this
-produces a large discrepancy. At ratio 10, the DE and mean slope remain close,
-and the DE is close to the median own-path R², but rare near-singular alignment
-ratios make the empirical *mean* R² strongly negative. Thus the first-order DE
-continues to predict typical calibration but no longer predicts the heavy-tail
-mean of the nonlinear own-path R². The plot includes both MC mean with standard
-error and MC median with IQR to make this distinction explicit.
+The dense grid removes the artificial decade-scale dip-and-recovery. Between
+`sigma=10` and 100, the largest adjacent change in selected alpha falls from
+10x to 1.58x; total variation of the empirical accentuation-R² curve falls from
+6.75 to 0.34, and total variation of squared weight error falls from 1591 to
+270. Generalization remains especially well predicted. Own-path R² still
+requires care at extreme noise: DE stays near the empirical median, while its
+nonlinear alignment ratio leaves the empirical mean lower and increasingly
+uncertain. The plot therefore retains both MC mean with standard error and MC
+median with IQR.
 
 ---
 
