@@ -41,6 +41,7 @@ scripts/
   validate_r2_peer_review.py        # Gen/own/peer error and R² validation
   validate_cv_selected_r2.py        # R² after actual vs DE-predicted K-fold CV
   validate_powerlaw_teacher_alignment.py  # Teacher spectral-alignment sweep
+  validate_ffhq_disk_teacher.py     # Exact natural-image disk-teacher experiment
 
 notebooks/
   theory_validation_demo.ipynb      # Interactive demo
@@ -81,4 +82,11 @@ python scripts/validate_powerlaw_teacher_alignment.py
 
 # Restyle all five alignment/weight figures using plot-ready cached tables
 python scripts/validate_powerlaw_teacher_alignment.py --plot-only
+
+# Reproduce the 100x100 FFHQ unit-disk teacher experiment on a CUDA GPU.
+# The script benchmarks first, stages the image archive locally, and caches cases.
+python scripts/validate_ffhq_disk_teacher.py
+
+# Restyle the three FFHQ figures from cached summaries (no images/GPU needed)
+python scripts/validate_ffhq_disk_teacher.py --plot-only
 ```

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from rmt_core.ridge_theory_lib import (
     accentuation_r2_theory,
@@ -18,6 +19,7 @@ from rmt_core.simulation_lib import (
     run_paired_cv_monte_carlo,
 )
 from rmt_core.teacher_lib import make_spectral_teacher
+from scripts.validate_ffhq_disk_teacher import ridge_loocv_fit
 
 
 def test_generalization_metrics_use_natural_signal_variance():
@@ -166,3 +168,44 @@ def test_cv_monte_carlo_can_return_fitted_coefficients():
 
     assert result['coefficient_trials'].shape == (2, 2, 3)
     assert np.all(np.isfinite(result['coefficient_trials']))
+
+
+def test_stable_ridge_loocv_path_matches_brute_force():
+    """Tiny ridge penalties must not lose the LOO residual to cancellation."""
+    rng = np.random.default_rng(23)
+    n, d = 18, 30
+    left, _ = np.linalg.qr(rng.standard_normal((n, n)))
+    right, _ = np.linalg.qr(rng.standard_normal((d, n)))
+    singular_values = np.geomspace(20.0, 0.1, n)
+    X = (left * singular_values) @ right.T
+    beta = rng.standard_normal(d)
+    y = X @ beta
+    alphas = np.array([1e-6, 1e-4, 1e-2, 0.1, 10.0])
+
+    _, selected, loo_mse = ridge_loocv_fit(
+        torch.from_numpy(X.astype(np.float32)),
+        torch.from_numpy(beta.astype(np.float32)), 0.0,
+        torch.from_numpy(alphas.astype(np.float32)),
+        torch.Generator().manual_seed(5))
+
+    brute_mse = []
+    for alpha in alphas:
+        residuals = []
+        for held_out in range(n):
+            keep = np.arange(n) != held_out
+            X_train = X[keep]
+            y_train = y[keep]
+            x_mean = X_train.mean(axis=0)
+            y_mean = y_train.mean()
+            X_centered = X_train - x_mean
+            y_centered = y_train - y_mean
+            weight = np.linalg.solve(
+                X_centered.T @ X_centered + alpha * np.eye(d),
+                X_centered.T @ y_centered)
+            prediction = y_mean + (X[held_out] - x_mean) @ weight
+            residuals.append(y[held_out] - prediction)
+        brute_mse.append(np.mean(np.square(residuals)))
+    brute_mse = np.asarray(brute_mse)
+
+    assert np.allclose(loo_mse.numpy(), brute_mse, rtol=5e-3, atol=1e-8)
+    assert np.isclose(selected, alphas[np.argmin(brute_mse)])

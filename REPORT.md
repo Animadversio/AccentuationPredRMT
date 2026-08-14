@@ -587,6 +587,89 @@ coefficient ensembles are cached under
 
 ---
 
+## Natural-image unit-disk teacher
+
+### Mapping to the original experiment
+
+The exact source experiment is
+`Closed-loop-visual-insilico/notebooks/toy_model_linear_regression_sweep.py`
+(converted from `20250528_toy_model_adv_generation.ipynb`). It uses 100x100
+grayscale FFHQ images (`d=10,000`), the binary radius-0.3 central disk as
+`beta*`, `n=1,000`, a fitted intercept, and scikit-learn `RidgeCV` with
+`alpha in 10**[-4,...,5]`. Its saved coefficient maps and train/test scores
+are under `AdvExampleLinearRegr/circ_mask_weights`. The downstream natural
+image accentuation code is in
+`Closed-loop-visual-insilico/scripts/accentuation_theory/exp2_accentuation.py`.
+
+Scikit-learn solves with `X.T X + alpha I`, whereas this repository uses
+`X.T X + n lambda I`; hence the final-fit conversion is
+`lambda=alpha/n`. `RidgeCV(cv=None)` is leave-one-out CV. We therefore select
+`alpha` by minimizing the DE generalization error at sample size `n-1` with
+`lambda=alpha/(n-1)`, then evaluate the final estimator at full `n`.
+
+### Exact-spectrum validation
+
+We estimated the centered FFHQ population covariance from 20,000 images
+independent of a 10,000-image training pool and diagonalized its full
+10,000x10,000 spectrum on an H100. For each noise level, 100 natural-image
+training sets were fit with exact analytic LOOCV. The DE used only this
+population spectrum, the disk teacher's PC projections, `n`, and `sigma`.
+The original saved Ridge alpha was not stored, so its value below is inferred
+from the paired saved OLS/Ridge coefficient maps; it is least identifiable
+when the low-noise CV risk curve is flat.
+
+| sigma | alpha DE / MC median / saved inferred | squared weight error DE / MC / saved | accentuation error DE / MC / saved |
+|---:|---:|---:|---:|
+| 0.1 | 1e-4 / 1e-4 / 1e-3 | 69.9 / 69.7 / 67.5 | 0.00181 / 0.00272 / 0.00197 |
+| 1 | 1e-4 / 1e-4 / 1 | 101.0 / 105.0 / 98.8 | 15.7 / 20.6 / 14.4 |
+| 3 | 10 / 10 / 10 | 198.1 / 200.7 / 194.0 | 169.7 / 175.0 / 154.7 |
+| 10 | 100 / 100 / 100 | 269.6 / 267.1 / 270.5 | 234.3 / 220.0 / 252.4 |
+
+Across all six tested noise levels, DE matched the actual-CV median alpha on
+the candidate grid. Mean absolute relative gaps were 1.3% for squared weight
+error and 4.3% for natural-image generalization error. For accentuation error,
+the mean relative gap was 11.2% over `sigma>=1`; the largest gap there was 24%
+at `sigma=1`, where the selected-alpha distribution is broad and the nonlinear
+alignment ratio has appreciable finite-sample variance. At very low noise the
+relative accentuation gap looks large only because both errors are nearly zero.
+
+This gives a direct explanation of the visual result. Even at zero noise,
+`n=1,000` observations cannot identify all 10,000 raw pixels: the squared
+coefficient error is about 69 although the disk teacher has norm squared 692.
+Most residual error lies in low-variance FFHQ PCs, so its natural-image cost is
+small (`R2_gen` is about 0.9997), while those raw coefficient components can
+strongly affect optimization along the fitted weight direction. Individual
+fits consequently contain face/texture artifacts, even though their mean and
+the DE mean recover a clean disk-like shape. This is precisely the
+prediction/accentuation dissociation in the note, now observed beyond the
+Gaussian-design assumption using real natural images.
+
+See `figures/ffhq_disk_teacher_de_validation.png`,
+`figures/ffhq_disk_teacher_weights.png`, and
+`figures/ffhq_disk_teacher_eigenbasis.png`. Plot-ready results are in
+`tables/ffhq_disk_teacher_de_summary.csv`; reusable per-condition arrays are
+cached under `tables/ffhq_disk_teacher_cases/`. The processing log is
+`logs/ffhq_disk_teacher_de.log`.
+
+### Computational audit
+
+Loading separate PNG files was I/O-bound at about 16 images/s (roughly 12
+minutes for 12,000 images). Sequential reads from the contiguous FFHQ zip
+reached 251 images/s, staging 30,000 resized images to node-local scratch in
+119 seconds. Once staged, the H100 covariance and eigendecomposition took 1.2
+seconds and the 600 fitted trials took 9.1 seconds. Both the staged array and
+eigenvectors are cached on node-local scratch; compact spectrum, per-case
+numerical summaries, and plot-ready CSV are cached separately so figures can
+be restyled without recomputation.
+
+An implementation audit also found and fixed float32 cancellation in analytic
+LOOCV at very small alpha. Forming `(I-H)y` directly in the sample eigensystem,
+rather than subtracting two nearly equal vectors `y-Hy`, makes the selector
+agree with scikit-learn on the original FFHQ design. A regression test now
+compares this stable path with brute-force leave-one-out fits.
+
+---
+
 ## How to reproduce
 
 ```bash
@@ -613,6 +696,12 @@ python scripts/validate_cv_selected_r2.py
 
 # Replot selected-lambda and downstream R² summaries without recomputation
 python scripts/validate_cv_selected_r2.py --plot-only
+
+# Exact 100x100 FFHQ disk-teacher validation (CUDA; image archive required)
+python scripts/validate_ffhq_disk_teacher.py
+
+# Replot all FFHQ figures from cached summary/case tables
+python scripts/validate_ffhq_disk_teacher.py --plot-only
 
 # Notebook (interactive)
 jupyter notebook notebooks/validation_overview.ipynb
