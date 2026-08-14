@@ -232,12 +232,18 @@ def ridge_loocv_fit(X: torch.Tensor, beta: torch.Tensor, sigma: float,
 
 
 def fit_metrics(weight: torch.Tensor, beta: torch.Tensor, eigval: torch.Tensor,
-                eigvec: torch.Tensor, signal_power: float
+                eigvec: torch.Tensor, beta_proj: torch.Tensor,
+                signal_power: float
                 ) -> tuple[dict[str, float], torch.Tensor]:
     delta = weight - beta
     delta_proj = eigvec.T @ delta
+    weight_proj = beta_proj + delta_proj
     weight_error = float(delta.square().sum())
     gen_error = float((eigval * delta_proj.square()).sum())
+    gen_numerator = float((eigval * weight_proj * beta_proj).sum())
+    gen_denominator = float((eigval * weight_proj.square()).sum())
+    slope_gen = (gen_numerator / gen_denominator
+                 if gen_denominator > 0 else np.nan)
     numerator = float(weight @ beta)
     denominator = float(weight @ weight)
     alignment = numerator / denominator if denominator > 0 else np.nan
@@ -248,6 +254,8 @@ def fit_metrics(weight: torch.Tensor, beta: torch.Tensor, eigval: torch.Tensor,
         'weight_error': weight_error,
         'gen_error': gen_error,
         'r2_gen': 1.0 - gen_error / signal_power,
+        'slope_gen': slope_gen,
+        'slope_acc': alignment,
         'acc_alignment': alignment,
         'acc_error': acc_error,
         'r2_acc': r2_acc,
@@ -283,6 +291,14 @@ def theory_metrics(eigenvalues: np.ndarray, beta_proj: np.ndarray,
     kappa = SpectrumKappa(eigenvalues, len(eigenvalues) / n)(lam)
     error_pc, *_ = ridge_error_per_pc_theory(
         eigenvalues, beta_proj, kappa, sigma, n)
+    shrink = eigenvalues / (eigenvalues + kappa)
+    bias_pc = (1.0 - shrink) ** 2 * beta_proj ** 2
+    variance_pc = np.maximum(error_pc - bias_pc, 0.0)
+    second_moment_pc = shrink ** 2 * beta_proj ** 2 + variance_pc
+    gen_slope_numerator = np.sum(
+        eigenvalues * shrink * beta_proj ** 2)
+    gen_slope_denominator = np.sum(eigenvalues * second_moment_pc)
+    slope_gen = gen_slope_numerator / gen_slope_denominator
     r2_gen, gen_error, signal_power = generalization_r2_theory(
         eigenvalues, beta_proj, kappa, sigma, n)
     acc_error, alignment, _ = accentuation_error_theory(
@@ -298,6 +314,8 @@ def theory_metrics(eigenvalues: np.ndarray, beta_proj: np.ndarray,
         'theory_weight_error': float(np.sum(error_pc)),
         'theory_gen_error': gen_error,
         'theory_r2_gen': r2_gen,
+        'theory_slope_gen': slope_gen,
+        'theory_slope_acc': alignment,
         'theory_acc_alignment': alignment,
         'theory_acc_error': acc_error,
         'theory_r2_acc': r2_acc,
@@ -332,8 +350,9 @@ def infer_historical_alpha(
 
 def summarize_historical(
         n: int, sigma: float, X_original: torch.Tensor, beta: torch.Tensor,
-        eigval: torch.Tensor, eigvec: torch.Tensor, signal_power: float,
-        alphas: torch.Tensor) -> tuple[dict[str, float], np.ndarray]:
+        eigval: torch.Tensor, eigvec: torch.Tensor, beta_proj: torch.Tensor,
+        signal_power: float, alphas: torch.Tensor
+        ) -> tuple[dict[str, float], np.ndarray]:
     path = historical_pickle(n, sigma)
     if not path.exists():
         return {}, np.full(len(beta), np.nan, dtype=np.float32)
@@ -346,13 +365,16 @@ def summarize_historical(
     inferred_alpha, residual = infer_historical_alpha(
         X_original, ols_np, ridge_np, alphas)
     ridge = torch.from_numpy(ridge_np).to(beta.device)
-    metrics, _ = fit_metrics(ridge, beta, eigval, eigvec, signal_power)
+    metrics, _ = fit_metrics(
+        ridge, beta, eigval, eigvec, beta_proj, signal_power)
     return {
         'historical_alpha_inferred': inferred_alpha,
         'historical_alpha_inference_relative_error': residual,
         'historical_weight_error': metrics['weight_error'],
         'historical_gen_error': metrics['gen_error'],
         'historical_r2_gen_population': metrics['r2_gen'],
+        'historical_slope_gen': metrics['slope_gen'],
+        'historical_slope_acc': metrics['slope_acc'],
         'historical_acc_error': metrics['acc_error'],
         'historical_r2_acc': metrics['r2_acc'],
         'historical_r2_test_saved': float(result['r2_test_Ridge']),
@@ -413,14 +435,17 @@ def plot_metrics(rows: list[dict[str, object]]) -> None:
     panels = [
         ('weight_error', 'theory_weight_error', 'historical_weight_error',
          r'$\|\hat\beta-\beta^*\|^2$', True),
-        ('gen_error', 'theory_gen_error', 'historical_gen_error',
-         r'$E_{gen}$', True),
-        ('acc_error', 'theory_acc_error', 'historical_acc_error',
-         r'$E_{acc}$', True),
-        ('alpha_cv', 'theory_alpha_cv', 'historical_alpha_inferred',
-         r'RidgeCV $\alpha=n\lambda$', True),
+        ('r2_gen', 'theory_r2_gen', 'historical_r2_gen_population',
+         r'$R^2_{gen}$', False),
+        ('r2_acc', 'theory_r2_acc', 'historical_r2_acc',
+         r'$R^2_{acc}$', False),
+        ('slope_gen', 'theory_slope_gen', 'historical_slope_gen',
+         r'slope$_{gen}$: true on fitted', False),
+        ('slope_acc', 'theory_slope_acc', 'historical_slope_acc',
+         r'slope$_{acc}$: true on fitted', False),
     ]
-    fig, axes = plt.subplots(2, 2, figsize=(10.5, 7.6), squeeze=False)
+    fig, axes = plt.subplots(2, 3, figsize=(14.2, 7.6), squeeze=False)
+    legend_handles = legend_labels = None
     for ax, (mc_key, theory_key, history_key, ylabel, log_y) in zip(
             axes.ravel(), panels):
         mc = np.asarray([float(row[f'mc_{mc_key}']) for row in rows])
@@ -435,10 +460,21 @@ def plot_metrics(rows: list[dict[str, object]]) -> None:
         ax.set_xscale('symlog', linthresh=0.01)
         if log_y and np.all(mc > 0) and np.all(theory > 0):
             ax.set_yscale('log')
+        else:
+            ax.axhline(1.0, color='0.5', lw=0.8, ls=':', zorder=0)
         ax.set_xlabel(r'response noise $\sigma$')
         ax.set_ylabel(ylabel)
         ax.grid(alpha=0.2)
-        ax.legend(fontsize=7)
+        if legend_handles is None:
+            legend_handles, legend_labels = ax.get_legend_handles_labels()
+    legend_ax = axes.ravel()[-1]
+    legend_ax.axis('off')
+    legend_ax.legend(legend_handles, legend_labels, loc='center', fontsize=10,
+                     frameon=False)
+    legend_ax.text(
+        0.5, 0.28,
+        'Slopes regress true teacher response\non fitted-model response.',
+        ha='center', va='center', fontsize=10, transform=legend_ax.transAxes)
     fig.suptitle('FFHQ disk teacher: deterministic equivalent vs natural-image fits')
     fig.tight_layout()
     METRIC_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -601,7 +637,8 @@ def main() -> None:
     eigval, eigvec, _, eigenvalues, beta_proj, _ = compute_population_spectrum(
         staged, args.train_pool_size, args.population_size, beta_np,
         args.scratch_dir, device, logger)
-    signal_power = float((eigval * (eigvec.T @ beta).square()).sum())
+    beta_proj_t = torch.from_numpy(beta_proj.astype(np.float32)).to(device)
+    signal_power = float((eigval * beta_proj_t.square()).sum())
     logger.info('Disk teacher: norm²=%.1f, population signal power=%.6g',
                 float(beta @ beta), signal_power)
 
@@ -649,8 +686,8 @@ def main() -> None:
             eigenvalues, beta_proj, sigma, args.n, alpha_de)
 
         metric_names = [
-            'weight_error', 'gen_error', 'r2_gen', 'acc_alignment',
-            'acc_error', 'r2_acc', 'alpha_cv']
+            'weight_error', 'gen_error', 'r2_gen', 'slope_gen', 'slope_acc',
+            'acc_alignment', 'acc_error', 'r2_acc', 'alpha_cv']
         trials = {name: np.empty(args.n_trials, dtype=float)
                   for name in metric_names}
         coefficients = np.empty((args.n_trials, len(beta_np)), dtype=np.float32)
@@ -673,7 +710,7 @@ def main() -> None:
             weight, selected_alpha, _ = ridge_loocv_fit(
                 train_pool[indices], beta, sigma, alphas, generator)
             metrics, delta_proj = fit_metrics(
-                weight, beta, eigval, eigvec, signal_power)
+                weight, beta, eigval, eigvec, beta_proj_t, signal_power)
             for name in metric_names[:-1]:
                 trials[name][trial_index] = metrics[name]
             trials['alpha_cv'][trial_index] = selected_alpha
@@ -704,7 +741,7 @@ def main() -> None:
         row['mc_alpha_cv_q75'] = float(np.quantile(trials['alpha_cv'], 0.75))
 
         historical, historical_weight = summarize_historical(
-            args.n, sigma, X_original, beta, eigval, eigvec,
+            args.n, sigma, X_original, beta, eigval, eigvec, beta_proj_t,
             signal_power, alphas)
         row.update(historical)
 
@@ -717,6 +754,8 @@ def main() -> None:
             'trial_alpha_cv': trials['alpha_cv'],
             'trial_weight_error': trials['weight_error'],
             'trial_gen_error': trials['gen_error'],
+            'trial_slope_gen': trials['slope_gen'],
+            'trial_slope_acc': trials['slope_acc'],
             'trial_acc_error': trials['acc_error'],
             'trial_r2_acc': trials['r2_acc'],
             'mc_error_per_pc': (error_pc_sum / args.n_trials).cpu().numpy(),

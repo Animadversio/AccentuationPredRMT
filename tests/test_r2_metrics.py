@@ -19,7 +19,7 @@ from rmt_core.simulation_lib import (
     run_paired_cv_monte_carlo,
 )
 from rmt_core.teacher_lib import make_spectral_teacher
-from scripts.validate_ffhq_disk_teacher import ridge_loocv_fit
+from scripts.validate_ffhq_disk_teacher import fit_metrics, ridge_loocv_fit
 
 
 def test_generalization_metrics_use_natural_signal_variance():
@@ -209,3 +209,21 @@ def test_stable_ridge_loocv_path_matches_brute_force():
 
     assert np.allclose(loo_mse.numpy(), brute_mse, rtol=5e-3, atol=1e-8)
     assert np.isclose(selected, alphas[np.argmin(brute_mse)])
+
+
+def test_ffhq_evaluation_slopes_use_true_on_fitted_orientation():
+    eigenvalues = torch.tensor([4.0, 1.0])
+    eigenvectors = torch.eye(2)
+    beta = torch.tensor([1.0, 2.0])
+    weight = torch.tensor([0.5, 3.0])
+    signal_power = float((eigenvalues * beta.square()).sum())
+
+    metrics, _ = fit_metrics(
+        weight, beta, eigenvalues, eigenvectors, beta, signal_power)
+
+    expected_gen = float(
+        (weight * eigenvalues * beta).sum()
+        / (weight * eigenvalues * weight).sum())
+    expected_acc = float((weight * beta).sum() / weight.square().sum())
+    assert np.isclose(metrics['slope_gen'], expected_gen)
+    assert np.isclose(metrics['slope_acc'], expected_acc)

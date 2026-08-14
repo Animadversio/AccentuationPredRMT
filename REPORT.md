@@ -607,6 +607,21 @@ Scikit-learn solves with `X.T X + alpha I`, whereas this repository uses
 `alpha` by minimizing the DE generalization error at sample size `n-1` with
 `lambda=alpha/(n-1)`, then evaluate the final estimator at full `n`.
 
+The evaluation slopes use the orientation in the response scatterplots: true
+teacher response regressed on fitted-model response. On centered natural
+images and on the fitted model's own accentuation path, respectively,
+
+```
+slope_gen = (beta_hat^T Sigma beta*) / (beta_hat^T Sigma beta_hat)
+slope_acc = (beta_hat^T beta*)       / (beta_hat^T beta_hat).
+```
+
+The natural-image slope remains extremely close to one (MC 1.002 at
+`sigma=1`, 1.008 at `sigma=10`) even as the accentuation slope falls to 0.945
+and 0.820. This exposes the calibration dissociation more directly than error
+alone: natural responses have almost unit slope while the teacher achieves
+only 94.5% or 82.0% of the response change requested along the student weight.
+
 ### Exact-spectrum validation
 
 We estimated the centered FFHQ population covariance from 20,000 images
