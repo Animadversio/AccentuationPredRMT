@@ -21,6 +21,11 @@ E_acc ≍ (β*ᵀΣβ*) · (1 - R_det)²
 ```
 where `R_det = E[β̂ᵀβ*] / E[β̂ᵀβ̂]`.
 
+The library also predicts noiseless-signal `R²_gen`, own-path `R²_acc`,
+and error/`R²_peer` when an independent ridge fit generates the accentuation
+path. Optional second-order delta corrections account for finite-sample
+fluctuations in the nonlinear own-path and peer ratios.
+
 ## Structure
 
 ```
@@ -28,10 +33,14 @@ rmt_core/          # Core library
   kappa_lib.py     # κ(λ) solver (Marchenko-Pastur fixed-point)
   ridge_theory_lib.py  # Three-term error formula, accentuation error
   simulation_lib.py    # Monte Carlo simulation functions
+  teacher_lib.py       # Teachers with controlled population-PC alignment
 
 scripts/
   validate_ridge_error_formula.py   # Per-PC error: theory vs MC
   validate_accentuation_error.py    # Accentuation error vs n
+  validate_r2_peer_review.py        # Gen/own/peer error and R² validation
+  validate_cv_selected_r2.py        # R² after actual vs DE-predicted K-fold CV
+  validate_powerlaw_teacher_alignment.py  # Teacher spectral-alignment sweep
 
 notebooks/
   theory_validation_demo.ipynb      # Interactive demo
@@ -52,4 +61,24 @@ cd scripts && python validate_ridge_error_formula.py --d 100 --n 200 --lam 0.1 -
 
 # Validate accentuation error vs n
 python validate_accentuation_error.py --d 50 --lam 0.05 --sigma 0.5
+
+# Validate R² and error on natural, own-accentuation, and peer paths.
+# The script benchmarks first, shows tqdm ETA, and caches per-case trials.
+python scripts/validate_r2_peer_review.py
+
+# Re-render both figures from the cached summary without rerunning Monte Carlo
+python scripts/validate_r2_peer_review.py --plot-only
+
+# Compare actual 5-fold CV with the DE-predicted selected lambda
+python scripts/validate_cv_selected_r2.py
+
+# Re-render CV-selected lambda and R² figures from cached summaries
+python scripts/validate_cv_selected_r2.py --plot-only
+
+# Sweep a unit-signal teacher from top to bottom of a power-law spectrum,
+# including actual/DE CV lambda selection and eigenbasis weight plots
+python scripts/validate_powerlaw_teacher_alignment.py
+
+# Restyle all five alignment/weight figures using plot-ready cached tables
+python scripts/validate_powerlaw_teacher_alignment.py --plot-only
 ```

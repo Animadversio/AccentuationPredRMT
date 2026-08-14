@@ -233,7 +233,7 @@ AccentuationPredRMT/
 
 ### What the theory computes
 
-`accentuation_error_theory` returns:
+By default, `accentuation_error_theory` returns the leading term:
 
 ```
 E_acc_theory  =  (β*ᵀΣβ*) · (1 − R_det)²
@@ -254,9 +254,12 @@ E[(1−R)²]  =  (1 − E[R])²  +  Var(R)
                theory term     missing term
 ```
 
-Theory gives the exact `E[R]` (to leading order in 1/d), but has **no
+The leading theory gives `E[R]` (to leading order in 1/d), but has **no
 Var(R) term**.  When `R ≈ 1` (well-aligned β̂), `(1−E[R])²` becomes
-tiny and `Var(R)` dominates.
+tiny and `Var(R)` dominates.  The current implementation optionally adds an
+approximate noise-driven correction with `include_var_R=True`.  It captures
+the correct scale but can underestimate total variance when random-design
+(`X`) fluctuations dominate.
 
 ### Numerical diagnosis — van Hateren 16×16, n=512, optimal λ*(σ)
 
@@ -277,9 +280,9 @@ Key observations:
 - At σ ≲ 0.3, the bias² term dominates and theory matches MC to < 1%.
 - At σ ≳ 1, `Var(R)` is 5–250× larger than bias² — theory is off by
   an order of magnitude for E_acc.
-- This is a **fundamental limitation** of leading-order deterministic
-  equivalents, not a code bug. A Var(R) correction would require the
-  next order in the 1/d expansion.
+- This is a limitation of the leading deterministic equivalent, not a code
+  bug. The optional correction is useful but is not a complete second-order
+  random-matrix expansion.
 
 ---
 
@@ -327,6 +330,263 @@ See `figures/gen_vs_acc_optimal_lambda_vh.png`.
 
 ---
 
+## R² and independent-peer deterministic equivalents
+
+### Definitions
+
+Let `S = β*ᵀΣβ*` and let the evaluation target be the noiseless teacher
+response. Then
+
+```
+R²_gen = 1 - E_gen/S.
+```
+
+For a model's own zero-seed accentuation path, define
+`R = β̂ᵀβ*/(β̂ᵀβ̂)`. The note's fixed-calibration score is
+
+```
+R²_acc = 1 - (1 - 1/R)².
+```
+
+This is not squared Pearson correlation; on a noiseless one-dimensional path,
+Pearson correlation has magnitude one. `R²_acc` can be negative when the
+predicted response has sufficiently bad scale calibration.
+
+For peer review, an independent ridge fit `β'` generates the path and `β̂`
+evaluates it:
+
+```
+G_peer  = β̂ᵀβ' / (β*ᵀβ')
+R²_peer = 1 - (1 - G_peer)².
+```
+
+### Leading peer deterministic equivalent
+
+Let `t_k = λ_k/(λ_k+κ)`, `b_k = β*ᵀu_k`, and
+`T = Σ(Σ+κI)⁻¹`. For two independent fits,
+
+```
+β̂ᵀβ'  ≍ β*ᵀT²β* = Σ_k t_k² b_k² = M
+β*ᵀβ' ≍ β*ᵀT β* = Σ_k t_k  b_k² = N
+```
+
+so
+
+```
+G_peer,det  = M/N
+R²_peer,det = 1 - (1-M/N)².
+```
+
+If `v_k` is the sum of the finite-sample signal and label-noise terms
+(Terms 2+3 in the per-PC error formula), then the peer norm deterministic
+equivalent is `D = M + Σ_k v_k`, giving
+
+```
+E_peer,det = S [(M-N)/D]².
+```
+
+### Second-order peer correction
+
+Approximating the two independent fits as `m+ε` and `m+ζ`, with
+`m_k=t_k b_k` and diagonal fluctuation variance `v_k`, gives delta-method
+corrections for both peer metrics. For `U=β̂ᵀβ'` and `V=β*ᵀβ'`:
+
+```
+Var(U) = 2 Σ_k m_k²v_k + Σ_k v_k²
+Var(V) = Σ_k b_k²v_k
+Cov(U,V) = Σ_k m_k b_k v_k
+
+Bias(G_peer) ≈ M Var(V)/N³ - Cov(U,V)/N²
+Var(G_peer)  ≈ Var(U)/N² + M²Var(V)/N⁴ - 2M Cov(U,V)/N³
+
+E[R²_peer] ≈ 1-(1-M/N)²
+                   + 2(1-M/N) Bias(G_peer) - Var(G_peer).
+```
+
+`peer_review_error_theory` applies the analogous bivariate expansion to
+`E_peer = S E[(L/W)²]`, where `L=β'ᵀ(β̂-β*)` and `W=β'ᵀβ'`.
+
+### Validation
+
+We tested `d=128`, `n=256`, `λ=0.05`, and `σ∈{0.1,0.6,1.0}` on
+isotropic, power-law `α=1`, and steeper power-law `α=1.5` spectra. Each
+of the nine conditions used 1,000 paired trials (two independent fits per
+trial), with teacher signal power normalized to one.
+
+| Quantity | Leading DE mean abs. gap | Corrected mean abs. gap | Corrected max gap |
+|---|---:|---:|---:|
+| R²_gen | 0.00148 | — | 0.00554 |
+| R²_acc | 0.02233 | 0.00573 | 0.01790 |
+| R²_peer | 0.00899 | 0.00113 | 0.00495 |
+| E_gen | 0.00148 | — | 0.00554 |
+| E_acc | 0.00108 | 0.00109 | 0.00456 |
+| E_peer | 0.00303 | 0.00042 | 0.00141 |
+
+The main conclusions are:
+
+- The existing generalization deterministic equivalent directly and
+  accurately predicts `R²_gen` after division by `S`.
+- Leading plug-in formulas accurately predict own-path and peer-path R² at
+  low/moderate noise. Nonlinear ratio fluctuations matter at high noise.
+- The own-path delta correction materially improves `R²_acc`, although its
+  incomplete `Var(R)` approximation leaves a visible residual in the hardest
+  cases.
+- The new independent-peer correction performs especially well: its maximum
+  R² gap is below 0.005 across the nine tested conditions.
+
+See `figures/r2_peer_validation.png`, `figures/error_peer_validation.png`, and
+the plot-ready cache `tables/r2_peer_validation_summary.csv`. Compressed
+per-trial caches are in `tables/r2_peer_validation_cases/` and are intentionally
+ignored by git.
+
+---
+
+## Cross-validated lambda from deterministic equivalents
+
+### Fold-size correction
+
+In K-fold cross-validation, each validation score is produced by a model fitted
+on
+
+```
+n_cv = n (K-1)/K
+```
+
+samples. For a candidate lambda, expected validation error against noisy labels
+is
+
+```
+E[CV_K(lambda)] = E_gen(lambda; n_cv) + sigma².
+```
+
+The fresh validation-noise term is constant in lambda. Therefore a leading
+deterministic-equivalent prediction of the cross-validated penalty is
+
+```
+lambda_DE,CV = argmin_lambda E_gen,DE(lambda; n_cv).
+```
+
+After selecting this penalty, the final model is refitted on all `n` samples,
+so its R² values are evaluated using `kappa(lambda_DE,CV; d/n)` and the full
+sample-size formulas. Minimizing the full-`n` risk instead predicts the oracle
+penalty for a model trained directly on all data; it is generally smaller than
+the K-fold-selected penalty.
+
+This approximation predicts the center of the CV-selected-lambda distribution.
+It does not, at leading order, predict finite-sample fluctuations of the CV risk
+curve or the resulting random argmin.
+
+### Actual-CV experiment
+
+We used the same three spectra and signal normalization as above, now with
+`sigma in {0.1, 0.3, 0.6, 1.0}`. Each of the 12 conditions used 300 paired
+trials. Every fitted model independently selected lambda by 5-fold CV from a
+61-point logarithmic grid spanning `1e-4` to `10`, then refit on all `n=256`
+samples. Ridge paths were evaluated with one eigendecomposition per fold.
+
+The DE fold-size optimum matched the actual CV median exactly on the candidate
+grid in 10 of 12 conditions and was within one grid step in the remaining two.
+No condition selected the upper grid boundary; the largest lower-boundary
+selection fraction was 1.7% at the lowest noise.
+
+| Quantity | Mean absolute DE/MC gap | Maximum gap |
+|---|---:|---:|
+| R²_gen | 0.00348 | 0.00795 |
+| R²_acc, leading | 0.00975 | 0.03801 |
+| R²_acc, corrected | 0.00882 | 0.03358 |
+| R²_peer, leading | 0.00480 | 0.01196 |
+| R²_peer, corrected | 0.00449 | 0.01453 |
+
+At the highest noise level:
+
+| Spectrum | lambda DE-CV / CV median | R²_gen DE / MC | R²_acc corrected DE / MC | R²_peer corrected DE / MC |
+|---|---:|---:|---:|---:|
+| Isotropic | 0.681 / 0.681 | 0.577 / 0.570 | 0.987 / 0.977 | 0.768 / 0.782 |
+| Power law alpha=1 | 0.464 / 0.464 | 0.661 / 0.654 | 0.985 / 0.964 | 0.739 / 0.748 |
+| Power law alpha=1.5 | 0.316 / 0.316 | 0.808 / 0.800 | 0.995 / 0.962 | 0.798 / 0.795 |
+
+The broad conclusion is that DE theory can predict both cross-validated lambda
+and downstream R² well. The main residual is own-path R² at high noise, where
+CV-selection variability compounds the incomplete random-design contribution
+in the current `Var(R)` correction.
+
+Scientifically, generalization-selected regularization keeps own-path
+`R²_acc` close to one over the whole noise range, while independent-peer
+`R²_peer` falls to roughly 0.74-0.80 at high noise. Thus self-accentuation can
+remain apparently well calibrated even when independently trained models no
+longer agree strongly on the accentuation direction.
+
+See `figures/cv_selected_lambda.png`, `figures/cv_selected_r2.png`, and the
+plot-ready cache `tables/cv_selected_r2_summary.csv`. Per-trial selected
+penalties, metrics, and DE risk paths are cached under
+`tables/cv_selected_r2_cases/` and ignored by git.
+
+---
+
+## Power-law teacher spectral-alignment sweep
+
+### Controlled teacher family
+
+For a power-law covariance with `alpha=1`, we controlled the teacher through
+its per-PC allocation of natural response variance,
+
+```
+s_k = lambda_k (u_k^T beta*)^2,       sum_k s_k = 1.
+```
+
+The localized family places a Gaussian bump of width 0.10 in normalized PC
+rank, with center swept from 0.05 (top eigenspace) to 0.95 (bottom
+eigenspace). This construction keeps teacher signal power exactly one while
+moving where that signal lives. It necessarily gives bottom-aligned teachers
+larger raw coefficients because low-variance input directions require larger
+weights to produce the same response variance. An i.i.d.-Gaussian coefficient
+teacher, separately normalized to unit signal power, provides a diffuse random
+reference.
+
+For each of 8 teachers and 4 noise levels, 200 paired trials independently
+selected lambda by actual 5-fold CV on the same 61-point grid used by the DE
+calculation. Raw fitted weights were retained and projected onto the population
+eigenbasis. The coefficient plots show sign-aligned means and 10--90% bands;
+the dashed curve is the deterministic mean
+`lambda_k/(lambda_k+kappa) beta_k*` at the DE-CV penalty.
+
+### Main result
+
+At `sigma=1`, moving unit teacher signal toward lower-variance PCs produces a
+large, monotone loss of natural and peer performance, while own-path R² remains
+much more optimistic:
+
+| Teacher | Signal-rank centroid | lambda DE-CV / CV median | R²_gen DE / MC | R²_acc corrected DE / MC | R²_peer corrected DE / MC |
+|---|---:|---:|---:|---:|---:|
+| Top localized | 0.101 | 0.562 / 0.562 | 0.791 / 0.785 | 0.976 / 0.959 | 0.888 / 0.883 |
+| Middle localized | 0.500 | 0.215 / 0.215 | 0.518 / 0.508 | 0.988 / 0.971 | 0.789 / 0.786 |
+| Bottom localized | 0.899 | 0.147 / 0.147 | 0.360 / 0.326 | 0.961 / 0.889 | 0.730 / 0.677 |
+| i.i.d. random | 0.211 | 0.464 / 0.562 | 0.700 / 0.689 | 0.996 / 0.967 | 0.776 / 0.758 |
+
+Across all 32 conditions, the corrected DE/MC mean absolute gaps were 0.0056
+for `R²_gen`, 0.0100 for `R²_acc`, and 0.0060 for `R²_peer`. The DE-CV lambda
+matched the actual CV median exactly on the grid in 28/32 cases. The largest
+gaps occur for the bottom-aligned teacher at the highest noise, where the
+selected-lambda distribution and nonlinear ratio fluctuations are widest.
+
+The random teacher has nearly the same signal-rank centroid as the localized
+0.20 teacher and nearly the same high-noise `R²_gen`, but substantially lower
+`R²_peer` (0.758 versus 0.853). Thus a single spectral centroid is not a
+sufficient description of peer agreement: the full distribution of teacher
+power over PCs matters because ridge shrinkage varies mode by mode.
+
+See `figures/powerlaw_teacher_alignment_r2.png`,
+`figures/powerlaw_teacher_alignment_lambda.png`,
+`figures/powerlaw_teacher_signal_profiles.png`,
+`figures/powerlaw_teacher_weights_eigenbasis.png`, and
+`figures/powerlaw_teacher_response_weights_eigenbasis.png`. Plot-ready data are
+stored in `tables/powerlaw_teacher_alignment_summary.csv` and
+`tables/powerlaw_teacher_weight_summary.csv`; raw per-case metrics and fitted
+coefficient ensembles are cached under
+`tables/powerlaw_teacher_alignment_cases/`.
+
+---
+
 ## How to reproduce
 
 ```bash
@@ -338,6 +598,21 @@ python scripts/validate_large_d.py --spectrum vanhateren --patch_hw 32 --n 2000 
 
 # σ sweep
 python scripts/validate_sigma_sweep.py --spectrum powerlaw --d 256 --n 512
+
+# Natural/own/peer error and R² (benchmarks first, logs ETA, caches trials)
+python scripts/validate_r2_peer_review.py
+
+# Power-law teacher-alignment and eigenbasis-weight sweep
+python scripts/validate_powerlaw_teacher_alignment.py
+
+# Replot from the cached CSV without rerunning Monte Carlo
+python scripts/validate_r2_peer_review.py --plot-only
+
+# Actual K-fold CV versus DE-predicted lambda, followed by full-n refitting
+python scripts/validate_cv_selected_r2.py
+
+# Replot selected-lambda and downstream R² summaries without recomputation
+python scripts/validate_cv_selected_r2.py --plot-only
 
 # Notebook (interactive)
 jupyter notebook notebooks/validation_overview.ipynb
