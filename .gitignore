@@ -9,3 +9,6 @@ build/
 *.npz
 *.npy
 logs/
+*.aux
+*.log
+*.out

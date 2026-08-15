@@ -48,6 +48,9 @@ scripts/
 notebooks/
   theory_validation_demo.ipynb      # Interactive demo
 
+notes/
+  dissociation_prediction_control_feature_space.tex  # Updated derivation
+
 figures/           # Output figures
 tables/            # Output tables
 bash/              # Slurm job scripts
@@ -103,4 +106,7 @@ python scripts/validate_ffhq_linear_features.py
 
 # Restyle the feature-space figures from plot-ready cached tables
 python scripts/validate_ffhq_linear_features.py --plot-only
+
+# Build the updated feature-space theory note and embedded validation figure
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=notes notes/dissociation_prediction_control_feature_space.tex
 ```

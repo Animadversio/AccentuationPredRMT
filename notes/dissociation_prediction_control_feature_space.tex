@@ -1,0 +1,463 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\bhat}{\widehat{\bm\beta}}
+\newcommand{\bstar}{\bm\beta^{\star}}
+\newcommand{\that}{\widehat{\bm\theta}}
+\newcommand{\tstar}{\bm\theta^{\star}}
+
+\title{Prediction and Pixel-Space Control from Ridge Regression\\
+in Linear Feature Spaces}
+\author{Theory note, revised with deterministic-equivalent feature-space analysis}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We study a noisy linear teacher and a ridge-regression student.  The student
+may be trained after a linear feature map, but accentuation is performed by
+back-propagating its gradient to the input pixels.  The feature map creates two
+distinct geometries: the feature covariance
+$C=A\Sigma A^{\top}$ controls natural-image prediction, whereas
+$G=AA^{\top}$ controls pixel-space gradient motion.  This distinction gives
+closed-form finite-sample expressions for generalization, own-path
+accentuation, and peer review.  In a spectral feature map aligned with the
+eigenvectors of $\Sigma$, random-matrix deterministic equivalents (DEs) give
+per-mode weight bias and variance, generalization error, accentuation error,
+slopes, and both $R^2$ measures.  The same DE risk can also approximate
+cross-validation and select the ridge penalty.  Full PCA, whitening, and
+top-PC truncation emerge as transparent special cases.
+\end{abstract}
+
+\section{Teacher, features, and ridge student}
+
+Let the centered input and noisy response be
+\begin{equation}
+  \bm x\sim\mathcal N(0,\Sigma),\qquad
+  y=(\bstar)^{\top}\bm x+\sigma\epsilon,
+  \qquad \epsilon\sim\mathcal N(0,1).
+\end{equation}
+The noiseless teacher signal variance is
+\begin{equation}
+  S=(\bstar)^{\top}\Sigma\bstar.
+\end{equation}
+We first map the input to $p$ linear features,
+\begin{equation}
+  \bm z=A\bm x\in\R^p,
+\end{equation}
+and fit ridge regression in feature coordinates.  With the training feature
+matrix $Z\in\R^{n\times p}$ and
+$\widehat C=Z^{\top}Z/n$, the normalized-loss convention is
+\begin{equation}
+  \that_\lambda
+  =\arg\min_{\bm\theta}
+   \left\{\frac{1}{n}\lVert\bm y-Z\bm\theta\rVert^2
+                 +\lambda\lVert\bm\theta\rVert^2\right\}
+  =(\widehat C+\lambda I)^{-1}\frac{Z^{\top}\bm y}{n}.
+  \label{eq:feature-ridge}
+\end{equation}
+The resulting model as a function of pixels is
+\begin{equation}
+  \widehat f(\bm x)=\that^{\top}A\bm x=\bhat^{\top}\bm x,
+  \qquad \bhat=A^{\top}\that.
+  \label{eq:pixel-weight}
+\end{equation}
+Thus feature-space estimation and pixel-space attribution are not the same
+object.
+
+\subsection{Best population predictor in the feature span}
+
+Define
+\begin{equation}
+  C=A\Sigma A^{\top},\qquad
+  \bm h=A\Sigma\bstar.
+\end{equation}
+The best linear feature coefficient and its unrepresented residual are
+\begin{align}
+  \tstar &= C^{\dagger}\bm h,\\
+  r(\bm x)&=(\bstar)^{\top}\bm x-(\tstar)^{\top}A\bm x.
+\end{align}
+By the normal equations, $\Cov(\bm z,r)=0$.  Since the joint distribution is
+Gaussian, the residual is independent of the retained features.  Its variance
+is
+\begin{equation}
+  S_{\perp}=\Var(r)=S-(\tstar)^{\top}C\tstar.
+  \label{eq:residual-signal}
+\end{equation}
+Consequently, truncated features reduce the training model to
+\begin{equation}
+  y=(\tstar)^{\top}\bm z+\xi,\qquad
+  \Var(\xi)=\sigma_{\rm eff}^2=\sigma^2+S_{\perp}.
+  \label{eq:effective-noise}
+\end{equation}
+The omitted teacher signal is simultaneously irreducible generalization error
+and additional independent training noise.
+
+\section{Two geometries: prediction versus pixel control}
+
+Natural-image prediction is governed by $C=A\Sigma A^{\top}$.  Pixel-space
+gradient motion is governed by the distinct matrix
+\begin{equation}
+  G=AA^{\top},\qquad \bm q=A\bstar.
+  \label{eq:control-geometry}
+\end{equation}
+The vector $\bm h=A\Sigma\bstar$ determines population prediction, whereas
+$\bm q=A\bstar$ determines the teacher's response to a back-propagated pixel
+gradient.  Confusing these two vectors hides the prediction--control
+dissociation.
+
+\subsection{Natural-distribution metrics}
+
+For a fixed fitted model, the noiseless population prediction error is
+\begin{equation}
+  E_{\rm gen}(\that)
+  =S_{\perp}+(\that-\tstar)^{\top}C(\that-\tstar).
+  \label{eq:exact-gen-error}
+\end{equation}
+We use the noiseless-teacher coefficient of determination
+\begin{equation}
+  R^2_{\rm gen}=1-\frac{E_{\rm gen}}{S}.
+  \label{eq:r2-gen}
+\end{equation}
+The slope of true response on predicted response over natural inputs is
+\begin{equation}
+  b_{\rm gen}
+  =\frac{\Cov((\bstar)^{\top}\bm x,\that^{\top}A\bm x)}
+         {\Var(\that^{\top}A\bm x)}
+  =\frac{\bm h^{\top}\that}{\that^{\top}C\that}.
+  \label{eq:slope-gen-exact}
+\end{equation}
+
+\subsection{Own-path accentuation metrics}
+
+Gradient accentuation from a seed $\bm x_0$ follows
+\begin{equation}
+  \bm x(t)=\bm x_0+t\nabla_{\bm x}\widehat f(\bm x)
+           =\bm x_0+tA^{\top}\that.
+  \label{eq:feature-accent-path}
+\end{equation}
+The student and teacher changes along this path are, respectively,
+\begin{align}
+  \Delta\widehat f(t)&=t\that^{\top}G\that,\\
+  \Delta f^{\star}(t)&=t\bm q^{\top}\that.
+  \label{eq:path-gains}
+\end{align}
+Therefore the exact true-on-predicted slope along the path is
+\begin{equation}
+  b_{\rm acc}(\that)
+  =\frac{\bm q^{\top}\that}{\that^{\top}G\that}.
+  \label{eq:slope-acc-exact}
+\end{equation}
+Suppose the experimenter chooses the distribution of $t$ so that the
+student's pathwise response variance equals the natural teacher variance $S$:
+\begin{equation}
+  \Var(t)=\frac{S}{(\that^{\top}G\that)^2}.
+\end{equation}
+The accentuation calibration error is then
+\begin{equation}
+  \frac{E_{\rm acc}}{S}
+  =\left(1-b_{\rm acc}\right)^2
+  =\left(1-\frac{\bm q^{\top}\that}
+                   {\that^{\top}G\that}\right)^2.
+  \label{eq:acc-error-exact}
+\end{equation}
+When the denominator of $R^2$ is the variance of the \emph{true} response on
+the generated path, the exact pathwise statistic becomes
+\begin{equation}
+  R^2_{\rm acc}
+  =1-\left(1-\frac{\that^{\top}G\that}
+                        {\bm q^{\top}\that}\right)^2.
+  \label{eq:r2-acc-exact}
+\end{equation}
+Unlike $E_{\rm acc}/S$, this statistic is singular when the true path gain
+$\bm q^{\top}\that$ is close to zero.  Hence it can be extremely negative even
+when other summary metrics appear bounded.
+
+\section{Spectral feature maps and deterministic equivalents}
+\label{sec:spectral-de}
+
+We now specialize to the setting implemented in the accompanying numerical
+experiments.  Write the input eigendecomposition as
+\begin{equation}
+  \Sigma=U\,\mathrm{diag}(s_1,\ldots,s_d)U^{\top},
+  \qquad b_j=\bm u_j^{\top}\bstar.
+\end{equation}
+For an index set $\mathcal J$, let the feature map retain and rescale PCs,
+\begin{equation}
+  z_j=a_j\bm u_j^{\top}\bm x,\qquad j\in\mathcal J.
+\end{equation}
+In the common eigenbasis of prediction and control, define
+\begin{equation}
+  c_j=a_j^2s_j,\qquad
+  g_j=a_j^2,\qquad
+  \theta_j^{\star}=\frac{b_j}{a_j}.
+  \label{eq:spectral-feature-quantities}
+\end{equation}
+Then $C=\mathrm{diag}(c_j)$, $G=\mathrm{diag}(g_j)$, and
+$q_j=g_j\theta_j^{\star}$.  The omitted signal and effective noise are
+\begin{equation}
+  S_{\perp}=\sum_{j\notin\mathcal J}s_jb_j^2,qquad
+  \sigma_{\rm eff}^2=\sigma^2+S_{\perp}.
+\end{equation}
+
+We take $p,n\to\infty$ with $p/n\to\gamma$.  The effective ridge parameter
+$\kappa=\kappa(\lambda)$ solves the Silverstein fixed-point equation
+\begin{equation}
+  \kappa-\lambda
+  =\frac{\kappa}{n}\sum_{j\in\mathcal J}
+       \frac{c_j}{c_j+\kappa}.
+  \label{eq:kappa-fixed-point}
+\end{equation}
+Equivalently, the right side is
+$\gamma\kappa\int c/(c+\kappa)\,d\nu(c)$ for the empirical feature spectrum
+$\nu$.
+
+Define
+\begin{align}
+  h_j&=\frac{c_j}{c_j+\kappa},\\
+  \mathrm{df}_2(\kappa)&=\sum_j\frac{c_j^2}{(c_j+\kappa)^2},\\
+  C_{\rm sig}(\kappa)&=
+       \sum_j\frac{c_j(\theta_j^{\star})^2}{(c_j+\kappa)^2},\\
+  v_0(\kappa)&=
+       \frac{\kappa^2C_{\rm sig}(\kappa)+\sigma_{\rm eff}^2}
+            {n-\mathrm{df}_2(\kappa)}.
+  \label{eq:de-global-quantities}
+\end{align}
+The leading componentwise first and second moments of the fitted feature
+weight are
+\begin{align}
+  m_j&\equiv\E[\widehat\theta_j]
+       \simeq h_j\theta_j^{\star},\\
+  v_j&\equiv\Var(\widehat\theta_j)
+       \simeq v_0\frac{c_j}{(c_j+\kappa)^2},\\
+  \E[\widehat\theta_j^2]&\simeq m_j^2+v_j.
+  \label{eq:de-component-moments}
+\end{align}
+Thus the per-feature coefficient error is
+\begin{equation}
+  e_j\equiv\E[(\widehat\theta_j-\theta_j^{\star})^2]
+  \simeq (1-h_j)^2(\theta_j^{\star})^2+v_j.
+  \label{eq:de-per-feature-error}
+\end{equation}
+The first term is ridge shrinkage bias; the second combines finite-sample
+signal and response-noise fluctuations.
+
+\subsection{DE generalization metrics}
+
+Aggregating the componentwise moments gives
+\begin{align}
+  E_{\rm gen}^{\rm DE}
+    &=S_{\perp}+\sum_j c_je_j,
+    \label{eq:de-gen-error}\\
+  R_{\rm gen}^{2,\rm DE}
+    &=1-\frac{E_{\rm gen}^{\rm DE}}{S},\\
+  N_{\rm gen}^{\rm DE}
+    &=\sum_j c_jm_j\theta_j^{\star},\\
+  D_{\rm gen}^{\rm DE}
+    &=\sum_j c_j(m_j^2+v_j),\\
+  b_{\rm gen}^{\rm DE}
+    &=\frac{N_{\rm gen}^{\rm DE}}{D_{\rm gen}^{\rm DE}}.
+  \label{eq:de-gen-slope}
+\end{align}
+
+\subsection{DE pixel-accentuation metrics}
+
+The control geometry changes only the aggregation weights:
+\begin{align}
+  N_{\rm acc}^{\rm DE}
+    &=\sum_j g_jm_j\theta_j^{\star},\\
+  D_{\rm acc}^{\rm DE}
+    &=\sum_j g_j(m_j^2+v_j),\\
+  b_{\rm acc}^{\rm DE}
+    &=\frac{N_{\rm acc}^{\rm DE}}{D_{\rm acc}^{\rm DE}},
+    \label{eq:de-acc-slope}\\
+  \frac{E_{\rm acc}^{\rm DE}}{S}
+    &=\left(1-b_{\rm acc}^{\rm DE}\right)^2,\\
+  R_{\rm acc}^{2,\rm DE}
+    &=1-\left(1-\frac{D_{\rm acc}^{\rm DE}}
+                            {N_{\rm acc}^{\rm DE}}\right)^2.
+    \label{eq:de-acc-r2}
+\end{align}
+Equations~\eqref{eq:de-gen-error}--\eqref{eq:de-acc-r2} are the main
+feature-space extension.  Natural generalization weights mode $j$ by $c_j$;
+pixel accentuation weights it by $g_j$.  The two agree only in special cases.
+
+The DE above substitutes ratios of deterministic first and second moments for
+the nonlinear per-fit ratios.  It predicts a typical high-dimensional fit but
+is not, in general, the exact Monte Carlo mean of $R^2_{\rm acc}$.  This
+distinction matters whenever $N_{\rm acc}$ can approach zero: rare fits then
+dominate the empirical mean, while the median can remain close to the leading
+DE.
+
+\subsection{Input-space weight recovery}
+
+The recovered pixel coefficient in retained mode $j$ is
+$\widehat b_j=a_j\widehat\theta_j$.  Therefore
+\begin{align}
+  \E[\widehat b_j]&\simeq a_jm_j,\\
+  \Var(\widehat b_j)&\simeq g_jv_j,\\
+  \E\lVert\bhat-\bstar\rVert^2
+    &\simeq \sum_{j\in\mathcal J}g_je_j
+          +\sum_{j\notin\mathcal J}b_j^2.
+  \label{eq:de-pixel-weight-error}
+\end{align}
+This formula makes the high-frequency mechanism explicit.  A low-variance
+direction can make a negligible contribution $s_j e_j$ to prediction error
+but a large contribution $g_je_j$ to the back-propagated pixel gradient.
+The DE predicts the mean and variance envelope across modes; it does not
+predict the signs or texture of one particular random fitted realization.
+
+\section{Cross-validated ridge selection from the DE}
+
+Many software packages parameterize ridge as
+\begin{equation}
+  \lVert\bm y-Z\bm\theta\rVert^2+\alpha\lVert\bm\theta\rVert^2,
+\end{equation}
+so that $\lambda=\alpha/n$ in Eq.~\eqref{eq:feature-ridge}.  For analytic
+leave-one-out cross-validation, a DE approximation follows the actual
+training-size change:
+\begin{enumerate}
+  \item set $n_{\rm tr}=n-1$;
+  \item for every candidate $\alpha$, solve
+        Eq.~\eqref{eq:kappa-fixed-point} with
+        $\lambda=\alpha/n_{\rm tr}$ and aspect ratio $p/n_{\rm tr}$;
+  \item compute $E_{\rm gen}^{\rm DE}(\alpha;n_{\rm tr})$ using
+        $\sigma_{\rm eff}^2$;
+  \item select
+        $\alpha_{\rm DE-CV}=\arg\min_{\alpha}E_{\rm gen}^{\rm DE}$;
+  \item refit the final $n$-sample DE with
+        $\lambda=\alpha_{\rm DE-CV}/n$.
+\end{enumerate}
+For $K$-fold CV, replace $n-1$ by the fold training size.  A dense log-spaced
+$\alpha$ grid is important: a coarse grid creates artificial jumps in the
+selected regularization and therefore jagged downstream control metrics.
+The DE selects ridge for natural predictive risk, just as ordinary CV does;
+it does not secretly optimize accentuation.
+
+\section{PCA, whitening, and top-PC truncation}
+
+The spectral formulas expose the behavior of the three feature spaces used in
+the FFHQ disk-teacher experiment.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Feature map & $a_j$ & $c_j$ & $g_j$ & omitted signal \\
+\midrule
+Full PCA & $1$ & $s_j$ & $1$ & $0$ \\
+Full whitening & $s_j^{-1/2}$ & $1$ & $s_j^{-1}$ & $0$ \\
+Top $K$ PCs & $1$, $j\le K$ & $s_j$ & $1$ &
+  $\sum_{j>K}s_jb_j^2$ \\
+\bottomrule
+\end{tabular}
+\caption{Prediction and pixel-control quantities for aligned linear features.}
+\label{tab:feature-cases}
+\end{table}
+
+\paragraph{Full PCA.}
+An orthogonal change of basis leaves ridge and the pixel-gradient norm
+unchanged.  It is the pixel-space baseline written in interpretable spectral
+coordinates.
+
+\paragraph{Full whitening.}
+Regression sees an isotropic covariance, $c_j=1$, but back-propagation weights
+each mode by $g_j=1/s_j$.  Low-variance, high-frequency PCs can therefore
+dominate $D_{\rm acc}$ even though they do not dominate natural prediction.
+The feature representation may look well conditioned while pixel control is
+ill conditioned.
+
+\paragraph{Top-PC truncation.}
+Discarding low-variance PCs introduces irreducible natural error
+$S_{\perp}$, but completely prevents those directions from entering the
+pixel-gradient path.  When the teacher signal is concentrated in the leading
+PCs, a modest predictive cost can buy a large control benefit.  The optimal
+cutoff depends on noise: higher response noise generally favors a smaller,
+more signal-focused feature space.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/ffhq_linear_feature_gen_acc_gap.png}
+  \caption{Measured-spectrum FFHQ disk-teacher experiment.  Curves are the
+  leading DE; points are Monte Carlo ridge fits.  Full PCA develops a
+  generalization--accentuation gap, top-100-PC truncation suppresses the
+  harmful control directions, and full whitening produces a near-zero true
+  path gain and extremely negative $R^2_{\rm acc}$.  The lower horizontal
+  axis is response-noise standard deviation; the upper axis is
+  $\sigma^2/S$.}
+  \label{fig:feature-gap}
+\end{figure}
+
+\section{Peer review across models and feature spaces}
+
+Let an evaluator have pixel weight
+$\widehat{\bm w}_e=A_e^{\top}\widehat{\bm\theta}_e$ and a generator have
+$\widehat{\bm w}_g=A_g^{\top}\widehat{\bm\theta}_g$.  Along the generator's
+path $\bm x(t)=\bm x_0+t\widehat{\bm w}_g$, the teacher and evaluator gains
+are
+\begin{equation}
+  T_g=(\bstar)^{\top}\widehat{\bm w}_g,\qquad
+  D_{e\leftarrow g}=\widehat{\bm w}_e^{\top}\widehat{\bm w}_g
+  =\widehat{\bm\theta}_e^{\top}A_eA_g^{\top}
+       \widehat{\bm\theta}_g.
+\end{equation}
+If the generator scales its path to its own natural-response target range,
+the evaluator's normalized peer error, slope, and $R^2$ are
+\begin{align}
+  \frac{E_{e\leftarrow g}}{S}
+    &=\left(\frac{D_{e\leftarrow g}-T_g}
+                    {\widehat{\bm w}_g^{\top}\widehat{\bm w}_g}\right)^2,\\
+  b_{e\leftarrow g}&=\frac{T_g}{D_{e\leftarrow g}},\\
+  R^2_{e\leftarrow g}
+    &=1-\left(1-\frac{D_{e\leftarrow g}}{T_g}\right)^2.
+  \label{eq:peer-r2-feature}
+\end{align}
+For two independently trained models, a leading peer DE can replace each
+weight by its deterministic mean in $D_{e\leftarrow g}$ and $T_g$.  Models
+trained on the same or overlapping samples require a joint two-resolvent DE
+to retain their correlated fluctuations.  Equation~\eqref{eq:peer-r2-feature}
+also clarifies the observed asymmetry: a generator can move in directions
+that remain legible to a good evaluator, while the reverse path can have
+nearly zero teacher gain.
+
+\section{Interpretation and limitations}
+
+The main conclusions are:
+\begin{enumerate}
+  \item Good natural-image prediction does not imply good pixel-space
+        control.  Prediction uses $C$; control uses $G$.
+  \item Low-variance modes are cheap under natural risk but can be expensive
+        under pixel-gradient accentuation, especially after whitening.
+  \item Top-PC truncation can reverse the generalization--accentuation gap by
+        removing directions that contribute little teacher signal but large
+        control variance.
+  \item The feature-space DE predicts mean per-mode bias and variance,
+        aggregate natural risk, typical control calibration, and DE-CV ridge
+        selection.  It does not specify the visual pattern of a single random
+        fit.
+  \item $R^2_{\rm acc}$ and peer $R^2$ are nonlinear ratios.  Near-zero true
+        path gain creates heavy tails, so empirical medians/IQRs and
+        means/standard errors should both be reported.
+\end{enumerate}
+
+The present closed-form feature DE assumes a linear feature map aligned with
+the input covariance eigenbasis, so that $C$ and $G$ commute.  The exact
+finite-sample formulas in Sections 1--2 hold for arbitrary linear $A$.
+Extending the DE to noncommuting $C$ and $G$, nonlinear learned features, and
+joint peer-review fluctuations requires operator-valued or bilinear-resolvent
+deterministic equivalents.
+
+\end{document}
