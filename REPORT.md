@@ -784,6 +784,8 @@ generalization-optimal retained dimension decreases from `K=200` at
 `sigma²/S=0.01`, to 150 at 0.1, 50 at 1, and 20 at 10. Thus higher response
 noise favors a smaller, more signal-focused feature space. See
 `figures/ffhq_linear_feature_comparison.png` and
+`figures/ffhq_linear_feature_gen_acc_gap.png` for the direct experimental
+generalization--accentuation gaps, and
 `figures/ffhq_top_pc_cutoff_sweep.png`; plot-ready data are in
 `tables/ffhq_linear_feature_summary.csv` and
 `tables/ffhq_top_pc_cutoff_summary.csv`.

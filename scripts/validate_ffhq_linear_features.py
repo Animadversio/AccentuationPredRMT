@@ -13,6 +13,8 @@ os.environ.setdefault('MPLCONFIGDIR', '/tmp/accentuationpredrmt-matplotlib')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 from rmt_core import (
     SpectrumKappa,
@@ -33,6 +35,8 @@ CUTOFF_PATH = REPO_ROOT / 'tables' / 'ffhq_top_pc_cutoff_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_linear_feature_cases'
 FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_linear_feature_comparison.png'
 CUTOFF_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_top_pc_cutoff_sweep.png'
+GAP_FIGURE_PATH = (
+    REPO_ROOT / 'figures' / 'ffhq_linear_feature_gen_acc_gap.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_linear_feature_validation.log'
 FEATURE_NAMES = ('pca_full', 'whiten_full', 'top_pc_100')
 FEATURE_LABELS = {
@@ -373,6 +377,128 @@ def plot_noise_summary(rows: list[dict[str, object]]) -> None:
     plt.close(fig)
 
 
+def plot_feature_gen_acc_gap(rows: list[dict[str, object]]) -> None:
+    """Plot experimental gen--acc gaps, with the leading DE as reference."""
+    fig, axes = plt.subplots(2, 3, figsize=(14.8, 8.8), sharex='col')
+    max_sigma = max(float(row['sigma']) for row in rows) * 1.15
+    signal = max(float(row['sigma']) ** 2 / float(row['noise_signal_ratio'])
+                 for row in rows if float(row['noise_signal_ratio']) > 0)
+    gen_color, acc_color = 'C0', 'C1'
+
+    for column, feature in enumerate(FEATURE_NAMES):
+        selected = sorted(
+            [row for row in rows if row['feature'] == feature],
+            key=lambda item: float(item['sigma']))
+        sigma = np.asarray([float(row['sigma']) for row in selected])
+        retained = float(selected[0]['retained_signal_fraction'])
+        if feature == 'top_pc_100':
+            title = f'top 100 PCs ({100 * retained:.2f}% signal)'
+        else:
+            title = FEATURE_LABELS[feature]
+        axes[0, column].set_title(title, pad=34)
+
+        error_ax = axes[0, column]
+        de_gen_error = np.asarray([
+            float(row['de_gen_error_normalized']) for row in selected])
+        de_acc_error = np.asarray([
+            float(row['de_acc_error_normalized']) for row in selected])
+        error_ax.fill_between(
+            sigma, de_gen_error, de_acc_error, color='0.45', alpha=0.12,
+            linewidth=0, zorder=1)
+        error_ax.plot(
+            sigma, de_gen_error, color=gen_color, lw=2.0, zorder=2)
+        error_ax.plot(
+            sigma, de_acc_error, color=acc_color, lw=2.0, zorder=2)
+
+        r2_ax = axes[1, column]
+        de_r2_gen = np.asarray([float(row['de_r2_gen']) for row in selected])
+        de_r2_acc = np.asarray([float(row['de_r2_acc']) for row in selected])
+        r2_ax.fill_between(
+            sigma, de_r2_gen, de_r2_acc, color='0.45', alpha=0.12,
+            linewidth=0, zorder=1)
+        r2_ax.plot(sigma, de_r2_gen, color=gen_color, lw=2.0, zorder=2)
+        r2_ax.plot(sigma, de_r2_acc, color=acc_color, lw=2.0, zorder=2)
+
+        mc_selected = [row for row in selected
+                       if 'mc_gen_error_normalized' in row]
+        if mc_selected:
+            mc_sigma = np.asarray([float(row['sigma']) for row in mc_selected])
+            for metric, color, marker in (
+                    ('gen_error_normalized', gen_color, 'o'),
+                    ('acc_error_normalized', acc_color, '^')):
+                mean = np.asarray([
+                    float(row[f'mc_{metric}']) for row in mc_selected])
+                se = np.asarray([
+                    float(row[f'mc_{metric}_se']) for row in mc_selected])
+                error_ax.errorbar(
+                    mc_sigma, mean, yerr=2 * se, fmt=marker + ':',
+                    color=color, mec='black', mew=0.45, capsize=2.5,
+                    ms=5.2, lw=1.2, zorder=4)
+
+            mc_r2_gen = np.asarray([
+                float(row['mc_r2_gen']) for row in mc_selected])
+            mc_r2_gen_se = np.asarray([
+                float(row['mc_r2_gen_se']) for row in mc_selected])
+            r2_ax.errorbar(
+                mc_sigma, mc_r2_gen, yerr=2 * mc_r2_gen_se, fmt='o:',
+                color=gen_color, mec='black', mew=0.45, capsize=2.5,
+                ms=5.2, lw=1.2, zorder=4)
+
+            mc_r2_acc = np.asarray([
+                float(row['mc_r2_acc_median']) for row in mc_selected])
+            mc_r2_acc_q25 = np.asarray([
+                float(row['mc_r2_acc_q25']) for row in mc_selected])
+            mc_r2_acc_q75 = np.asarray([
+                float(row['mc_r2_acc_q75']) for row in mc_selected])
+            r2_ax.errorbar(
+                mc_sigma, mc_r2_acc,
+                yerr=np.vstack((mc_r2_acc - mc_r2_acc_q25,
+                                mc_r2_acc_q75 - mc_r2_acc)),
+                fmt='^:', color=acc_color, mec='black', mew=0.45,
+                capsize=2.5, ms=5.2, lw=1.2, zorder=4)
+
+        error_ax.set_yscale('log')
+        error_ax.set_ylim(1e-13, 2.0)
+        r2_ax.axhline(1, color='0.5', lw=0.8, ls=':')
+        r2_ax.axhline(0, color='0.5', lw=0.8, ls='--')
+        if feature == 'whiten_full':
+            r2_ax.set_yscale('symlog', linthresh=0.1)
+        else:
+            r2_ax.set_ylim(0.55, 1.02)
+
+        for ax in axes[:, column]:
+            ax.grid(alpha=0.18)
+            ax.set_xscale('symlog', linthresh=0.01)
+            ax.set_xlim(0, max_sigma)
+        add_noise_ratio_axis(error_ax, signal, max_sigma)
+        r2_ax.set_xlabel(r'response noise $\sigma$')
+
+    axes[0, 0].set_ylabel(r'normalized error $E/S$')
+    axes[1, 0].set_ylabel(r'$R^2$')
+    legend_handles = [
+        Line2D([0], [0], color=gen_color, lw=2, label='generalization'),
+        Line2D([0], [0], color=acc_color, lw=2, label='accentuation'),
+        Line2D([0], [0], color='0.25', lw=2, label='leading DE'),
+        Line2D([0], [0], color='0.25', marker='o', ls=':', lw=1.2,
+               label=r'MC mean $\pm$ 2 SE'),
+        Line2D([0], [0], color='0.25', marker='^', ls=':', lw=1.2,
+               label=r'MC $R^2_{acc}$ median / IQR'),
+        Patch(facecolor='0.45', alpha=0.12, edgecolor='none',
+              label='DE gen--acc gap'),
+    ]
+    fig.legend(
+        handles=legend_handles, loc='lower center', ncol=3, fontsize=8.5,
+        frameon=False, bbox_to_anchor=(0.5, 0.005))
+    fig.suptitle(
+        'FFHQ disk teacher: experimental generalization--accentuation gaps',
+        y=0.995)
+    fig.tight_layout(rect=(0, 0.085, 1, 0.965), h_pad=2.5, w_pad=1.2)
+    GAP_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(GAP_FIGURE_PATH, dpi=185, bbox_inches='tight')
+    GAP_FIGURE_PATH.chmod(0o644)
+    plt.close(fig)
+
+
 def plot_cutoff_summary(rows: list[dict[str, object]], n: int) -> None:
     fig, axes = plt.subplots(2, 2, figsize=(11.8, 8.5), sharex=True)
     ratios = sorted({float(row['noise_signal_ratio']) for row in rows})
@@ -445,7 +571,9 @@ def main() -> None:
     args = parse_args()
     logger = configure_logger(args.log_file)
     if args.plot_only:
-        plot_noise_summary(read_rows(SUMMARY_PATH))
+        rows = read_rows(SUMMARY_PATH)
+        plot_noise_summary(rows)
+        plot_feature_gen_acc_gap(rows)
         plot_cutoff_summary(read_rows(CUTOFF_PATH), args.n)
         return
     with np.load(SPECTRUM_PATH) as data:
@@ -514,10 +642,13 @@ def main() -> None:
     write_rows(SUMMARY_PATH, rows)
     write_rows(CUTOFF_PATH, cutoff_rows)
     plot_noise_summary(rows)
+    plot_feature_gen_acc_gap(rows)
     plot_cutoff_summary(cutoff_rows, args.n)
     logger.info('Summary: %s', SUMMARY_PATH)
     logger.info('Cutoff sweep: %s', CUTOFF_PATH)
-    logger.info('Figures: %s, %s', FIGURE_PATH, CUTOFF_FIGURE_PATH)
+    logger.info(
+        'Figures: %s, %s, %s', FIGURE_PATH, GAP_FIGURE_PATH,
+        CUTOFF_FIGURE_PATH)
 
 
 if __name__ == '__main__':
