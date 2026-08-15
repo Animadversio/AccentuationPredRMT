@@ -32,6 +32,7 @@ fluctuations in the nonlinear own-path and peer ratios.
 rmt_core/          # Core library
   kappa_lib.py     # κ(λ) solver (Marchenko-Pastur fixed-point)
   ridge_theory_lib.py  # Three-term error formula, accentuation error
+  feature_theory_lib.py  # Ridge in linear features, pixel-backprop DE
   simulation_lib.py    # Monte Carlo simulation functions
   teacher_lib.py       # Teachers with controlled population-PC alignment
 
@@ -42,6 +43,7 @@ scripts/
   validate_cv_selected_r2.py        # R² after actual vs DE-predicted K-fold CV
   validate_powerlaw_teacher_alignment.py  # Teacher spectral-alignment sweep
   validate_ffhq_disk_teacher.py     # Exact natural-image disk-teacher experiment
+  validate_ffhq_linear_features.py  # PCA/whitening/top-PC feature comparison
 
 notebooks/
   theory_validation_demo.ipynb      # Interactive demo
@@ -95,4 +97,10 @@ python scripts/validate_ffhq_disk_teacher.py --plot-only
 
 # Align the preserved coarse-alpha stages with error, R2, and slope metrics
 python scripts/plot_ffhq_coarse_alpha_diagnostics.py
+
+# Compare full PCA, exact whitening, and top-PC feature regression/backprop
+python scripts/validate_ffhq_linear_features.py
+
+# Restyle the feature-space figures from plot-ready cached tables
+python scripts/validate_ffhq_linear_features.py --plot-only
 ```

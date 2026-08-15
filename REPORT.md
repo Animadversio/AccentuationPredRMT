@@ -729,6 +729,65 @@ fits keep the nonlinear mean strongly negative. See
 `figures/ffhq_disk_teacher_coarse_alpha_aligned.png`; its plot-ready values are
 in `tables/ffhq_disk_teacher_coarse_alpha_aligned.csv`.
 
+### Linear PCA features with pixel-space backpropagation
+
+For a spectral linear feature map `z_j=a_j x_j`, regression sees feature
+eigenvalues `c_j=a_j^2 s_j`, while pixel backpropagation uses the metric
+`g_j=a_j^2`. If `theta_j*=beta_j*/a_j`, the leading feature-space DE is
+
+```
+mean_j = c_j/(c_j+kappa) theta_j*
+Var_j  = v0 c_j/(c_j+kappa)^2
+slope_acc = sum_j g_j mean_j theta_j*
+            / sum_j g_j (mean_j^2 + Var_j).
+```
+
+Generalization additionally includes the teacher signal omitted by truncated
+features. For Gaussian PC scores this omitted signal is independent of the
+retained features and adds to both the irreducible evaluation error and the
+effective training-noise variance. DE RidgeCV selection uses the feature
+spectrum and this effective noise. We evaluated the measured FFHQ spectrum and
+disk-teacher PC coefficients at `n=1000` with a 221-point alpha grid. Monte
+Carlo validation used 50 Gaussian datasets matched to that exact spectrum at
+each of four noise ratios.
+
+Full PCA is an orthogonal rotation and therefore reproduces pixel ridge. Exact
+whitening instead sets the regression covariance to identity but makes the
+pixel-backpropagation metric `g_j=1/s_j`. With `p/n=10`, it both creates an
+isotropic overparameterized regression problem and enormously amplifies the
+lowest-variance PCs during accentuation. Top-100 PCA retains 99.52% of the disk
+teacher's natural response variance while deleting those low-variance control
+directions.
+
+| sigma²/S | feature | E_gen/S DE / MC | E_acc/S leading DE / MC mean | slope_acc DE / MC | R²_acc DE / MC median |
+|---:|:---|---:|---:|---:|---:|
+| 0.1 | full PCA | 0.0141 / 0.0141 | 0.0566 / 0.0729 | 0.762 / 0.735 | 0.903 / 0.878 |
+| 0.1 | full whitening | 0.910 / 0.911 | 1.000 / 1.000 | 1.68e-5 / 1.09e-5 | -3.54e9 / -2.08e9 |
+| 0.1 | top 100 PCs | 0.0139 / 0.0141 | 1.44e-6 / 7.21e-4 | 0.999 / 0.997 | 1.000 / 1.000 |
+| 1 | full PCA | 0.0533 / 0.0540 | 0.0863 / 0.104 | 0.706 / 0.695 | 0.827 / 0.830 |
+| 1 | full whitening | 0.951 / 0.956 | 1.000 / 1.000 | 1.61e-5 / 2.22e-5 | -3.86e9 / -1.25e9 |
+| 1 | top 100 PCs | 0.0514 / 0.0537 | 0.00268 / 0.00885 | 0.948 / 0.945 | 0.997 / 0.996 |
+| 10 | full PCA | 0.188 / 0.200 | 0.133 / 0.186 | 0.636 / 0.616 | 0.672 / 0.652 |
+| 10 | full whitening | 0.991 / 1.003 | 1.000 / 0.999 | 1.54e-5 / 3.50e-4 | -4.20e9 / -2.70e8 |
+| 10 | top 100 PCs | 0.186 / 0.193 | 0.0424 / 0.0757 | 0.794 / 0.793 | 0.933 / 0.939 |
+
+The generalization DE is accurate across all three representations. The
+leading accentuation DE predicts typical calibration well, but when its error
+is nearly zero, trial-to-trial fluctuations dominate the empirical mean
+squared error; this explains the top-100 DE/MC gap at low noise. Exact
+whitening is unequivocally harmful here: its true response barely changes
+along the enormous low-variance pixel gradient, producing near-zero slope and
+extremely negative path-wise R².
+
+Sweeping the top-PC cutoff reveals an adaptive bias-variance tradeoff. The
+generalization-optimal retained dimension decreases from `K=200` at
+`sigma²/S=0.01`, to 150 at 0.1, 50 at 1, and 20 at 10. Thus higher response
+noise favors a smaller, more signal-focused feature space. See
+`figures/ffhq_linear_feature_comparison.png` and
+`figures/ffhq_top_pc_cutoff_sweep.png`; plot-ready data are in
+`tables/ffhq_linear_feature_summary.csv` and
+`tables/ffhq_top_pc_cutoff_summary.csv`.
+
 ---
 
 ## How to reproduce
@@ -763,6 +822,12 @@ python scripts/validate_ffhq_disk_teacher.py
 
 # Replot all FFHQ figures from cached summary/case tables
 python scripts/validate_ffhq_disk_teacher.py --plot-only
+
+# PCA, whitening, and top-PC linear features with pixel backpropagation
+python scripts/validate_ffhq_linear_features.py
+
+# Replot feature-space summaries without Monte Carlo
+python scripts/validate_ffhq_linear_features.py --plot-only
 
 # Notebook (interactive)
 jupyter notebook notebooks/validation_overview.ipynb

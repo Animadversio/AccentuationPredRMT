@@ -34,3 +34,7 @@ from .spectrum_lib import (
     get_spectrum,
 )
 from .teacher_lib import make_spectral_teacher
+from .feature_theory_lib import (
+    spectral_feature_de_metrics,
+    select_spectral_feature_de_alpha,
+)
