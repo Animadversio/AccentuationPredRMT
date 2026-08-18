@@ -101,7 +101,7 @@ python scripts/validate_ffhq_disk_teacher.py --plot-only
 # Compare fixed alpha=100 (lambda=0.1) with paired dense-grid RidgeCV fits
 python scripts/compare_ffhq_fixed_vs_cv.py
 
-# Restyle that comparison from its plot-ready summary table
+# Restyle both policy-comparison figures from the plot-ready summary table
 python scripts/compare_ffhq_fixed_vs_cv.py --plot-only
 
 # Align the preserved coarse-alpha stages with error, R2, and slope metrics

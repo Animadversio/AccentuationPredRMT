@@ -40,6 +40,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_fixed_vs_cv_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_fixed_alpha_cases'
 FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_fixed_vs_cv_comparison.png'
+GAP_FIGURE_PATH = (
+    REPO_ROOT / 'figures' / 'ffhq_fixed_vs_cv_gen_acc_gap.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_fixed_vs_cv.log'
 
 
@@ -313,6 +315,153 @@ def plot_comparison(
     plt.close(fig)
 
 
+def plot_policy_gap_comparison(
+        rows: list[dict[str, object]], fixed_alpha: float,
+        signal: float, n: int) -> None:
+    """Facet by ridge policy and expose generation--accentuation gaps."""
+    fig, axes = plt.subplots(
+        2, 2, figsize=(13.2, 9.2), sharex='col',
+        gridspec_kw={'hspace': 0.13, 'wspace': 0.19})
+    colors = {'gen': 'C0', 'acc': 'C1'}
+    labels = {'gen': 'generalization', 'acc': 'accentuation'}
+    policy_titles = {
+        'fixed': (
+            rf'Fixed ridge: $\alpha={fixed_alpha:g}$ '
+            rf'($\lambda={fixed_alpha / n:g}$) at every noise level'),
+        'cv': r'RidgeCV: noise-adaptive $\alpha_{\rm CV}(\sigma)$',
+    }
+    max_sigma = max(float(row['sigma']) for row in rows) * 1.15
+    error_limits: list[float] = []
+
+    for column, policy in enumerate(('fixed', 'cv')):
+        error_ax, r2_ax = axes[:, column]
+        error_ax.set_title(policy_titles[policy], pad=34, fontsize=12)
+
+        error_series: dict[str, np.ndarray] = {}
+        r2_series: dict[str, np.ndarray] = {}
+        sigma_policy: np.ndarray | None = None
+        for path in ('gen', 'acc'):
+            sigma, theory, mc, uncertainty = metric_arrays(
+                rows, policy, f'{path}_error_normalized')
+            sigma_policy = sigma
+            color = colors[path]
+            error_series[path] = theory
+            error_limits.extend(theory[theory > 0].tolist())
+            error_limits.extend(mc[mc > 0].tolist())
+            error_ax.plot(
+                sigma, theory, color=color, lw=2.7, alpha=0.98,
+                zorder=4)
+            error_ax.errorbar(
+                sigma, mc, yerr=uncertainty, fmt='o', ls='none',
+                color=color, ecolor=color, alpha=0.52, ms=5.1,
+                mfc='white', mec=color, mew=1.25, capsize=2.0, zorder=3)
+
+            sigma, theory, mc, uncertainty = metric_arrays(
+                rows, policy, f'r2_{path}')
+            r2_series[path] = theory
+            r2_ax.plot(
+                sigma, theory, color=color, lw=2.7, alpha=0.98,
+                zorder=4)
+            r2_ax.errorbar(
+                sigma, mc, yerr=uncertainty, fmt='o', ls='none',
+                color=color, ecolor=color, alpha=0.52, ms=5.1,
+                mfc='white', mec=color, mew=1.25, capsize=2.0, zorder=3)
+
+        assert sigma_policy is not None
+        error_ax.fill_between(
+            sigma_policy, error_series['gen'], error_series['acc'],
+            color='0.45', alpha=0.13, linewidth=0, zorder=1)
+        r2_ax.fill_between(
+            sigma_policy, r2_series['gen'], r2_series['acc'],
+            color='0.45', alpha=0.13, linewidth=0, zorder=1)
+
+        for ax in (error_ax, r2_ax):
+            ax.set_xscale('symlog', linthresh=0.01)
+            ax.set_xlim(0, max_sigma)
+            ax.grid(alpha=0.16, zorder=0)
+        error_ax.set_yscale('log')
+        error_ax.tick_params(labelbottom=False)
+        add_noise_ratio_axis(error_ax, signal, max_sigma)
+        r2_ax.axhline(1, color='0.45', lw=0.8, ls=':', zorder=0)
+        r2_ax.axhline(0, color='0.45', lw=0.8, ls='--', zorder=0)
+        r2_ax.set_xlabel(r'response noise $\sigma$')
+
+        if policy == 'fixed':
+            r2_ax.set_yscale('symlog', linthresh=0.1)
+            r2_ax.set_ylim(-1e5, 1.2)
+            negative = np.flatnonzero(r2_series['acc'] < 0)
+            if len(negative):
+                index = int(negative[0])
+                r2_ax.annotate(
+                    rf'$R^2_{{\rm acc}}<0$ at $\sigma\approx'
+                    rf'{sigma_policy[index]:g}$',
+                    xy=(sigma_policy[index], r2_series['acc'][index]),
+                    xytext=(0.31, 0.29), textcoords='axes fraction',
+                    fontsize=8.5,
+                    arrowprops={
+                        'arrowstyle': '->', 'lw': 0.8, 'color': '0.35'})
+        else:
+            r2_ax.set_ylim(0.1, 1.025)
+            cv_rows = sorted(
+                [row for row in rows if row['policy'] == 'cv'],
+                key=lambda item: float(item['sigma']))
+            alpha_min = min(float(row['alpha']) for row in cv_rows)
+            alpha_max = max(float(row['alpha']) for row in cv_rows)
+            error_ax.text(
+                0.98, 0.05,
+                rf'DE selects $\alpha$: ${alpha_min:.0e}\rightarrow'
+                rf'{alpha_max:.2g}$',
+                transform=error_ax.transAxes, ha='right', va='bottom',
+                fontsize=8.5, color='0.3')
+
+    positive = np.asarray(error_limits)
+    error_ymin = 10 ** np.floor(np.log10(positive.min()))
+    error_ymax = 10 ** np.ceil(np.log10(positive.max()))
+    for ax in axes[0]:
+        ax.set_ylim(error_ymin, error_ymax)
+
+    axes[0, 0].set_ylabel(r'normalized error  $E/S$')
+    axes[1, 0].set_ylabel(r'coefficient of determination  $R^2$')
+    axes[0, 0].text(
+        0.02, 0.05, r'shading = DE $E_{\rm gen}$--$E_{\rm acc}$ gap',
+        transform=axes[0, 0].transAxes, fontsize=8.5, color='0.3')
+    axes[1, 0].text(
+        0.02, 0.05, r'shading = DE $R^2_{\rm gen}$--$R^2_{\rm acc}$ gap',
+        transform=axes[1, 0].transAxes, fontsize=8.5, color='0.3')
+    axes[1, 0].text(
+        0.98, 0.05, 'symlog y-scale', transform=axes[1, 0].transAxes,
+        ha='right', fontsize=8.5, color='0.3')
+
+    legend_handles = [
+        Line2D([0], [0], color=colors[path], lw=2.7,
+               label=labels[path]) for path in ('gen', 'acc')
+    ] + [
+        Line2D([0], [0], color='0.2', lw=2.7,
+               label='DE theory (solid curve)'),
+        Line2D([0], [0], color='0.2', marker='o', ls='none',
+               mfc='white', mew=1.25,
+               label=r'empirical MC (hollow points; uncertainty)'),
+    ]
+    fig.legend(
+        handles=legend_handles, loc='upper center', ncol=4,
+        frameon=False, fontsize=9.2, bbox_to_anchor=(0.5, 0.947))
+    fig.suptitle(
+        'FFHQ disk teacher: regularization controls the '
+        'generation--accentuation gap', y=0.995, fontsize=15)
+    fig.text(
+        0.5, 0.012,
+        r'Error and $R^2_{\rm gen}$ points: MC mean $\pm2$ SE; '
+        r'$R^2_{\rm acc}$ points: MC median / IQR',
+        ha='center', fontsize=8.5, color='0.3')
+    fig.subplots_adjust(
+        left=0.075, right=0.985, bottom=0.09, top=0.84,
+        hspace=0.14, wspace=0.19)
+    GAP_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(GAP_FIGURE_PATH, dpi=190, bbox_inches='tight')
+    GAP_FIGURE_PATH.chmod(0o644)
+    plt.close(fig)
+
+
 def merge_rows(
         cv_rows: list[dict[str, object]],
         fixed_rows: list[dict[str, object]], signal: float
@@ -367,7 +516,10 @@ def main() -> None:
             raise RuntimeError(
                 f'Expected one cached fixed alpha, found {cached_fixed}')
         plot_comparison(rows, cached_fixed[0], signal, args.n)
-        logger.info('Replotted %s from %s', FIGURE_PATH, SUMMARY_PATH)
+        plot_policy_gap_comparison(rows, cached_fixed[0], signal, args.n)
+        logger.info(
+            'Replotted %s and %s from %s',
+            FIGURE_PATH, GAP_FIGURE_PATH, SUMMARY_PATH)
         return
     if not torch.cuda.is_available():
         raise RuntimeError('Fixed-alpha natural-image Monte Carlo requires CUDA.')
@@ -466,8 +618,10 @@ def main() -> None:
     rows = merge_rows(cv_rows, fixed_rows, signal)
     write_summary(rows)
     plot_comparison(rows, args.fixed_alpha, signal, args.n)
+    plot_policy_gap_comparison(rows, args.fixed_alpha, signal, args.n)
     logger.info('Summary: %s', SUMMARY_PATH)
     logger.info('Figure: %s', FIGURE_PATH)
+    logger.info('Gap figure: %s', GAP_FIGURE_PATH)
 
 
 if __name__ == '__main__':
