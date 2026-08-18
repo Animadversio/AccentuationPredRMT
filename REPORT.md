@@ -715,6 +715,60 @@ nonlinear alignment ratio leaves the empirical mean lower and increasingly
 uncertain. The plot therefore retains both MC mean with standard error and MC
 median with IQR.
 
+### Fixed regularization versus RidgeCV
+
+To isolate the effect of regularization selection, we compared the dense-grid
+RidgeCV fits with a fixed alpha=100, or lambda=alpha/n=0.1. This fixed value is
+anchored at sigma=10, where the DE and empirical RidgeCV selector also choose
+alpha=100; the two policies are therefore identical there in theory and differ
+only by Monte Carlo sampling error.
+
+For each candidate alpha, the DE solves the kappa fixed point and predicts the
+final-fit metrics. The CV branch uses
+
+    alpha_CV_DE(sigma)
+        = argmin_alpha E_gen_DE(n-1, sigma, lambda=alpha/(n-1)),
+    lambda_final = alpha_CV_DE / n.
+
+The fixed branch instead evaluates every noise level at lambda=0.1. Both use
+the same per-PC DE moments. Natural error aggregates them with population
+eigenvalues, while own-path accentuation uses Euclidean weight geometry:
+
+    E_gen_DE = sum_j s_j E[(beta_hat_j-beta_j*)^2]
+    slope_acc_DE = E[beta_hat^T beta*] / E[beta_hat^T beta_hat]
+    E_acc_DE / S = (1-slope_acc_DE)^2
+    R2_acc_DE = 1-(1-E[beta_hat^T beta_hat]/E[beta_hat^T beta*])^2.
+
+The Monte Carlo comparison is paired: at each of the 26 noise levels, the 100
+fixed-alpha fits use the same natural-image subsets and response-noise draws as
+the cached RidgeCV experiment.
+
+| sigma²/S | policy | E_gen/S DE / MC | E_acc/S DE / MC | R²_gen DE / MC | R²_acc DE / MC median |
+|---:|:---|---:|---:|---:|---:|
+| 0.01 | RidgeCV | 0.00358 / 0.00375 | 0.0275 / 0.0309 | 0.996 / 0.996 | 0.961 / 0.959 |
+| 0.01 | fixed | 0.00365 / 0.00384 | 0.0129 / 0.0115 | 0.996 / 0.996 | 0.984 / 0.986 |
+| 0.1 | RidgeCV | 0.0141 / 0.0141 | 0.0567 / 0.0657 | 0.986 / 0.986 | 0.902 / 0.896 |
+| 0.1 | fixed | 0.0201 / 0.0197 | 0.449 / 0.437 | 0.980 / 0.980 | -3.13 / -2.82 |
+| 1 | RidgeCV | 0.0533 / 0.0543 | 0.0870 / 0.111 | 0.947 / 0.946 | 0.822 / 0.817 |
+| 1 | fixed | 0.185 / 0.182 | 0.911 / 0.909 | 0.815 / 0.818 | -453 / -414 |
+| 10 | RidgeCV | 0.188 / 0.195 | 0.136 / 0.154 | 0.812 / 0.805 | 0.639 / 0.612 |
+| 10 | fixed | 1.83 / 1.81 | 0.991 / 0.990 | -0.830 / -0.812 | -5.63e4 / -4.05e4 |
+
+The fixed value has a narrow useful range and can even give slightly better
+accentuation calibration near sigma²/S=0.01. Beyond that range it becomes
+severely under-regularized. RidgeCV raises alpha from 1e-4 at very low noise to
+about 7.1e3 at sigma²/S=10, suppressing noisy low-variance weight components.
+This keeps both natural and accentuation performance usable.
+
+The apparently different high-noise limits of E_acc/S and R²_acc are not
+contradictory. Fixed-alpha E_acc/S saturates near one because it is normalized
+by the natural teacher signal S. Pathwise R²_acc is normalized by the true
+teacher variance along the generated direction; that variance approaches
+zero, so R²_acc diverges negatively. See
+figures/ffhq_fixed_vs_cv_comparison.png; plot-ready results are in
+tables/ffhq_fixed_vs_cv_summary.csv, and fixed-alpha trial caches are under
+tables/ffhq_fixed_alpha_cases/.
+
 An aligned audit of the preserved coarse-grid cases separates two effects. The
 first negative accentuation-R² trough spans the `alpha=100` to `alpha=1000`
 transition: at `sigma=26.0`, 56/100 trials still select 100 and 44/100 select

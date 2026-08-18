@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from scripts.compare_ffhq_fixed_vs_cv import ridge_fixed_fit
 from scripts.validate_ffhq_linear_features import ridge_loocv_from_data
 
 
@@ -33,3 +34,18 @@ def test_feature_loocv_matches_brute_force_when_p_less_than_n():
     brute = np.asarray([brute_force_loo_mse(X, y, alpha) for alpha in alphas])
     assert np.allclose(mse.numpy(), brute, rtol=1e-8, atol=1e-10)
     assert selected == alphas[np.argmin(brute)]
+
+
+def test_fixed_sample_space_ridge_matches_primal_solution():
+    generator = torch.Generator().manual_seed(11)
+    X = torch.randn((8, 5), generator=generator, dtype=torch.float64)
+    beta = torch.randn(5, generator=generator, dtype=torch.float64)
+    alpha = 2.3
+    estimate = ridge_fixed_fit(
+        X, beta, sigma=0.0, alpha=alpha, generator=generator)
+    Xc = X - X.mean(dim=0, keepdim=True)
+    yc = Xc @ beta
+    expected = torch.linalg.solve(
+        Xc.T @ Xc + alpha * torch.eye(5, dtype=torch.float64),
+        Xc.T @ yc)
+    assert torch.allclose(estimate, expected, rtol=1e-10, atol=1e-12)
