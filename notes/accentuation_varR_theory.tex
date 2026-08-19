@@ -1,0 +1,644 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\bhat}{\widehat{\bm\beta}}
+\newcommand{\bstar}{\bm\beta^\star}
+\newcommand{\Shat}{\widehat\Sigma}
+
+\title{Second-Order Fluctuations of the Accentuation Alignment Ratio\\
+Current Noise-Conditional Correction and the Full Random-Design Problem}
+\author{Theory supplement for \texttt{AccentuationPredRMT}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The own-path accentuation metrics depend on the nonlinear ratio
+\[
+R=\frac{\bhat^\top\bstar}{\bhat^\top\bhat}.
+\]
+Leading deterministic equivalents replace this random ratio by a ratio of
+deterministic first and second moments.  The current code adds an approximate
+second-order correction for response-noise fluctuations.  This note derives
+that correction from a conditional Gaussian calculation and shows exactly
+where its spectral sums arise.  It then formulates the full unconditional
+variance problem, which must additionally retain random-design resolvent
+fluctuations and, for cross-validated ridge, randomness of the selected
+regularization.
+\end{abstract}
+
+\section{Ridge estimator and accentuation ratio}
+
+Consider
+\begin{equation}
+  \bm x_i\sim\mathcal N(0,\Sigma),\qquad
+  y_i=(\bstar)^\top\bm x_i+\sigma\epsilon_i,
+  \qquad \epsilon_i\sim\mathcal N(0,1).
+\end{equation}
+For centered data, let
+\begin{equation}
+  \Shat=\frac{X^\top X}{n},\qquad
+  Q_X=(\Shat+\lambda I)^{-1}.
+\end{equation}
+The normalized-loss ridge estimator is
+\begin{align}
+  \bhat
+    &=Q_X\frac{X^\top\bm y}{n}\\
+    &=Q_X\Shat\bstar
+      +\frac{\sigma}{n}Q_XX^\top\bm\epsilon.
+  \label{eq:ridge-decomposition}
+\end{align}
+Define the sample ridge filter
+\begin{equation}
+  P_X=Q_X\Shat=\Shat(\Shat+\lambda I)^{-1}.
+\end{equation}
+Conditional on \(X\), Eq.~\eqref{eq:ridge-decomposition} becomes
+\begin{equation}
+  \bhat=\bm\mu_X+\bm\xi_X,
+  \qquad
+  \bm\mu_X=P_X\bstar,
+  \label{eq:conditional-decomposition}
+\end{equation}
+with
+\begin{equation}
+  \bm\xi_X\mid X\sim\mathcal N(0,\Omega_X),\qquad
+  \Omega_X=\frac{\sigma^2}{n}Q_X\Shat Q_X.
+  \label{eq:conditional-covariance}
+\end{equation}
+
+For one fitted model, the true-on-predicted slope along its own pixel-gradient
+path is
+\begin{equation}
+  R=\frac{N}{D},\qquad
+  N=\bhat^\top\bstar,\qquad
+  D=\bhat^\top\bhat.
+  \label{eq:R-definition}
+\end{equation}
+The normalized accentuation error and pathwise coefficient of determination
+are
+\begin{align}
+  \frac{E_{\rm acc}}{S}&=(1-R)^2,
+  \qquad S=(\bstar)^\top\Sigma\bstar,
+  \label{eq:Eacc-R}\\
+  R^2_{\rm acc}&=g(R)
+  =1-\left(1-\frac{1}{R}\right)^2.
+  \label{eq:R2acc-R}
+\end{align}
+
+\section{Exact Gaussian moments conditional on the design}
+
+Using Eq.~\eqref{eq:conditional-decomposition},
+\begin{align}
+  N&=(\bstar)^\top\bm\mu_X+(\bstar)^\top\bm\xi_X,\\
+  D&=\bm\mu_X^\top\bm\mu_X
+  +2\bm\mu_X^\top\bm\xi_X+\bm\xi_X^\top\bm\xi_X.
+\end{align}
+Their conditional means are
+\begin{align}
+  n_X&=\E_\epsilon[N\mid X]
+       =(\bstar)^\top\bm\mu_X,
+  \label{eq:nX}\\
+  d_X&=\E_\epsilon[D\mid X]
+       =\bm\mu_X^\top\bm\mu_X+\tr\Omega_X.
+  \label{eq:dX}
+\end{align}
+The centered fluctuations are
+\begin{align}
+  \delta N&=(\bstar)^\top\bm\xi_X,\\
+  \delta D&=2\bm\mu_X^\top\bm\xi_X
+       +\left(\bm\xi_X^\top\bm\xi_X-\tr\Omega_X\right).
+\end{align}
+
+For a centered Gaussian vector \(\bm\xi\sim\mathcal N(0,\Omega)\),
+\begin{align}
+  \Var(\bm a^\top\bm\xi)&=\bm a^\top\Omega\bm a,\\
+  \Var(\bm\xi^\top\bm\xi)&=2\tr(\Omega^2),\\
+  \Cov(\bm a^\top\bm\xi,\bm\xi^\top\bm\xi)&=0.
+\end{align}
+The last equality follows because centered third-order Gaussian moments vanish.
+Consequently,
+\begin{align}
+  \Var_\epsilon(N\mid X)
+    &=(\bstar)^\top\Omega_X\bstar,
+  \label{eq:conditional-varN}\\
+  \Cov_\epsilon(N,D\mid X)
+    &=2(\bstar)^\top\Omega_X\bm\mu_X,
+  \label{eq:conditional-covND}\\
+  \Var_\epsilon(D\mid X)
+    &=4\bm\mu_X^\top\Omega_X\bm\mu_X
+      +2\tr(\Omega_X^2).
+  \label{eq:conditional-varD}
+\end{align}
+Equations~\eqref{eq:conditional-varN}--\eqref{eq:conditional-varD} are exact
+conditional Gaussian identities.
+
+\section{Delta-method variance at fixed design}
+
+For \(f(N,D)=N/D\), the gradient at \((n_X,d_X)\) is
+\begin{equation}
+  \nabla f=
+  \begin{pmatrix}
+    d_X^{-1}\\
+    -n_Xd_X^{-2}
+  \end{pmatrix}
+  =
+  \frac{1}{d_X}
+  \begin{pmatrix}
+    1\\-R_X
+  \end{pmatrix},
+  \qquad R_X=\frac{n_X}{d_X}.
+\end{equation}
+The first-order delta approximation therefore gives
+\begin{align}
+  \Var_\epsilon(R\mid X)
+  &\simeq
+  \frac{
+    \Var_\epsilon(N\mid X)
+    -2R_X\Cov_\epsilon(N,D\mid X)
+    +R_X^2\Var_\epsilon(D\mid X)
+  }{d_X^2}\\
+  &=
+  \frac{
+    \bm v_X^\top\Omega_X\bm v_X
+    +2R_X^2\tr(\Omega_X^2)
+  }{d_X^2},
+  \label{eq:conditional-varR}\\
+  \bm v_X&=\bstar-2R_X\bm\mu_X.
+\end{align}
+This compact expression is the source of the current correction.  Its first
+term is the variance of a linear Gaussian form; its second is the variance of
+the centered quadratic form in the denominator.
+
+\section{Deterministic substitutions made by the current code}
+\label{sec:current-code}
+
+Let
+\begin{equation}
+  \Sigma=U\,\mathrm{diag}(s_1,\ldots,s_d)U^\top,\qquad
+  b_k=\bm u_k^\top\bstar.
+\end{equation}
+The effective regularization \(\kappa=\kappa(\lambda)\) solves
+\begin{equation}
+  \kappa-\lambda
+  =\frac{\kappa}{n}\sum_k\frac{s_k}{s_k+\kappa}.
+  \label{eq:kappa}
+\end{equation}
+Define
+\begin{align}
+  t_k&=\frac{s_k}{s_k+\kappa},\\
+  \mathrm{df}_2&=\sum_k\frac{s_k^2}{(s_k+\kappa)^2},\\
+  C_{\rm sig}&=\sum_k\frac{s_kb_k^2}{(s_k+\kappa)^2}.
+\end{align}
+The first-order deterministic numerator and denominator used by the code are
+\begin{align}
+  N_{\rm det}
+    &=\sum_k t_kb_k^2,
+  \label{eq:Ndet}\\
+  D_{\rm det}
+    &=\sum_k t_k^2b_k^2
+    +\frac{\kappa^2C_{\rm sig}+\sigma^2}
+           {n-\mathrm{df}_2}
+       \sum_k\frac{s_k}{(s_k+\kappa)^2},
+  \label{eq:Ddet}\\
+  R_{\rm det}&=\frac{N_{\rm det}}{D_{\rm det}}.
+  \label{eq:Rdet}
+\end{align}
+These equations are implemented by
+\texttt{accentuation\_alignment} in
+\path{rmt_core/ridge_theory_lib.py}.
+
+For the variance correction, the current implementation makes the simplified
+substitutions
+\begin{align}
+  \bm\mu_X&\rightsquigarrow
+  T_\kappa\bstar,\qquad
+  T_\kappa=\Sigma(\Sigma+\kappa I)^{-1},
+  \label{eq:mu-substitution}\\
+  \Omega_X&\rightsquigarrow
+  \frac{\sigma^2}{n}H_\kappa,\qquad
+  H_\kappa=\Sigma(\Sigma+\kappa I)^{-2},
+  \label{eq:Omega-substitution}\\
+  (R_X,d_X)&\rightsquigarrow(R_{\rm det},D_{\rm det}).
+\end{align}
+This is a hybrid leading-DE plus conditional-noise approximation.  It is not a
+full central-limit theorem for the random design.
+
+\subsection{Linear Gaussian contribution}
+
+Under Eqs.~\eqref{eq:mu-substitution}--\eqref{eq:Omega-substitution},
+\begin{equation}
+  \bm v_{\rm det}
+  =(I-2R_{\rm det}T_\kappa)\bstar.
+\end{equation}
+Therefore
+\begin{align}
+  \bm v_{\rm det}^\top
+  \left(\frac{\sigma^2}{n}H_\kappa\right)
+  \bm v_{\rm det}
+  &=
+  \frac{\sigma^2}{n}
+  \sum_k
+  \frac{s_kb_k^2}{(s_k+\kappa)^2}
+  \left(1-2R_{\rm det}\frac{s_k}{s_k+\kappa}\right)^2\\
+  &=
+  \frac{\sigma^2}{n}
+  \left(
+    C_{\rm sig}
+    -4R_{\rm det}M_1
+    +4R_{\rm det}^2M_2
+  \right),
+  \label{eq:var-linear}
+\end{align}
+where
+\begin{align}
+  M_1&=\sum_k\frac{s_k^2b_k^2}{(s_k+\kappa)^3},\\
+  M_2&=\sum_k\frac{s_k^3b_k^2}{(s_k+\kappa)^4}.
+\end{align}
+Thus the apparently specialized combination
+\(C_{\rm sig}-4R_{\rm det}M_1+4R_{\rm det}^2M_2\) is simply the eigenbasis
+expansion of a single quadratic form.
+
+\subsection{Quadratic Gaussian contribution}
+
+The second term in Eq.~\eqref{eq:conditional-varR} becomes
+\begin{align}
+  2R_{\rm det}^2
+  \tr\left[
+    \left(\frac{\sigma^2}{n}H_\kappa\right)^2
+  \right]
+  &=
+  \frac{2R_{\rm det}^2\sigma^4}{n^2}
+  T_{\rm quad},\\
+  T_{\rm quad}
+  &=\sum_k\frac{s_k^2}{(s_k+\kappa)^4}.
+  \label{eq:var-quadratic}
+\end{align}
+
+\subsection{Current implemented formula}
+
+Combining Eqs.~\eqref{eq:var-linear} and \eqref{eq:var-quadratic} gives
+\begin{equation}
+\boxed{
+  \Var_{\rm current}(R)
+  =
+  \frac{
+    \dfrac{\sigma^2}{n}
+    \left(
+      C_{\rm sig}
+      -4R_{\rm det}M_1
+      +4R_{\rm det}^2M_2
+    \right)
+    +
+    \dfrac{2R_{\rm det}^2\sigma^4}{n^2}
+    T_{\rm quad}
+  }{D_{\rm det}^2}.
+}
+\label{eq:current-varR}
+\end{equation}
+Equation~\eqref{eq:current-varR} is implemented by
+\texttt{accentuation\_var\_R} in
+\path{rmt_core/ridge_theory_lib.py}.
+
+\section{How the current variance correction is used}
+
+The exact bias--variance identity
+\begin{equation}
+  \E[(1-R)^2]
+  =(1-\E R)^2+\Var(R)
+\end{equation}
+motivates the code approximation
+\begin{equation}
+  \frac{\E E_{\rm acc}}{S}
+  \simeq
+  (1-R_{\rm det})^2+\Var_{\rm current}(R).
+  \label{eq:Eacc-correction}
+\end{equation}
+This is enabled by \texttt{include\_var\_R=True}.
+
+For pathwise \(R^2\), let
+\begin{equation}
+  g(r)=1-\left(1-\frac1r\right)^2
+      =\frac{2}{r}-\frac{1}{r^2}.
+\end{equation}
+A second-order scalar delta expansion gives
+\begin{align}
+  \E[g(R)]
+  &\simeq
+  g(R_{\rm det})
+  +\frac12g''(R_{\rm det})\Var_{\rm current}(R),\\
+  \frac12g''(r)&=\frac{2r-3}{r^4}.
+\end{align}
+Hence
+\begin{equation}
+\boxed{
+  R_{\rm acc}^{2,\rm corrected}
+  =
+  1-\left(1-\frac{1}{R_{\rm det}}\right)^2
+  \frac{2R_{\rm det}-3}{R_{\rm det}^4}
+  \Var_{\rm current}(R).
+}
+\label{eq:R2-correction}
+\end{equation}
+This is enabled by \texttt{include\_delta\_correction=True}.
+Equation~\eqref{eq:R2-correction} is poorly conditioned when
+\(R_{\rm det}\) is close to zero; in that regime the local Taylor expansion
+need not describe the heavy-tailed reciprocal statistic.
+
+\section{What conditioning on the design omits}
+
+Conditioning on \(X\) is an exact first step.  The incomplete step is replacing
+all \(X\)-dependent conditional means by deterministic limits while retaining
+only response-noise variance.  The law of total variance is
+\begin{equation}
+\boxed{
+  \Var_{X,\epsilon}(R)
+  =
+  \E_X\!\left[\Var_\epsilon(R\mid X)\right]
+  +
+  \Var_X\!\left(\E_\epsilon[R\mid X]\right).
+}
+\label{eq:total-variance}
+\end{equation}
+The current correction targets primarily the first term.  The second term is
+a random-design fluctuation of the ridge resolvent.
+
+This distinction is invisible to a leading deterministic equivalent: both
+terms can be \(O(n^{-1})\) and therefore vanish as \(n\to\infty\), while their
+sum is precisely the leading quantity needed for a second-order correction.
+A sharp diagnostic is \(\sigma=0\).  Equation~\eqref{eq:current-varR} then
+returns zero, although finite-sample variation of \(P_X\bstar\) across
+training sets generally gives nonzero \(\Var_X(R)\).
+
+The covariance substitution in Eq.~\eqref{eq:Omega-substitution} is also
+simplified.  Deterministic equivalents for derivatives of the resolvent
+introduce the susceptibility
+\begin{equation}
+  \kappa'(\lambda)
+  =
+  \frac{1}{
+  1-\mathrm{df}_2/n
+  }.
+  \label{eq:kappa-prime}
+\end{equation}
+A minimal refinement should carry such factors in noise bilinear forms.
+However, simply multiplying every term by \(\kappa'\) is not a complete
+solution: the quadratic trace and design covariance require joint
+two-resolvent equivalents.
+
+\section{Formulation of the full unconditional variance}
+\label{sec:full-varR}
+
+Let
+\begin{equation}
+  \bm Z=
+  \begin{pmatrix}N\\D\end{pmatrix},\qquad
+  \overline{\bm Z}=
+  \begin{pmatrix}\overline N\\\overline D\end{pmatrix}
+  =
+  \E_{X,\epsilon}\bm Z.
+\end{equation}
+To leading second order,
+\begin{equation}
+  \Var(R)
+  \simeq
+  \bm J^\top\mathcal C_{ND}\bm J,
+  \qquad
+  \bm J=
+  \begin{pmatrix}
+    \overline D^{-1}\\
+    -\overline N\overline D^{-2}
+  \end{pmatrix},
+  \label{eq:full-delta}
+\end{equation}
+where
+\begin{equation}
+  \mathcal C_{ND}
+  =
+  \Cov_{X,\epsilon}
+  \begin{pmatrix}N\\D\end{pmatrix}.
+\end{equation}
+The exact covariance decomposition is
+\begin{equation}
+\boxed{
+  \mathcal C_{ND}
+  =
+  \E_X[\mathcal C_{\epsilon}(X)]
+  +
+  \mathcal C_X,
+}
+\label{eq:covariance-decomposition}
+\end{equation}
+with
+\begin{equation}
+  \mathcal C_{\epsilon}(X)
+  =
+  \begin{pmatrix}
+    (\bstar)^\top\Omega_X\bstar
+    &
+    2(\bstar)^\top\Omega_X\bm\mu_X\\
+    2(\bstar)^\top\Omega_X\bm\mu_X
+    &
+    4\bm\mu_X^\top\Omega_X\bm\mu_X
+      +2\tr(\Omega_X^2)
+  \end{pmatrix},
+  \label{eq:conditional-cov-matrix}
+\end{equation}
+and
+\begin{equation}
+  \mathcal C_X
+  =
+  \Cov_X
+  \begin{pmatrix}
+    n_X\\d_X
+  \end{pmatrix}.
+  \label{eq:design-cov-matrix}
+\end{equation}
+The current formula approximates selected entries of
+\(\E_X[\mathcal C_{\epsilon}(X)]\) and sets
+\(\mathcal C_X\) to zero.
+
+\subsection{Random-matrix objects required for the design covariance}
+
+Using \(P_X=\Shat(\Shat+\lambda I)^{-1}\),
+\begin{align}
+  n_X&=(\bstar)^\top P_X\bstar,\\
+  d_X&=(\bstar)^\top P_X^2\bstar
+       +\frac{\sigma^2}{n}
+        \tr(Q_X\Shat Q_X).
+  \label{eq:nX-dX-resolvent}
+\end{align}
+Since
+\begin{equation}
+  P_X=I-\lambda Q_X,\qquad
+  P_X^2=I-2\lambda Q_X+\lambda^2Q_X^2,
+\end{equation}
+the design covariance in Eq.~\eqref{eq:design-cov-matrix} requires a joint
+central-limit theorem for bilinear and trace resolvent statistics, including
+\begin{align}
+  &(\bstar)^\top Q_X\bstar,\qquad
+  (\bstar)^\top Q_X^2\bstar,\\
+  &\tr(Q_X\Shat Q_X),\\
+  &\Cov\left(
+    (\bstar)^\top Q_X\bstar,
+    (\bstar)^\top Q_X^2\bstar
+  \right),\\
+  &\Cov\left(
+    (\bstar)^\top Q_X\bstar,
+    \tr(Q_X\Shat Q_X)
+  \right),
+\end{align}
+and the remaining entries generated by Eq.~\eqref{eq:nX-dX-resolvent}.
+Equivalently, these can be obtained from a two-spectral-parameter covariance
+kernel for
+\[
+(\bstar)^\top(\Shat-zI)^{-1}\bstar
+\]
+and its derivatives before taking \(z=-\lambda\).
+
+A complete calculation must specify:
+\begin{enumerate}
+  \item deterministic means of \(N\) and \(D\), including \(O(n^{-1})\)
+        bias if the mean of \(R\) is required to the same order;
+  \item the full \(2\times2\) covariance matrix
+        \(\mathcal C_{ND}\) to order \(n^{-1}\);
+  \item fourth-cumulant terms for non-Gaussian designs;
+  \item spike or teacher-alignment terms when \(\bstar\) is not generic with
+        respect to the covariance eigenbasis.
+\end{enumerate}
+For Gaussian designs the fourth-cumulant correction vanishes, but bilinear
+resolvent fluctuations remain.
+
+\subsection{Second-order correction to the mean ratio}
+
+If \(\E R\), rather than only \(\Var R\), is needed to order \(n^{-1}\), the
+second-order bivariate delta method gives
+\begin{equation}
+  \E R
+  \simeq
+  \frac{\overline N}{\overline D}
+  -\frac{\Cov(N,D)}{\overline D^2}
+  +\frac{\overline N\,\Var(D)}{\overline D^3}.
+  \label{eq:mean-ratio-correction}
+\end{equation}
+Thus a full correction to \(\E[(1-R)^2]\) should use both the corrected mean
+in Eq.~\eqref{eq:mean-ratio-correction} and the full variance in
+Eq.~\eqref{eq:full-delta}.
+
+\section{Additional randomness from cross-validation}
+
+The fixed-\(\lambda\) theory above treats the regularization as deterministic.
+For RidgeCV, the fitted model is
+\begin{equation}
+  \bhat=\bhat_{\widehat\alpha(X,\epsilon)},
+\end{equation}
+so the selected grid point is another random variable.  The unconditional
+variance contains:
+\begin{enumerate}
+  \item fluctuations of \(N\) and \(D\) at fixed \(\alpha\);
+  \item variation of \(\widehat\alpha\) across data and response noise;
+  \item covariance between \(\widehat\alpha\) and the downstream ratio.
+\end{enumerate}
+If the CV risk has a unique smooth interior minimum, a local approximation is
+\begin{equation}
+  \widehat\alpha-\alpha_\star
+  \simeq
+  -\frac{\widehat L_{\rm CV}'(\alpha_\star)}
+         {L_{\rm CV}''(\alpha_\star)}.
+  \label{eq:cv-alpha-delta}
+\end{equation}
+One could augment the joint delta calculation with
+\((N,D,\widehat\alpha)\).  For a discrete grid or a flat risk curve, the local
+approximation in Eq.~\eqref{eq:cv-alpha-delta} is unreliable; the appropriate
+description is a mixture over selected grid points,
+\begin{equation}
+  \Var(R)
+  =
+  \sum_a p_a\Var(R\mid\widehat\alpha=a)
+  +
+  \Var_a\!\left(\E[R\mid\widehat\alpha=a]\right).
+\end{equation}
+
+\section{Linear-feature generalization}
+
+For a linear feature map, let the feature coefficient be
+\(\widehat{\bm\theta}=\bm\mu+\bm\xi\), with conditional covariance \(\Omega\).
+Pixel back-propagation introduces
+\begin{equation}
+  G=AA^\top,\qquad \bm q=A\bstar,
+\end{equation}
+and the own-path ratio is
+\begin{equation}
+  R=
+  \frac{\widehat{\bm\theta}^\top\bm q}
+       {\widehat{\bm\theta}^\top G\widehat{\bm\theta}}.
+\end{equation}
+The fixed-design delta calculation becomes
+\begin{equation}
+\boxed{
+  \Var(R\mid X)
+  \simeq
+  \frac{
+    \bm v^\top\Omega\bm v
+    +2R^2\tr[(G\Omega)^2]
+  }{D^2},
+  \qquad
+  \bm v=\bm q-2RG\bm\mu.
+}
+\label{eq:feature-varR}
+\end{equation}
+The pixel-space formula is recovered with \(G=I\) and \(\bm q=\bstar\).
+For noncommuting feature covariance and back-propagation geometry, the full
+unconditional theory requires weighted two-resolvent covariances.
+
+\section{Practical validation and implementation roadmap}
+
+A nested simulation can measure every component of
+Eq.~\eqref{eq:total-variance} without theoretical ambiguity:
+\begin{enumerate}
+  \item draw \(B_X\) independent training matrices;
+  \item for each fixed \(X_b\), draw \(B_\epsilon\) independent response-noise
+        vectors;
+  \item estimate the within-\(X\) variance and average it over datasets;
+  \item estimate the between-\(X\) variance of the conditional means;
+  \item repeat first at fixed \(\alpha\), then with RidgeCV.
+\end{enumerate}
+This separates response noise, random design, and selection variability.
+
+A staged theoretical implementation should proceed as follows:
+\begin{enumerate}
+  \item replace the simplified noise covariance in
+        Eq.~\eqref{eq:Omega-substitution} with its derivative-resolvent DE;
+  \item derive or import the joint Gaussian-design CLT for the bilinear forms
+        in Section~\ref{sec:full-varR};
+  \item assemble \(\mathcal C_{ND}\) using
+        Eq.~\eqref{eq:covariance-decomposition};
+  \item apply Eqs.~\eqref{eq:full-delta} and
+        \eqref{eq:mean-ratio-correction};
+  \item validate fixed-\(\alpha\) predictions with nested Monte Carlo;
+  \item add CV-selection variability only after the fixed-\(\alpha\) variance
+        is validated.
+\end{enumerate}
+
+\section{Summary}
+
+The current code formula is not an arbitrary spectral expression.  It follows
+from four steps: conditional Gaussian ridge noise, a delta method for \(N/D\),
+Wick identities, and a leading spectral DE substitution.
+It estimates response-noise fluctuations around a deterministic ridge fit.
+The full \(\Var(R)\) additionally needs the joint random-design covariance of
+the numerator and denominator resolvent statistics, second-order correction
+to the mean ratio, and--for RidgeCV--the distribution and covariance of the
+selected regularization.
+
+\end{document}

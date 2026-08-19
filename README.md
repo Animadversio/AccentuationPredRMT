@@ -50,6 +50,7 @@ notebooks/
 
 notes/
   dissociation_prediction_control_feature_space.tex  # Updated derivation
+  accentuation_varR_theory.tex  # Current Var(R) correction and full theory roadmap
 
 figures/           # Output figures
 tables/            # Output tables
@@ -123,4 +124,7 @@ python scripts/validate_ffhq_linear_features.py --plot-only
 
 # Build the updated feature-space theory note and embedded validation figure
 pdflatex -interaction=nonstopmode -halt-on-error -output-directory=notes notes/dissociation_prediction_control_feature_space.tex
+
+# Build the detailed current/full Var(R) derivation (run twice for references)
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=notes notes/accentuation_varR_theory.tex
 ```
