@@ -320,9 +320,14 @@ def plot_policy_gap_comparison(
         signal: float, n: int) -> None:
     """Facet by ridge policy and expose generation--accentuation gaps."""
     fig, axes = plt.subplots(
-        2, 2, figsize=(13.2, 9.2), sharex='col',
-        gridspec_kw={'hspace': 0.13, 'wspace': 0.19})
+        3, 2, figsize=(13.2, 11.0), sharex='col',
+        gridspec_kw={
+            'height_ratios': (1, 1, 0.52),
+            'hspace': 0.13,
+            'wspace': 0.19,
+        })
     colors = {'gen': 'C0', 'acc': 'C1'}
+    lambda_color = 'C2'
     labels = {'gen': 'generalization', 'acc': 'accentuation'}
     policy_titles = {
         'fixed': (
@@ -332,10 +337,14 @@ def plot_policy_gap_comparison(
     }
     max_sigma = max(float(row['sigma']) for row in rows) * 1.15
     error_limits: list[float] = []
+    lambda_limits: list[float] = []
 
     for column, policy in enumerate(('fixed', 'cv')):
-        error_ax, r2_ax = axes[:, column]
+        error_ax, r2_ax, lambda_ax = axes[:, column]
         error_ax.set_title(policy_titles[policy], pad=34, fontsize=12)
+        policy_rows = sorted(
+            [row for row in rows if row['policy'] == policy],
+            key=lambda item: float(item['sigma']))
 
         error_series: dict[str, np.ndarray] = {}
         r2_series: dict[str, np.ndarray] = {}
@@ -375,16 +384,47 @@ def plot_policy_gap_comparison(
             sigma_policy, r2_series['gen'], r2_series['acc'],
             color='0.45', alpha=0.13, linewidth=0, zorder=1)
 
-        for ax in (error_ax, r2_ax):
+        theory_lambda = np.asarray(
+            [float(row['lambda']) for row in policy_rows])
+        if policy == 'cv':
+            mc_lambda = np.asarray(
+                [float(row['mc_alpha_cv_median']) / n
+                 for row in policy_rows])
+            mc_lambda_q25 = np.asarray(
+                [float(row['mc_alpha_cv_q25']) / n
+                 for row in policy_rows])
+            mc_lambda_q75 = np.asarray(
+                [float(row['mc_alpha_cv_q75']) / n
+                 for row in policy_rows])
+            lambda_uncertainty = np.vstack(
+                (mc_lambda - mc_lambda_q25,
+                 mc_lambda_q75 - mc_lambda))
+        else:
+            mc_lambda = theory_lambda.copy()
+            lambda_uncertainty = np.zeros_like(mc_lambda)
+        lambda_limits.extend(theory_lambda.tolist())
+        lambda_limits.extend(mc_lambda.tolist())
+        lambda_ax.plot(
+            sigma_policy, theory_lambda, color=lambda_color, lw=2.7,
+            alpha=0.98, zorder=4)
+        lambda_ax.errorbar(
+            sigma_policy, mc_lambda, yerr=lambda_uncertainty,
+            fmt='o', ls='none', color=lambda_color, ecolor=lambda_color,
+            alpha=0.58, ms=5.1, mfc='white', mec=lambda_color,
+            mew=1.25, capsize=2.0, zorder=3)
+
+        for ax in (error_ax, r2_ax, lambda_ax):
             ax.set_xscale('symlog', linthresh=0.01)
             ax.set_xlim(0, max_sigma)
             ax.grid(alpha=0.16, zorder=0)
         error_ax.set_yscale('log')
+        lambda_ax.set_yscale('log')
         error_ax.tick_params(labelbottom=False)
+        r2_ax.tick_params(labelbottom=False)
         add_noise_ratio_axis(error_ax, signal, max_sigma)
         r2_ax.axhline(1, color='0.45', lw=0.8, ls=':', zorder=0)
         r2_ax.axhline(0, color='0.45', lw=0.8, ls='--', zorder=0)
-        r2_ax.set_xlabel(r'response noise $\sigma$')
+        lambda_ax.set_xlabel(r'response noise $\sigma$')
 
         if policy == 'fixed':
             r2_ax.set_yscale('symlog', linthresh=0.1)
@@ -402,26 +442,30 @@ def plot_policy_gap_comparison(
                         'arrowstyle': '->', 'lw': 0.8, 'color': '0.35'})
         else:
             r2_ax.set_ylim(0.1, 1.025)
-            cv_rows = sorted(
-                [row for row in rows if row['policy'] == 'cv'],
-                key=lambda item: float(item['sigma']))
-            alpha_min = min(float(row['alpha']) for row in cv_rows)
-            alpha_max = max(float(row['alpha']) for row in cv_rows)
-            error_ax.text(
-                0.98, 0.05,
-                rf'DE selects $\alpha$: ${alpha_min:.0e}\rightarrow'
-                rf'{alpha_max:.2g}$',
-                transform=error_ax.transAxes, ha='right', va='bottom',
-                fontsize=8.5, color='0.3')
+
+        lambda_ax.text(
+            0.98, 0.10,
+            (rf'fixed $\lambda={theory_lambda[0]:g}$'
+             if policy == 'fixed'
+             else rf'DE: ${theory_lambda[0]:.0e}\rightarrow'
+                  rf'{theory_lambda[-1]:.2g}$'),
+            transform=lambda_ax.transAxes, ha='right', va='bottom',
+            fontsize=8.5, color='0.3')
 
     positive = np.asarray(error_limits)
     error_ymin = 10 ** np.floor(np.log10(positive.min()))
     error_ymax = 10 ** np.ceil(np.log10(positive.max()))
     for ax in axes[0]:
         ax.set_ylim(error_ymin, error_ymax)
+    positive_lambda = np.asarray(lambda_limits)
+    lambda_ymin = positive_lambda.min() / 3
+    lambda_ymax = positive_lambda.max() * 3
+    for ax in axes[2]:
+        ax.set_ylim(lambda_ymin, lambda_ymax)
 
     axes[0, 0].set_ylabel(r'normalized error  $E/S$')
     axes[1, 0].set_ylabel(r'coefficient of determination  $R^2$')
+    axes[2, 0].set_ylabel(r'used $\lambda=\alpha/n$')
     axes[0, 0].text(
         0.02, 0.05, r'shading = DE $E_{\rm gen}$--$E_{\rm acc}$ gap',
         transform=axes[0, 0].transAxes, fontsize=8.5, color='0.3')
@@ -436,6 +480,8 @@ def plot_policy_gap_comparison(
         Line2D([0], [0], color=colors[path], lw=2.7,
                label=labels[path]) for path in ('gen', 'acc')
     ] + [
+        Line2D([0], [0], color=lambda_color, lw=2.7,
+               label=r'regularization $\lambda$'),
         Line2D([0], [0], color='0.2', lw=2.7,
                label='DE theory (solid curve)'),
         Line2D([0], [0], color='0.2', marker='o', ls='none',
@@ -443,7 +489,7 @@ def plot_policy_gap_comparison(
                label=r'empirical MC (hollow points; uncertainty)'),
     ]
     fig.legend(
-        handles=legend_handles, loc='upper center', ncol=4,
+        handles=legend_handles, loc='upper center', ncol=5,
         frameon=False, fontsize=9.2, bbox_to_anchor=(0.5, 0.947))
     fig.suptitle(
         'FFHQ disk teacher: regularization controls the '
@@ -454,7 +500,7 @@ def plot_policy_gap_comparison(
         r'$R^2_{\rm acc}$ points: MC median / IQR',
         ha='center', fontsize=8.5, color='0.3')
     fig.subplots_adjust(
-        left=0.075, right=0.985, bottom=0.09, top=0.84,
+        left=0.075, right=0.985, bottom=0.075, top=0.84,
         hspace=0.14, wspace=0.19)
     GAP_FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(GAP_FIGURE_PATH, dpi=190, bbox_inches='tight')
