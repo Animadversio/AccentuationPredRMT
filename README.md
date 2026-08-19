@@ -104,6 +104,14 @@ python scripts/compare_ffhq_fixed_vs_cv.py
 # Restyle both policy-comparison figures from the plot-ready summary table
 python scripts/compare_ffhq_fixed_vs_cv.py --plot-only
 
+# Reproduce the paired fixed-ridge/RidgeCV experiment on 100x100 Van Hateren
+# patches. Training uses one patch per source photograph to keep CV independent;
+# raw trials and a plot-ready CSV are cached separately.
+PYTHONPATH=. python scripts/validate_vanhateren_disk_teacher.py
+
+# Replot the Van Hateren comparison without images or a GPU
+PYTHONPATH=. python scripts/validate_vanhateren_disk_teacher.py --plot-only
+
 # Align the preserved coarse-alpha stages with error, R2, and slope metrics
 python scripts/plot_ffhq_coarse_alpha_diagnostics.py
 

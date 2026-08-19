@@ -769,6 +769,53 @@ figures/ffhq_fixed_vs_cv_comparison.png; plot-ready results are in
 tables/ffhq_fixed_vs_cv_summary.csv, and fixed-alpha trial caches are under
 tables/ffhq_fixed_alpha_cases/.
 
+### Van Hateren 100 x 100 disk-teacher replication
+
+We repeated the paired fixed-alpha/RidgeCV comparison on log-luminance Van
+Hateren patches. Raw 16-bit luminance was transformed as
+`log1p(x)/log(65536)`, quantized to the same [0,1] scale as the FFHQ inputs,
+and cropped to 100 x 100. The binary disk teacher has norm squared 692 and the
+independent population estimate gives signal power S=1736.34.
+
+To preserve the independent-sample assumption behind both ordinary LOOCV and
+the DE, the training pool contains one crop from each of 2,000 source
+photographs. Every n=1,000 training set therefore contains distinct source
+images. The population covariance uses 20,000 patches from a disjoint set of
+2,000 photographs. A preliminary 25-patches-per-image design was rejected:
+patch-level LOOCV leaked through correlated sibling crops and spuriously chose
+the interpolating alpha boundary in 26/100 trials already at sigma^2/S=0.03.
+
+The final experiment uses the same 26 noise/signal ratios, 100 paired trials
+per ratio, fixed alpha=100 (lambda=0.1), and 181-point alpha grid from 1e-4 to
+1e5 as the FFHQ comparison. Exact LOOCV and the final sample-space solves are
+performed in float64. This precision is necessary: on a preserved problematic
+trial, float32 selected alpha=1e-4 whereas float64 selected alpha=199.5.
+
+| sigma^2/S | policy | E_gen/S DE / MC | E_acc/S DE / MC | R^2_gen DE / MC | R^2_acc DE / MC median |
+|---:|:---|---:|---:|---:|---:|
+| 0.01 | RidgeCV | 0.00182 / 0.00181 | 0.0523 / 0.0447 | 0.998 / 0.998 | 0.912 / 0.934 |
+| 0.01 | fixed | 0.00745 / 0.00738 | 0.0956 / 0.0847 | 0.993 / 0.993 | 0.944 / 0.949 |
+| 0.1 | RidgeCV | 0.00702 / 0.00686 | 0.133 / 0.132 | 0.993 / 0.993 | 0.667 / 0.699 |
+| 0.1 | fixed | 0.00925 / 0.00906 | 0.000472 / 0.000791 | 0.991 / 0.991 | 1.000 / 1.000 |
+| 1 | RidgeCV | 0.0248 / 0.0241 | 0.261 / 0.264 | 0.975 / 0.976 | -0.119 / 0.0169 |
+| 1 | fixed | 0.0273 / 0.0253 | 0.482 / 0.455 | 0.973 / 0.975 | -4.31 / -3.32 |
+| 10 | RidgeCV | 0.0734 / 0.0795 | 0.291 / 0.274 | 0.927 / 0.921 | -0.636 / 0.497 |
+| 10 | fixed | 0.208 / 0.191 | 0.925 / 0.919 | 0.792 / 0.809 | -830 / -494 |
+
+DE closely predicts the stable errors and natural-image R^2 throughout the
+curve. High-noise pathwise R^2_acc remains a broad ratio statistic: at
+sigma^2/S=10 the empirical median is 0.497 but its IQR is [-2.23, 0.938] and
+its mean is -19.7. The plot therefore continues to show median/IQR for this
+metric. Fixed lambda=0.1 happens to nearly optimize accentuation around
+sigma^2/S=0.1, but becomes catastrophically under-regularized at higher noise.
+
+The staging probe projected 119.5 seconds and completed in 123.0 seconds. The
+post-warmup GPU benchmark projected 33.7 seconds for 2,600 paired fits; the
+simulation completed in 39.8 seconds. Plot-ready values are cached in
+tables/vanhateren_fixed_vs_cv_summary.csv, per-noise trial data and mean weights
+under tables/vanhateren_fixed_vs_cv_cases/, and the rendered comparison in
+figures/vanhateren_fixed_vs_cv_gen_acc_gap.png.
+
 An aligned audit of the preserved coarse-grid cases separates two effects. The
 first negative accentuation-R² trough spans the `alpha=100` to `alpha=1000`
 transition: at `sigma=26.0`, 56/100 trials still select 100 and 44/100 select

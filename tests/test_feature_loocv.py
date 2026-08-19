@@ -3,6 +3,8 @@ import torch
 
 from scripts.compare_ffhq_fixed_vs_cv import ridge_fixed_fit
 from scripts.validate_ffhq_linear_features import ridge_loocv_from_data
+from scripts.validate_ffhq_disk_teacher import ridge_loocv_fit
+from scripts.validate_vanhateren_disk_teacher import ridge_cv_and_fixed_fit
 
 
 def brute_force_loo_mse(X, y, alpha):
@@ -49,3 +51,29 @@ def test_fixed_sample_space_ridge_matches_primal_solution():
         Xc.T @ Xc + alpha * torch.eye(5, dtype=torch.float64),
         Xc.T @ yc)
     assert torch.allclose(estimate, expected, rtol=1e-10, atol=1e-12)
+
+
+def test_paired_vanhateren_solver_matches_separate_ridge_solvers():
+    generator = torch.Generator().manual_seed(23)
+    X = torch.randn((9, 6), generator=generator, dtype=torch.float64)
+    beta = torch.randn(6, generator=generator, dtype=torch.float64)
+    alphas = torch.logspace(-2, 2, 17, dtype=torch.float64)
+    fixed_alpha = 3.7
+
+    paired_generator = torch.Generator().manual_seed(91)
+    cv_weight, fixed_weight, selected = ridge_cv_and_fixed_fit(
+        X, beta, sigma=0.4, alphas=alphas, fixed_alpha=fixed_alpha,
+        generator=paired_generator)
+
+    cv_generator = torch.Generator().manual_seed(91)
+    expected_cv, expected_alpha, _ = ridge_loocv_fit(
+        X, beta, sigma=0.4, alphas=alphas, generator=cv_generator)
+    assert selected == expected_alpha
+    assert torch.allclose(cv_weight, expected_cv, rtol=1e-10, atol=1e-12)
+
+    fixed_generator = torch.Generator().manual_seed(91)
+    expected_fixed = ridge_fixed_fit(
+        X, beta, sigma=0.4, alpha=fixed_alpha,
+        generator=fixed_generator)
+    assert torch.allclose(
+        fixed_weight, expected_fixed, rtol=1e-10, atol=1e-12)
