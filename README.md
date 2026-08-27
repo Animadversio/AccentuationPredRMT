@@ -24,7 +24,9 @@ where `R_det = E[β̂ᵀβ*] / E[β̂ᵀβ̂]`.
 The library also predicts noiseless-signal `R²_gen`, own-path `R²_acc`,
 and error/`R²_peer` when an independent ridge fit generates the accentuation
 path. Optional second-order delta corrections account for finite-sample
-fluctuations in the nonlinear own-path and peer ratios.
+fluctuations in the nonlinear own-path and peer ratios.  For the own-path
+ratio, the library exposes both the leading ratio of expectations and the
+response-noise correction to its mean and variance.
 
 ## Structure
 
@@ -44,6 +46,7 @@ scripts/
   validate_powerlaw_teacher_alignment.py  # Teacher spectral-alignment sweep
   validate_ffhq_disk_teacher.py     # Exact natural-image disk-teacher experiment
   validate_ffhq_linear_features.py  # PCA/whitening/top-PC feature comparison
+  audit_natural_image_ratio_corrections.py  # Leading/second-order cache audit
 
 notebooks/
   theory_validation_demo.ipynb      # Interactive demo
@@ -112,6 +115,10 @@ PYTHONPATH=. python scripts/validate_vanhateren_disk_teacher.py
 
 # Replot the Van Hateren comparison without images or a GPU
 PYTHONPATH=. python scripts/validate_vanhateren_disk_teacher.py --plot-only
+
+# Add leading and response-noise second-order curves to both natural-image
+# figures and rebuild their numerical error audit entirely from cached spectra
+PYTHONPATH=. python scripts/audit_natural_image_ratio_corrections.py
 
 # Align the preserved coarse-alpha stages with error, R2, and slope metrics
 python scripts/plot_ffhq_coarse_alpha_diagnostics.py

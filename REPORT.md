@@ -816,6 +816,70 @@ tables/vanhateren_fixed_vs_cv_summary.csv, per-noise trial data and mean weights
 under tables/vanhateren_fixed_vs_cv_cases/, and the rendered comparison in
 figures/vanhateren_fixed_vs_cv_gen_acc_gap.png.
 
+### Ratio-of-expectations versus response-noise second order
+
+An audit prompted by the numerator/denominator expansion clarified what the
+previous natural-image curves did.  They used
+
+```
+R0 = E[N]DE / E[D]DE,
+N = beta_hat^T beta*,   D = beta_hat^T beta_hat,
+```
+
+and included `Var(R)` in `E_acc` plus `g''(R0) Var(R)/2` in
+`R2_acc`, where `g(r)=1-(1-1/r)^2`.  They did **not** include the
+second-order shift in the mean of the ratio,
+
+```
+bR = E[R] - R0
+   ~= -Cov(N,D)/E[D]^2 + R0 Var(D)/E[D]^2.
+```
+
+The revised implementation exposes `Var(N)`, `Cov(N,D)`, and `Var(D)` and
+compares two downstream predictions at exactly the same fitted-model
+regularization:
+
+```
+ratio of expectations:
+    E_acc/S = (1-R0)^2
+    R2_acc  = g(R0)
+
+response-noise second order:
+    E_acc/S = (1-R0)^2 + 2(R0-1)bR + Var(R)
+    R2_acc  = g(R0) + g'(R0)bR + g''(R0)Var(R)/2.
+```
+
+For RidgeCV, both curves reuse the DE-CV alpha selected by the generalization
+risk model; the leading curve does not reselect alpha.  This makes the line
+difference a clean audit of the nonlinear ratio approximation rather than a
+regularization-policy difference.
+
+| dataset | policy | target | ratio-of-expectations MAE | second-order MAE |
+|:--|:--|:--|--:|--:|
+| FFHQ | RidgeCV | mean normalized E_acc | 0.00615 | 0.00587 |
+| FFHQ | RidgeCV | mean R2_acc | 0.0577 | 0.0547 |
+| FFHQ | RidgeCV | median R2_acc | 0.0127 | 0.0121 |
+| Van Hateren | RidgeCV | mean normalized E_acc | 0.00465 | 0.00549 |
+| Van Hateren | RidgeCV | mean R2_acc | 1.016 | 0.983 |
+| Van Hateren | RidgeCV | median R2_acc | 0.0657 | 0.0971 |
+
+These MAEs use all 26 cached points through noise/signal variance ratio 10.
+The second-order correction modestly improves the empirical **mean** of
+`R2_acc`, which is the quantity the delta calculation targets.  It does not
+uniformly improve the empirical median.  At Van Hateren noise/signal ratio 10,
+for example, the two predictions are -0.288 and -0.662, while the empirical
+mean is -19.68 and the median is +0.497.  This is evidence that a local
+response-noise Taylor correction is insufficient once the reciprocal ratio is
+heavy-tailed; random-design resolvent fluctuations and the mixture over
+CV-selected alpha remain absent.
+
+The solid and dashed theory curves are now included in both fixed-versus-CV
+figures.  Per-noise moment and prediction columns are cached in the two
+`fixed_vs_cv_summary.csv` files, and the aggregate error audit is
+`tables/natural_image_ratio_theory_errors.csv`.  Recomputing all theory columns
+and both figures from those compact caches takes about 6.3 seconds and performs
+no image loading or regression refitting.
+
 An aligned audit of the preserved coarse-grid cases separates two effects. The
 first negative accentuation-R² trough spans the `alpha=100` to `alpha=1000`
 transition: at `sigma=26.0`, 56/100 trials still select 100 and 44/100 select
