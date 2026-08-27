@@ -45,6 +45,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from rmt_core import (  # noqa: E402
     SpectrumKappa,
     accentuation_error_theory,
+    accentuation_ratio_moments_theory,
     accentuation_r2_simulation,
     accentuation_r2_theory,
     generalization_r2_theory,
@@ -309,10 +310,19 @@ def theory_metrics(eigenvalues: np.ndarray, beta_proj: np.ndarray,
     r2_gen, gen_error, signal_power = generalization_r2_theory(
         eigenvalues, beta_proj, kappa, sigma, n)
     acc_error, alignment, _ = accentuation_error_theory(
-        eigenvalues, beta_proj, kappa, sigma, n, include_var_R=True)
-    r2_acc, _, _ = accentuation_r2_theory(
+        eigenvalues, beta_proj, kappa, sigma, n, include_var_R=True,
+        include_ratio_mean_correction=True)
+    acc_error_ratio, _, _ = accentuation_error_theory(
+        eigenvalues, beta_proj, kappa, sigma, n)
+    r2_acc_ratio, _, _ = accentuation_r2_theory(
+        eigenvalues, beta_proj, kappa, sigma, n)
+    r2_acc, _, r2_acc_correction = accentuation_r2_theory(
         eigenvalues, beta_proj, kappa, sigma, n,
-        include_delta_correction=True)
+        include_delta_correction=True,
+        include_ratio_mean_correction=True)
+    ratio_corrected_mean, ratio_variance, ratio_details = (
+        accentuation_ratio_moments_theory(
+            eigenvalues, beta_proj, kappa, sigma, n))
     return {
         'theory_alpha_cv': alpha,
         'theory_lambda_final': lam,
@@ -324,7 +334,16 @@ def theory_metrics(eigenvalues: np.ndarray, beta_proj: np.ndarray,
         'theory_slope_gen': slope_gen,
         'theory_slope_acc': alignment,
         'theory_acc_alignment': alignment,
+        'theory_acc_ratio_corrected_mean': ratio_corrected_mean,
+        'theory_acc_ratio_mean_correction': (
+            ratio_details['ratio_mean_correction']),
+        'theory_acc_ratio_variance': ratio_variance,
+        'theory_acc_error_ratio_of_expectations': acc_error_ratio,
+        'theory_acc_error_second_order': acc_error,
         'theory_acc_error': acc_error,
+        'theory_r2_acc_ratio_of_expectations': r2_acc_ratio,
+        'theory_r2_acc_second_order': r2_acc,
+        'theory_r2_acc_second_order_correction': r2_acc_correction,
         'theory_r2_acc': r2_acc,
     }, error_pc
 

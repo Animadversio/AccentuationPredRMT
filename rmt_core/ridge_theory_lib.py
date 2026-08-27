@@ -231,35 +231,112 @@ def accentuation_var_R(eigenvalues, beta_proj, kappa, sigma_noise, n, R_det, D_d
     var_lin : float   — linear (noise) contribution
     var_quad : float  — quadratic correction
     """
+    _, var_R, details = accentuation_ratio_moments_theory(
+        eigenvalues, beta_proj, kappa, sigma_noise, n, weights,
+        R_det=R_det, D_det=D_det)
+    return (
+        var_R,
+        details['ratio_variance_linear'],
+        details['ratio_variance_quadratic'],
+    )
+
+
+def accentuation_ratio_moments_theory(
+        eigenvalues, beta_proj, kappa, sigma_noise, n, weights=None, *,
+        R_det=None, D_det=None):
+    """Response-noise second-order moments of ``R = N / D``.
+
+    The leading deterministic equivalent is the ratio of expectations
+
+        R_det = E[N] / E[D],
+
+    where ``N = beta_hat.T @ beta_star`` and
+    ``D = beta_hat.T @ beta_hat``.  Conditional Gaussian response noise gives
+    deterministic approximations to ``Var(N)``, ``Cov(N, D)``, and ``Var(D)``.
+    The bivariate delta method then yields
+
+        E[R] - R_det ≈ -Cov(N,D)/D_det² + R_det Var(D)/D_det²
+
+    and ``Var(R)``.  These are response-noise corrections only: random-design
+    resolvent fluctuations and random CV selection are not included.
+
+    Returns
+    -------
+    corrected_mean : float
+        ``R_det + ratio_mean_correction``.
+    ratio_variance : float
+        First-order delta approximation to ``Var(R)``.
+    details : dict[str, float]
+        Leading ratio, mean correction, numerator/denominator covariance
+        components, and the linear/quadratic pieces of ``Var(R)``.
+    """
     eigenvalues = np.asarray(eigenvalues, dtype=float)
     beta_proj = np.asarray(beta_proj, dtype=float)
     lk = eigenvalues
     bk = beta_proj
     kp = kappa
 
+    if R_det is None or D_det is None:
+        alignment, _, denominator = accentuation_alignment(
+            eigenvalues, beta_proj, kappa, sigma_noise, n, weights)
+        if R_det is None:
+            R_det = alignment
+        if D_det is None:
+            D_det = denominator
+
     C_sig = np.sum(lk / (lk + kp) ** 2 * bk ** 2)
-    M1    = np.sum(lk ** 2 / (lk + kp) ** 3 * bk ** 2)
-    M2    = np.sum(lk ** 3 / (lk + kp) ** 4 * bk ** 2)
-    T_quad_spec = np.sum(lk ** 2 / (lk + kp) ** 4)   # Tr[H²]
+    M1 = np.sum(lk ** 2 / (lk + kp) ** 3 * bk ** 2)
+    M2 = np.sum(lk ** 3 / (lk + kp) ** 4 * bk ** 2)
+    T_quad_spec = np.sum(lk ** 2 / (lk + kp) ** 4)
 
-    var_lin  = (sigma_noise ** 2 / n) * (C_sig - 4 * R_det * M1 + 4 * R_det ** 2 * M2)
-    var_quad = 2 * R_det ** 2 * (sigma_noise ** 4 / n ** 2) * T_quad_spec
+    var_N = (sigma_noise ** 2 / n) * C_sig
+    cov_ND = 2.0 * (sigma_noise ** 2 / n) * M1
+    var_D_linear = 4.0 * (sigma_noise ** 2 / n) * M2
+    var_D_quadratic = (
+        2.0 * sigma_noise ** 4 / n ** 2 * T_quad_spec)
+    var_D = var_D_linear + var_D_quadratic
 
-    var_R = (var_lin + var_quad) / D_det ** 2
-    return var_R, var_lin / D_det ** 2, var_quad / D_det ** 2
+    mean_correction = (-cov_ND + R_det * var_D) / D_det ** 2
+    ratio_variance_linear = (
+        var_N - 2.0 * R_det * cov_ND
+        + R_det ** 2 * var_D_linear) / D_det ** 2
+    ratio_variance_quadratic = (
+        R_det ** 2 * var_D_quadratic) / D_det ** 2
+    ratio_variance = ratio_variance_linear + ratio_variance_quadratic
+    details = {
+        'ratio_leading_mean': R_det,
+        'ratio_mean_correction': mean_correction,
+        'ratio_corrected_mean': R_det + mean_correction,
+        'ratio_variance': ratio_variance,
+        'ratio_variance_linear': ratio_variance_linear,
+        'ratio_variance_quadratic': ratio_variance_quadratic,
+        'numerator_variance': var_N,
+        'numerator_denominator_covariance': cov_ND,
+        'denominator_variance': var_D,
+        'denominator_variance_linear': var_D_linear,
+        'denominator_variance_quadratic': var_D_quadratic,
+        'denominator_leading_mean': D_det,
+    }
+    return R_det + mean_correction, ratio_variance, details
 
 
 def accentuation_error_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
-                               weights=None, include_var_R=False):
+                               weights=None, include_var_R=False,
+                               include_ratio_mean_correction=False):
     """Theory prediction for accentuation evaluation error.
 
     Leading order:  E_acc ≍ (β*ᵀΣβ*) · (1 - R_det)²
-    With Var(R):    E_acc ≍ (β*ᵀΣβ*) · [(1 - R_det)² + Var(R)]
+    With second order:
+        E_acc ≍ (β*ᵀΣβ*) · [(1 - R_det)²
+                  + 2(R_det-1) Bias(R) + Var(R)]
 
     Parameters
     ----------
     include_var_R : bool
         If True, add the Var(R) second-order correction (eq. varR_det).
+    include_ratio_mean_correction : bool
+        If True, add the second-order mean-ratio contribution.  This should
+        normally be paired with ``include_var_R=True``.
 
     Returns
     -------
@@ -275,18 +352,25 @@ def accentuation_error_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
         eigenvalues, beta_proj, kappa, sigma_noise, n, weights)
     bias_sq = (1 - R_det) ** 2
 
-    if include_var_R:
-        var_R, _, _ = accentuation_var_R(
-            eigenvalues, beta_proj, kappa, sigma_noise, n, R_det, D_det)
-        error = signal_power * (bias_sq + var_R)
-    else:
-        error = signal_power * bias_sq
+    correction = 0.0
+    if include_var_R or include_ratio_mean_correction:
+        _, var_R, details = accentuation_ratio_moments_theory(
+            eigenvalues, beta_proj, kappa, sigma_noise, n, weights,
+            R_det=R_det, D_det=D_det)
+        if include_var_R:
+            correction += var_R
+        if include_ratio_mean_correction:
+            correction += (
+                2.0 * (R_det - 1.0)
+                * details['ratio_mean_correction'])
+    error = signal_power * (bias_sq + correction)
 
     return error, R_det, signal_power
 
 
 def accentuation_r2_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
-                            weights=None, include_delta_correction=False):
+                            weights=None, include_delta_correction=False,
+                            include_ratio_mean_correction=False):
     """Deterministic-equivalent R² on a model's own accentuation path.
 
     For one fitted model, let R = β̂ᵀβ* / β̂ᵀβ̂.  The path-wise
@@ -299,6 +383,9 @@ def accentuation_r2_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
     0.5 g''(R_det) Var(R) is added, where
     g(r) = 1 - (1 - 1/r)².  The available Var(R) formula captures the
     response-noise contribution but can miss random-design fluctuations.
+    If ``include_ratio_mean_correction`` is true, the additional term
+    g'(R_det) [E[R]-R_det] is included.  Using both flags gives the complete
+    response-noise second-order expansion available from the current moments.
 
     Returns
     -------
@@ -313,12 +400,18 @@ def accentuation_r2_theory(eigenvalues, beta_proj, kappa, sigma_noise, n,
 
     r2_acc = 1.0 - (1.0 - 1.0 / R_det) ** 2
     correction = 0.0
-    if include_delta_correction:
-        var_R, _, _ = accentuation_var_R(
-            eigenvalues, beta_proj, kappa, sigma_noise, n, R_det, D_det,
-            weights)
-        # 0.5*g''(r) = (2r - 3)/r^4 for g(r)=2/r-1/r^2.
-        correction = (2.0 * R_det - 3.0) / R_det ** 4 * var_R
+    if include_delta_correction or include_ratio_mean_correction:
+        _, var_R, details = accentuation_ratio_moments_theory(
+            eigenvalues, beta_proj, kappa, sigma_noise, n, weights,
+            R_det=R_det, D_det=D_det)
+        if include_delta_correction:
+            # 0.5*g''(r) = (2r - 3)/r^4 for g(r)=2/r-1/r^2.
+            correction += (2.0 * R_det - 3.0) / R_det ** 4 * var_R
+        if include_ratio_mean_correction:
+            # g'(r) = 2(1-r)/r^3.
+            correction += (
+                2.0 * (1.0 - R_det) / R_det ** 3
+                * details['ratio_mean_correction'])
         r2_acc += correction
     return r2_acc, R_det, correction
 

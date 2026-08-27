@@ -310,6 +310,30 @@ Equation~\eqref{eq:current-varR} is implemented by
 \texttt{accentuation\_var\_R} in
 \path{rmt_core/ridge_theory_lib.py}.
 
+The same conditional-noise substitution also gives the individual moments
+needed for the mean of the ratio:
+\begin{align}
+  V_N&=\frac{\sigma^2}{n}C_{\rm sig},\\
+  C_{ND}&=\frac{2\sigma^2}{n}M_1,\\
+  V_D&=\frac{4\sigma^2}{n}M_2
+      +\frac{2\sigma^4}{n^2}T_{\rm quad}.
+\end{align}
+The response-noise second-order shift is therefore
+\begin{equation}
+\boxed{
+  b_{R,{\rm current}}
+  =\E R-R_{\rm det}
+  \simeq
+  -\frac{C_{ND}}{D_{\rm det}^2}
+  +\frac{R_{\rm det}V_D}{D_{\rm det}^2}.
+}
+\label{eq:current-meanR-bias}
+\end{equation}
+This is implemented by
+\texttt{accentuation\_ratio\_moments\_theory}.  Like
+Eq.~\eqref{eq:current-varR}, it omits random-design and CV-selection
+fluctuations.
+
 \section{How the current variance correction is used}
 
 The exact bias--variance identity
@@ -317,14 +341,19 @@ The exact bias--variance identity
   \E[(1-R)^2]
   =(1-\E R)^2+\Var(R)
 \end{equation}
-motivates the code approximation
+combined with Eqs.~\eqref{eq:current-varR} and
+\eqref{eq:current-meanR-bias} motivates the second-order approximation
 \begin{equation}
   \frac{\E E_{\rm acc}}{S}
   \simeq
-  (1-R_{\rm det})^2+\Var_{\rm current}(R).
+  (1-R_{\rm det})^2
+  +2(R_{\rm det}-1)b_{R,{\rm current}}
+  +\Var_{\rm current}(R).
   \label{eq:Eacc-correction}
 \end{equation}
-This is enabled by \texttt{include\_var\_R=True}.
+The variance term is enabled by \path{include_var_R=True}; the mean-ratio
+term is enabled by \path{include_ratio_mean_correction=True}.  Omitting both yields the
+ratio-of-deterministic-expectations curve.
 
 For pathwise \(R^2\), let
 \begin{equation}
@@ -345,12 +374,16 @@ Hence
   R_{\rm acc}^{2,\rm corrected}
   =
   1-\left(1-\frac{1}{R_{\rm det}}\right)^2
+  +\frac{2(1-R_{\rm det})}{R_{\rm det}^3}
+   b_{R,{\rm current}}
+  +
   \frac{2R_{\rm det}-3}{R_{\rm det}^4}
   \Var_{\rm current}(R).
 }
 \label{eq:R2-correction}
 \end{equation}
-This is enabled by \texttt{include\_delta\_correction=True}.
+The variance term is enabled by \path{include_delta_correction=True}, and the
+mean-ratio term by \path{include_ratio_mean_correction=True}.
 Equation~\eqref{eq:R2-correction} is poorly conditioned when
 \(R_{\rm det}\) is close to zero; in that regime the local Taylor expansion
 need not describe the heavy-tailed reciprocal statistic.

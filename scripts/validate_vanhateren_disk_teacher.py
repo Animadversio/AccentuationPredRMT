@@ -22,7 +22,10 @@ os.environ.setdefault('XDG_CACHE_HOME', '/tmp/accentuationpredrmt-xdg-cache')
 import numpy as np
 import torch
 
-from scripts.compare_ffhq_fixed_vs_cv import plot_policy_gap_comparison
+from scripts.compare_ffhq_fixed_vs_cv import (
+    add_theory_order_columns,
+    plot_policy_gap_comparison,
+)
 from scripts.validate_ffhq_disk_teacher import (
     aggregate,
     configure_logger,
@@ -398,8 +401,27 @@ def summarize_policy(
             float(theory['theory_gen_error']) / signal_power),
         'theory_acc_error_normalized': (
             float(theory['theory_acc_error']) / signal_power),
+        'theory_acc_error_ratio_normalized': (
+            float(theory['theory_acc_error_ratio_of_expectations'])
+            / signal_power),
+        'theory_acc_error_second_order_normalized': (
+            float(theory['theory_acc_error_second_order']) / signal_power),
         'theory_r2_gen': float(theory['theory_r2_gen']),
         'theory_r2_acc': float(theory['theory_r2_acc']),
+        'theory_r2_acc_ratio': float(
+            theory['theory_r2_acc_ratio_of_expectations']),
+        'theory_r2_acc_second_order': float(
+            theory['theory_r2_acc_second_order']),
+        'theory_acc_ratio_leading_mean': float(
+            theory['theory_acc_alignment']),
+        'theory_acc_ratio_corrected_mean': float(
+            theory['theory_acc_ratio_corrected_mean']),
+        'theory_acc_ratio_mean_correction': float(
+            theory['theory_acc_ratio_mean_correction']),
+        'theory_acc_ratio_variance': float(
+            theory['theory_acc_ratio_variance']),
+        'theory_r2_acc_second_order_correction': float(
+            theory['theory_r2_acc_second_order_correction']),
         'theory_weight_error': float(theory['theory_weight_error']),
     }
     for metric, values in trials.items():
@@ -497,6 +519,12 @@ def main() -> None:
             float(row['alpha']) for row in rows if row['policy'] == 'fixed'})
         if len(fixed) != 1:
             raise RuntimeError(f'Expected one fixed alpha, found {fixed}')
+        with np.load(SPECTRUM_PATH) as spectrum:
+            eigenvalues = np.asarray(spectrum['eigenvalues'])
+            beta_proj = np.asarray(spectrum['beta_proj'])
+        add_theory_order_columns(
+            rows, eigenvalues, beta_proj, int(float(rows[0]['n'])))
+        write_summary(rows)
         render(rows, fixed[0], int(float(rows[0]['n'])))
         logger.info('Replotted %s from %s', FIGURE_PATH, SUMMARY_PATH)
         return
@@ -699,6 +727,8 @@ def main() -> None:
 
     summary_rows.sort(key=lambda row: (
         float(row['sigma']), 0 if row['policy'] == 'cv' else 1))
+    add_theory_order_columns(
+        summary_rows, eigenvalues, beta_proj, args.n)
     write_summary(summary_rows)
     render(summary_rows, args.fixed_alpha, args.n)
     logger.info('Finished paired simulation in %.1fs',

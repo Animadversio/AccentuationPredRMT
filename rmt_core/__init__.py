@@ -6,6 +6,7 @@ from .ridge_theory_lib import (
     ridge_error_total_theory,
     generalization_r2_theory,
     accentuation_alignment,
+    accentuation_ratio_moments_theory,
     accentuation_error_theory,
     accentuation_r2_theory,
     peer_review_theory,

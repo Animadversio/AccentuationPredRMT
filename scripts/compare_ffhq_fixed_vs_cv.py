@@ -138,6 +138,15 @@ def normalized_policy_row(
         float(base['theory_acc_error']) / signal)
     row['theory_r2_gen'] = float(base['theory_r2_gen'])
     row['theory_r2_acc'] = float(base['theory_r2_acc'])
+    if 'theory_acc_error_ratio_of_expectations' in base:
+        row['theory_acc_error_ratio_normalized'] = (
+            float(base['theory_acc_error_ratio_of_expectations']) / signal)
+        row['theory_acc_error_second_order_normalized'] = (
+            float(base['theory_acc_error_second_order']) / signal)
+        row['theory_r2_acc_ratio'] = float(
+            base['theory_r2_acc_ratio_of_expectations'])
+        row['theory_r2_acc_second_order'] = float(
+            base['theory_r2_acc_second_order'])
     for metric in ('gen_error', 'acc_error'):
         row[f'mc_{metric}_normalized'] = float(base[f'mc_{metric}']) / signal
         row[f'mc_{metric}_normalized_se'] = (
@@ -182,6 +191,57 @@ def read_summary() -> list[dict[str, object]]:
                     row[key] = float(value)
             rows.append(row)
     return rows
+
+
+def add_theory_order_columns(
+        rows: list[dict[str, object]], eigenvalues: np.ndarray,
+        beta_proj: np.ndarray, n: int) -> None:
+    """Backfill both accentuation theory orders from a compact spectrum.
+
+    The cached alpha in each row is reused verbatim.  In particular, the CV
+    policy is not reselected for the leading approximation, so the two curves
+    isolate the downstream ratio approximation at one common fitted model.
+    """
+    signal = float(np.sum(eigenvalues * beta_proj ** 2))
+    for row in rows:
+        theory, _ = theory_metrics(
+            eigenvalues, beta_proj, float(row['sigma']), n,
+            float(row['alpha']))
+        row.update({
+            'theory_acc_error_ratio_normalized': (
+                float(theory['theory_acc_error_ratio_of_expectations'])
+                / signal),
+            'theory_acc_error_second_order_normalized': (
+                float(theory['theory_acc_error_second_order']) / signal),
+            'theory_r2_acc_ratio': float(
+                theory['theory_r2_acc_ratio_of_expectations']),
+            'theory_r2_acc_second_order': float(
+                theory['theory_r2_acc_second_order']),
+            'theory_acc_ratio_leading_mean': float(
+                theory['theory_acc_alignment']),
+            'theory_acc_ratio_corrected_mean': float(
+                theory['theory_acc_ratio_corrected_mean']),
+            'theory_acc_ratio_mean_correction': float(
+                theory['theory_acc_ratio_mean_correction']),
+            'theory_acc_ratio_variance': float(
+                theory['theory_acc_ratio_variance']),
+            'theory_r2_acc_second_order_correction': float(
+                theory['theory_r2_acc_second_order_correction']),
+        })
+        # Backward-compatible names point to the fuller response-noise
+        # second-order prediction used by the solid curve.
+        row['theory_acc_error_normalized'] = row[
+            'theory_acc_error_second_order_normalized']
+        row['theory_r2_acc'] = row['theory_r2_acc_second_order']
+
+
+def theory_order_array(
+        rows: list[dict[str, object]], policy: str, key: str
+        ) -> np.ndarray:
+    selected = sorted(
+        [row for row in rows if row['policy'] == policy],
+        key=lambda item: float(item['sigma']))
+    return np.asarray([float(row[key]) for row in selected])
 
 
 def metric_arrays(
@@ -260,6 +320,15 @@ def plot_comparison(
             sigma, theory, mc, error = metric_arrays(rows, policy, metric)
             color = colors[policy]
             ax.plot(sigma, theory, color=color, lw=2.0)
+            ratio_key = {
+                'acc_error_normalized': (
+                    'theory_acc_error_ratio_normalized'),
+                'r2_acc': 'theory_r2_acc_ratio',
+            }.get(metric)
+            if ratio_key is not None:
+                ax.plot(
+                    sigma, theory_order_array(rows, policy, ratio_key),
+                    color=color, lw=1.7, ls='--', alpha=0.9)
             marker = (
                 'd' if metric == 'r2_acc'
                 else ('o' if policy == 'cv' else 's'))
@@ -295,6 +364,8 @@ def plot_comparison(
                markeredgecolor='black', markeredgewidth=0.4,
                label=labels['fixed']),
         Line2D([0], [0], color='0.25', lw=2, label='DE curve'),
+        Line2D([0], [0], color='0.25', lw=1.7, ls='--',
+               label=r'ratio of DE expectations ($R_0=\mu_N/\mu_D$)'),
         Line2D([0], [0], color='0.25', marker='o', ls='none',
                label=r'MC mean $\pm$ 2 SE'),
         Line2D([0], [0], color='0.25', marker='d', ls='none',
@@ -364,6 +435,13 @@ def plot_policy_gap_comparison(
             error_ax.plot(
                 sigma, theory, color=color, lw=2.7, alpha=0.98,
                 zorder=4)
+            if path == 'acc':
+                error_ax.plot(
+                    sigma, theory_order_array(
+                        rows, policy,
+                        'theory_acc_error_ratio_normalized'),
+                    color=color, lw=1.9, ls='--', alpha=0.92,
+                    zorder=3)
             # Linear mean +/- 2 SE can cross zero even though squared errors
             # are nonnegative.  Clip only the displayed lower whisker so a
             # log axis does not turn that interval into a full-height line.
@@ -382,6 +460,12 @@ def plot_policy_gap_comparison(
             r2_ax.plot(
                 sigma, theory, color=color, lw=2.7, alpha=0.98,
                 zorder=4)
+            if path == 'acc':
+                r2_ax.plot(
+                    sigma, theory_order_array(
+                        rows, policy, 'theory_r2_acc_ratio'),
+                    color=color, lw=1.9, ls='--', alpha=0.92,
+                    zorder=3)
             r2_ax.errorbar(
                 sigma, mc, yerr=uncertainty, fmt='o', ls='none',
                 color=color, ecolor=color, alpha=0.52, ms=5.1,
@@ -504,13 +588,16 @@ def plot_policy_gap_comparison(
         Line2D([0], [0], color=lambda_color, lw=2.7,
                label=r'regularization $\lambda$'),
         Line2D([0], [0], color='0.2', lw=2.7,
-               label='DE theory (solid curve)'),
+               label='DE; accentuation second order (solid)'),
+        Line2D([0], [0], color='0.2', lw=1.9, ls='--',
+               label=r'accentuation ratio of expectations '
+                     r'($R_0=\mu_N/\mu_D$; dashed)'),
         Line2D([0], [0], color='0.2', marker='o', ls='none',
                mfc='white', mew=1.25,
                label=r'empirical MC (hollow points; uncertainty)'),
     ]
     fig.legend(
-        handles=legend_handles, loc='upper center', ncol=5,
+        handles=legend_handles, loc='upper center', ncol=3,
         frameon=False, fontsize=9.2, bbox_to_anchor=(0.5, 0.947))
     fig.suptitle(
         f'{dataset_title}: regularization controls the '
@@ -583,6 +670,9 @@ def main() -> None:
         if len(cached_fixed) != 1:
             raise RuntimeError(
                 f'Expected one cached fixed alpha, found {cached_fixed}')
+        add_theory_order_columns(
+            rows, compact_eigenvalues, compact_beta_proj, args.n)
+        write_summary(rows)
         plot_comparison(rows, cached_fixed[0], signal, args.n)
         plot_policy_gap_comparison(rows, cached_fixed[0], signal, args.n)
         logger.info(
@@ -684,6 +774,8 @@ def main() -> None:
             float(row['mc_r2_acc_median']))
 
     rows = merge_rows(cv_rows, fixed_rows, signal)
+    add_theory_order_columns(
+        rows, compact_eigenvalues, compact_beta_proj, args.n)
     write_summary(rows)
     plot_comparison(rows, args.fixed_alpha, signal, args.n)
     plot_policy_gap_comparison(rows, args.fixed_alpha, signal, args.n)

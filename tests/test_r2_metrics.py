@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from rmt_core.ridge_theory_lib import (
+    accentuation_ratio_moments_theory,
     accentuation_r2_theory,
     generalization_r2_theory,
     peer_review_error_theory,
@@ -88,6 +89,38 @@ def test_accentuation_delta_correction_changes_only_r2_not_alignment():
     assert correction0 == 0.0
     assert np.isclose(alignment_leading, alignment_corrected)
     assert np.isclose(r2_corrected, r2_leading + correction)
+
+
+def test_accentuation_ratio_mean_correction_matches_bivariate_delta_formula():
+    eigenvalues = np.array([2.0, 1.0, 0.4, 0.1])
+    beta_proj = np.array([1.0, -0.7, 0.3, 0.2])
+    kappa, sigma, n = 0.2, 0.4, 20
+    leading_r2, leading_ratio, _ = accentuation_r2_theory(
+        eigenvalues, beta_proj, kappa, sigma, n)
+    corrected_mean, ratio_variance, details = (
+        accentuation_ratio_moments_theory(
+            eigenvalues, beta_proj, kappa, sigma, n))
+
+    expected_bias = (
+        -details['numerator_denominator_covariance']
+        + leading_ratio * details['denominator_variance']
+    ) / details['denominator_leading_mean'] ** 2
+    assert np.isclose(details['ratio_mean_correction'], expected_bias)
+    assert np.isclose(corrected_mean, leading_ratio + expected_bias)
+    assert ratio_variance >= 0.0
+
+    corrected_r2, corrected_ratio, correction = accentuation_r2_theory(
+        eigenvalues, beta_proj, kappa, sigma, n,
+        include_delta_correction=True,
+        include_ratio_mean_correction=True)
+    expected_correction = (
+        (2.0 * leading_ratio - 3.0) / leading_ratio ** 4
+        * ratio_variance
+        + 2.0 * (1.0 - leading_ratio) / leading_ratio ** 3
+        * expected_bias)
+    assert np.isclose(corrected_ratio, leading_ratio)
+    assert np.isclose(correction, expected_correction)
+    assert np.isclose(corrected_r2, leading_r2 + expected_correction)
 
 
 def test_peer_delta_correction_is_internally_consistent():
