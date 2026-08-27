@@ -33,12 +33,13 @@ distinct geometries: the feature covariance
 $C=A\Sigma A^{\top}$ controls natural-image prediction, whereas
 $G=AA^{\top}$ controls pixel-space gradient motion.  This distinction gives
 closed-form finite-sample expressions for generalization, own-path
-accentuation, and peer review.  In a spectral feature map aligned with the
-eigenvectors of $\Sigma$, random-matrix deterministic equivalents (DEs) give
-per-mode weight bias and variance, generalization error, accentuation error,
-slopes, and both $R^2$ measures.  The same DE risk can also approximate
-cross-validation and select the ridge penalty.  Full PCA, whitening, and
-top-PC truncation emerge as transparent special cases.
+accentuation, and peer review.  Weighted one- and two-resolvent deterministic
+equivalents (DEs) give aggregate prediction and accentuation quantities for an
+arbitrary fixed linear map.  When the map is spectral and aligned with the
+eigenvectors of $\Sigma$, these results further resolve into per-mode weight
+bias and variance.  The same DE risk can also approximate cross-validation and
+select the ridge penalty.  Full PCA, whitening, and top-PC truncation emerge as
+transparent special cases.
 \end{abstract}
 
 \section{Teacher, features, and ridge student}
@@ -105,6 +106,30 @@ Consequently, truncated features reduce the training model to
 The omitted teacher signal is simultaneously irreducible generalization error
 and additional independent training noise.
 
+It is important not to confuse this prediction-optimal coefficient with the
+Euclidean projection of the teacher weight.  Define
+\begin{equation}
+  G=A A^{\top},\qquad \bm q=A\bstar,
+\end{equation}
+and let
+\begin{equation}
+  \bm\theta_{\rm E}=G^{\dagger}\bm q
+\end{equation}
+minimize $\lVert\bstar-A^{\top}\bm\theta\rVert^2$.  Then
+\begin{align}
+  A^{\top}\tstar
+    &=A^{\top}(A\Sigma A^{\top})^{\dagger}A\Sigma\bstar,
+    &&\text{prediction-optimal,}\label{eq:sigma-projection}\\
+  A^{\top}\bm\theta_{\rm E}
+    &=A^{\top}(AA^{\top})^{\dagger}A\bstar,
+    &&\text{Euclidean-weight-optimal.}\label{eq:euclidean-projection}
+\end{align}
+The first is the $\Sigma$-orthogonal projection onto
+$\operatorname{range}(A^{\top})$; the second is the ordinary Euclidean
+projection.  They agree for isotropic inputs, for an invariant/aligned retained
+subspace, or when this particular teacher has identical projections, but not
+in general.
+
 \section{Two geometries: prediction versus pixel control}
 
 Natural-image prediction is governed by $C=A\Sigma A^{\top}$.  Pixel-space
@@ -126,11 +151,28 @@ For a fixed fitted model, the noiseless population prediction error is
   =S_{\perp}+(\that-\tstar)^{\top}C(\that-\tstar).
   \label{eq:exact-gen-error}
 \end{equation}
+Equivalently, if
+\begin{equation}
+  N_{\rm gen}=\bm h^{\top}\that,
+  \qquad D_{\rm gen}=\that^{\top}C\that,
+\end{equation}
+then
+\begin{equation}
+  \boxed{E_{\rm gen}=S-2N_{\rm gen}+D_{\rm gen}.}
+  \label{eq:gen-quadratic-decomposition}
+\end{equation}
+This is an ordinary positive quadratic loss.  If performance is measured
+against a newly observed noisy response rather than the noiseless teacher,
+one simply adds the irreducible test noise $\sigma^2$.
 We use the noiseless-teacher coefficient of determination
 \begin{equation}
   R^2_{\rm gen}=1-\frac{E_{\rm gen}}{S}.
   \label{eq:r2-gen}
 \end{equation}
+Its denominator $S$ is a fixed population property.  Thus random fitted
+quantities cannot make the normalization singular.  Generalization $R^2$ can
+be negative when $E_{\rm gen}>S$, but it changes continuously with the fitted
+weight and does not acquire the ratio instability of own-path accentuation.
 The slope of true response on predicted response over natural inputs is
 \begin{equation}
   b_{\rm gen}
@@ -184,6 +226,383 @@ the generated path, the exact pathwise statistic becomes
 Unlike $E_{\rm acc}/S$, this statistic is singular when the true path gain
 $\bm q^{\top}\that$ is close to zero.  Hence it can be extremely negative even
 when other summary metrics appear bounded.
+
+\subsection{Two distinct accentuation breakdowns}
+
+For clarity, write
+\begin{equation}
+  N_{\rm acc}=\bm q^{\top}\that,
+  \qquad D_{\rm acc}=\that^{\top}G\that\geq 0.
+\end{equation}
+At a fixed, unnormalized path distribution, the raw discrepancy is simply
+\begin{equation}
+  \E_t[(\Delta\widehat f-\Delta f^{\star})^2]
+  =\E[t^2](D_{\rm acc}-N_{\rm acc})^2,
+  \label{eq:raw-path-loss}
+\end{equation}
+which is again a regular quadratic quantity.  The dramatic behavior enters
+when the path is normalized by one of its fitted response variances:
+\begin{align}
+  \frac{E_{\rm acc}}{S}
+    &=\left(1-\frac{N_{\rm acc}}{D_{\rm acc}}\right)^2,
+    &\text{singular when }D_{\rm acc}\to0,\label{eq:eacc-singularity}\\
+  R^2_{\rm acc}
+    &=1-\left(1-\frac{D_{\rm acc}}{N_{\rm acc}}\right)^2,
+    &\text{singular when }N_{\rm acc}\to0.\label{eq:r2acc-singularity}
+\end{align}
+These are opposite singular limits.  If $N_{\rm acc}\to0$ while
+$D_{\rm acc}$ remains appreciable, then
+$R^2_{\rm acc}\sim-(D_{\rm acc}/N_{\rm acc})^2\to-\infty$, whereas
+$E_{\rm acc}/S\to1$.  If $D_{\rm acc}\to0$ while $N_{\rm acc}$ decays more
+slowly, the student-calibrated loss diverges, whereas $R^2_{\rm acc}\to0$.
+Moreover, $N_{\rm acc}<0$ means that the teacher moves opposite to the
+student along the generated path; then $R^2_{\rm acc}<0$ automatically.
+
+There are two mechanisms for approaching these bad regimes.  First, finite
+samples, response noise, and cross-validated regularization can shrink or
+randomize the signed linear form $N_{\rm acc}$.  At the same time, estimation
+variance adds a positive contribution to $D_{\rm acc}$, so the ratio
+$D_{\rm acc}/N_{\rm acc}$ can become very large.  Second, a non-aligned
+dimension-reducing feature map creates a structural mismatch even with
+infinite noiseless data.  In the limit $n\to\infty$, $\lambda\to0$,
+\begin{equation}
+  \that\longrightarrow\tstar=C^{\dagger}\bm h,
+\end{equation}
+and hence
+\begin{equation}
+  N_{\rm acc,\infty}=\bm q^{\top}\tstar,
+  \qquad
+  D_{\rm acc,\infty}=(\tstar)^{\top}G\tstar.
+  \label{eq:structural-acc-gains}
+\end{equation}
+Because $\bm q=G\bm\theta_{\rm E}$ on the effective feature support,
+\begin{equation}
+  N_{\rm acc,\infty}-D_{\rm acc,\infty}
+  =(\tstar)^{\top}G(\bm\theta_{\rm E}-\tstar).
+  \label{eq:projection-mismatch-control}
+\end{equation}
+Prediction training selects $\tstar$, whereas exact pixel-gradient control
+would prefer $\bm\theta_{\rm E}$.  The two need not agree, and the signed
+quantity $\bm q^{\top}\tstar$ can be small or even negative despite small
+natural generalization error.
+
+This structural mechanism is absent in direct pixel regression.  With $A=I$,
+\begin{equation}
+  C=\Sigma,\quad G=I,\quad \bm h=\Sigma\bstar,
+  \quad\bm q=\bstar,\quad S_{\perp}=0,
+  \quad\tstar=\bm\theta_{\rm E}=\bstar.
+\end{equation}
+Thus infinite-data, zero-ridge pixel regression has
+$N_{\rm acc}=D_{\rm acc}=\lVert\bstar\rVert^2$ and perfect own-path
+calibration.  Its breakdown is entirely a finite-sample/noise/regularization
+effect, often driven by low-variance input directions.  By contrast, a fixed
+non-aligned truncated feature map can have both that statistical effect and
+an irreducible projection mismatch.  An aligned PCA truncation is an
+important intermediate case: it has $S_{\perp}>0$ in general, but its
+prediction- and Euclidean-optimal weights agree on the retained modes, so its
+infinite-data own-path calibration remains exact.
+
+\section{Deterministic equivalents for an arbitrary fixed feature map}
+\label{sec:fixed-feature-de}
+
+The preceding exact formulas do not require $C$ and $G$ to commute.  Their
+leading aggregate DEs also remain tractable for a deterministic, non-aligned
+map.  Assume $p/n$ has a finite positive limit and the relevant operator norms
+and deterministic quadratic forms remain bounded.  Let $\kappa$ solve
+\begin{equation}
+  \kappa-\lambda
+  =\frac{\kappa}{n}\tr[C(C+\kappa I)^{-1}],
+  \label{eq:general-kappa-fixed-point}
+\end{equation}
+and define
+\begin{equation}
+  \mathcal R=(C+\kappa I)^{-1},\qquad
+  H=C\mathcal R,\qquad
+  \bm\mu=H\tstar,
+\end{equation}
+as well as
+\begin{equation}
+  v_0=
+  \frac{\kappa^2(\tstar)^{\top}\mathcal R C\mathcal R\tstar
+        +\sigma_{\rm eff}^2}
+       {n-\tr(C^2\mathcal R^2)},
+  \qquad \sigma_{\rm eff}^2=\sigma^2+S_{\perp}.
+  \label{eq:general-v0}
+\end{equation}
+Then the ordinary generalization quantities have DEs
+\begin{align}
+  N_{\rm gen}^{\rm DE}
+    &=\bm h^{\top}\bm\mu,\\
+  D_{\rm gen}^{\rm DE}
+    &=\bm\mu^{\top}C\bm\mu
+      +v_0\tr(C^2\mathcal R^2),\\
+  E_{\rm gen}^{\rm DE}
+    &=S-2N_{\rm gen}^{\rm DE}+D_{\rm gen}^{\rm DE}\nonumber\\
+    &=S_{\perp}+(\bm\mu-\tstar)^{\top}C(\bm\mu-\tstar)
+      +v_0\tr(C^2\mathcal R^2).
+  \label{eq:general-feature-gen-de}
+\end{align}
+The first two terms in the final line are approximation bias and omitted
+signal; the last is estimation variance.
+
+For pixel accentuation,
+\begin{align}
+  N_{\rm acc}^{\rm DE}
+    &=\bm q^{\top}\bm\mu,\\
+  D_{\rm acc}^{\rm DE}
+    &=\bm\mu^{\top}G\bm\mu
+      +v_0\tr(G\mathcal R C\mathcal R).
+  \label{eq:general-feature-acc-de}
+\end{align}
+The second line follows from the weighted two-resolvent identity
+\begin{equation}
+  Q_{\lambda}GQ_{\lambda}\ \asymp\
+  \left(\frac{\kappa}{\lambda}\right)^2
+  \left[
+    \mathcal R G\mathcal R
+    +\frac{n^{-1}\tr(G\mathcal R C\mathcal R)}
+           {1-n^{-1}\tr(C^2\mathcal R^2)}
+      \mathcal R C\mathcal R
+  \right],
+  \label{eq:weighted-two-resolvent}
+\end{equation}
+where $Q_{\lambda}=(\widehat C+\lambda I)^{-1}$.  The correction after
+$\mathcal R G\mathcal R$ is essential: replacing the two random resolvents
+independently by their one-point DE misses the random-design contribution.
+Equations~\eqref{eq:general-feature-gen-de} and
+\eqref{eq:general-feature-acc-de} reduce to the componentwise formulas below
+when $C$ and $G$ share an eigenbasis.
+
+\section{Geometry of protected prediction and catastrophic accentuation}
+\label{sec:protected-prediction-bad-control}
+
+\subsection{Exact two-center geometry}
+
+The cleanest geometric description uses the two feature-space inner products
+\begin{equation}
+  \langle\bm u,\bm v\rangle_C=\bm u^{\top}C\bm v,
+  \qquad
+  \langle\bm u,\bm v\rangle_G=\bm u^{\top}G\bm v.
+\end{equation}
+Natural prediction compares $\that$ with the prediction-optimal center
+$\bm\theta_{\rm P}=\tstar=C^{\dagger}\bm h$ in the $C$ metric:
+\begin{equation}
+  E_{\rm gen}=S_{\perp}
+  +\lVert\that-\bm\theta_{\rm P}\rVert_C^2.
+  \label{eq:prediction-ellipsoid}
+\end{equation}
+Pixel control instead compares $\that$ with the Euclidean-weight-optimal
+center $\bm\theta_{\rm E}=G^{\dagger}\bm q$ in the $G$ metric.  On the
+effective feature support, $\bm q=G\bm\theta_{\rm E}$ and therefore
+\begin{equation}
+  N_{\rm acc}=\langle\that,\bm\theta_{\rm E}\rangle_G,
+  \qquad
+  D_{\rm acc}=\lVert\that\rVert_G^2.
+\end{equation}
+
+Let $B_{\rm E}=\lVert\bm\theta_{\rm E}\rVert_G^2>0$ and make the exact
+$G$-orthogonal decomposition
+\begin{equation}
+  \that=a\bm\theta_{\rm E}+\bm u,
+  \qquad
+  \langle\bm u,\bm\theta_{\rm E}\rangle_G=0.
+\end{equation}
+Then
+\begin{align}
+  N_{\rm acc}&=aB_{\rm E},\\
+  D_{\rm acc}&=a^2B_{\rm E}+\lVert\bm u\rVert_G^2,\\
+  \frac{D_{\rm acc}}{N_{\rm acc}}
+    &=a+\frac{\lVert\bm u\rVert_G^2}{aB_{\rm E}}.
+  \label{eq:exact-control-angle-norm}
+\end{align}
+Equation~\eqref{eq:exact-control-angle-norm} separates two control failures.
+The coefficient $a$ measures signed calibration along the realizable teacher;
+$\bm u$ is pixel-gradient energy orthogonal to that teacher.  For $a>0$,
+$R^2_{\rm acc}<0$ exactly when
+\begin{equation}
+  a+\frac{\lVert\bm u\rVert_G^2}{aB_{\rm E}}>2.
+\end{equation}
+It becomes arbitrarily negative when $a\to0$ with nonzero orthogonal energy,
+or when the orthogonal energy becomes arbitrarily large relative to
+$aB_{\rm E}$.  Natural prediction can nevertheless remain accurate because
+Eq.~\eqref{eq:prediction-ellipsoid} measures displacement from a different
+center, in a different metric.
+
+\subsection{Sharp prediction cost of collapsing the true path gain}
+
+Assume for the moment that $C$ is positive definite on the effective feature
+support.  The smallest excess prediction loss among all fitted weights whose
+true accentuation gain vanishes is
+\begin{align}
+  \epsilon_{N=0}
+  &\equiv
+  \min_{\bm\theta:\,\bm q^{\top}\bm\theta=0}
+       \lVert\bm\theta-\bm\theta_{\rm P}\rVert_C^2\nonumber\\
+  &=\boxed{
+    \frac{(\bm q^{\top}\bm\theta_{\rm P})^2}
+         {\bm q^{\top}C^{-1}\bm q}}.
+  \label{eq:minimum-risk-to-zero-gain}
+\end{align}
+The minimizing fitted weight is
+\begin{equation}
+  \bm\theta_{N=0}
+  =\bm\theta_{\rm P}
+   -\frac{\bm q^{\top}\bm\theta_{\rm P}}
+          {\bm q^{\top}C^{-1}\bm q}C^{-1}\bm q.
+\end{equation}
+Hence a nearly perfect natural predictor can sit arbitrarily close to the
+$R^2_{\rm acc}$ singularity when both
+\begin{equation}
+  \frac{S_{\perp}}{S}\ll1,
+  \qquad
+  \frac{\epsilon_{N=0}}{S}\ll1.
+  \label{eq:protected-prediction-singular-control}
+\end{equation}
+The denominator $\bm q^{\top}C^{-1}\bm q$ is the susceptibility of the true
+path gain to a unit of prediction loss.  It is large when the control
+functional $\bm q$ points strongly into low-variance feature directions.  For
+singular $C$, the same statement holds after restricting to its support and
+using the corresponding pseudoinverse, provided the constraint is reachable.
+
+\subsection{Generalized low-variance amplification}
+
+For any feature-space error $\bm e$, define the generalized Rayleigh quotient
+\begin{equation}
+  \rho(\bm e)
+  =\frac{\bm e^{\top}G\bm e}{\bm e^{\top}C\bm e}
+  =\frac{\lVert A^{\top}\bm e\rVert^2}
+         {(A^{\top}\bm e)^{\top}\Sigma(A^{\top}\bm e)}.
+  \label{eq:generalized-control-rayleigh}
+\end{equation}
+The most dangerous direction is measured by
+\begin{equation}
+  \rho_{\max}
+  =\lambda_{\max}(C^{-1/2}GC^{-1/2}),
+  \qquad G\preceq\rho_{\max}C.
+  \label{eq:max-control-amplification}
+\end{equation}
+Thus
+\begin{equation}
+  \lVert\bm e\rVert_G^2
+  \leq\rho_{\max}\lVert\bm e\rVert_C^2.
+\end{equation}
+When $\rho_{\max}$ is modest, good prediction controls pixel-gradient error.
+When it is very large, a direction can be almost invisible to natural risk
+but enormous in pixel space.  A useful sufficient protection diagnostic is
+\begin{equation}
+  \Delta_G
+  =\lVert\bm\theta_{\rm P}-\bm\theta_{\rm E}\rVert_G
+   +\sqrt{\rho_{\max}(E_{\rm gen}-S_{\perp})}.
+  \label{eq:control-protection-radius}
+\end{equation}
+If $\Delta_G\ll\lVert\bm\theta_{\rm E}\rVert_G$, then prediction accuracy
+forces $\that$ into a small $G$-ball around the control-optimal weight and
+accentuation is protected.  If $\Delta_G$ is comparable to or larger than
+$\lVert\bm\theta_{\rm E}\rVert_G$, natural prediction alone supplies no such
+guarantee.  The first term is structural feature mismatch; the second is
+statistical error amplified by low natural variance.
+
+The DE has a scale-specific version of the same amplification.  Estimation
+variance contributes
+\begin{equation}
+  V_{\rm gen}=v_0\tr(C^2\mathcal R^2),
+  \qquad
+  V_{\rm acc}=v_0\tr(G\mathcal R C\mathcal R),
+\end{equation}
+so their ratio is
+\begin{equation}
+  \mathcal A_{G/C}(\kappa)
+  =\frac{\tr(G\mathcal R C\mathcal R)}
+         {\tr(C^2\mathcal R^2)}.
+  \label{eq:de-control-amplification}
+\end{equation}
+Prediction can remain protected while accentuation variance is large when
+$V_{\rm gen}\ll S$ but
+$V_{\rm acc}$ is comparable to $|N_{\rm acc}|$; a large
+$\mathcal A_{G/C}(\kappa)$ makes these inequalities compatible.
+
+\subsection{CV-selected simplification of the accentuation ratio}
+
+Let
+\begin{equation}
+  z_{\rm acc}^{\rm DE}
+  =\frac{D_{\rm acc}^{\rm DE}}{N_{\rm acc}^{\rm DE}}-1.
+\end{equation}
+For an arbitrary fixed map, Eqs.~\eqref{eq:general-feature-acc-de} give
+\begin{equation}
+  z_{\rm acc}^{\rm DE}
+  =\frac{\bm\mu^{\top}G\bm\mu-\bm q^{\top}\bm\mu
+          +v_0T_G}
+         {\bm q^{\top}\bm\mu},
+  \qquad
+  T_G=\tr(G\mathcal R C\mathcal R).
+  \label{eq:general-feature-z}
+\end{equation}
+At an interior minimizer of the DE generalization risk, define
+\begin{equation}
+  B_{2,3}^{C}=(\tstar)^{\top}C^2\mathcal R^3\tstar,
+  \qquad
+  d_{2,3}^{C}=\tr(C^2\mathcal R^3).
+\end{equation}
+The first-order stationarity condition implies
+\begin{equation}
+  v_0=\kappa\frac{B_{2,3}^{C}}{d_{2,3}^{C}}.
+  \label{eq:cv-v0-stationarity}
+\end{equation}
+Using $\bm q=G\bm\theta_{\rm E}$, the CV-selected ratio therefore becomes
+\begin{equation}
+  \boxed{
+  z_{\rm acc,CV}^{\rm DE}
+  =\frac{\bm\mu^{\top}G(\bm\mu-\bm\theta_{\rm E})}
+         {\bm q^{\top}\bm\mu}
+   +\frac{\kappa T_G}{\bm q^{\top}\bm\mu}
+      \frac{B_{2,3}^{C}}{d_{2,3}^{C}}.}
+  \label{eq:general-feature-z-cv}
+\end{equation}
+The first term is deterministic shrinkage plus structural projection mismatch;
+the second is variance inflation at the penalty selected to protect natural
+prediction.  Cross-validation controls the latter only through $C$ and does
+not optimize the $G$ geometry or remove the first term.
+
+There is a closer analogue of the pixel-regression simplification when $C$
+and $G$ commute and $\bm\theta_{\rm P}=\bm\theta_{\rm E}=\tstar$, as for an
+aligned spectral feature map.  Define
+\begin{align}
+  B_{a,b}^{G}
+    &=(\tstar)^{\top}G C^a(C+\kappa I)^{-b}\tstar,\\
+  d_{a,b}^{G}
+    &=\tr[G C^a(C+\kappa I)^{-b}].
+\end{align}
+Then
+\begin{equation}
+  N_{\rm acc}^{\rm DE}=B_{1,1}^{G},
+  \qquad
+  D_{\rm acc}^{\rm DE}=B_{2,2}^{G}+v_0d_{1,2}^{G},
+\end{equation}
+and the identity $B_{2,2}^{G}-B_{1,1}^{G}=-\kappa B_{1,2}^{G}$ yields
+\begin{equation}
+  \boxed{
+  z_{\rm acc,CV}^{\rm DE}
+  =\kappa\frac{d_{1,2}^{G}}{B_{1,1}^{G}}
+   \left(
+     \frac{B_{2,3}^{C}}{d_{2,3}^{C}}
+     -\frac{B_{1,2}^{G}}{d_{1,2}^{G}}
+   \right).}
+  \label{eq:aligned-feature-z-cv}
+\end{equation}
+This has the same difference-of-weighted-averages structure as direct pixel
+regression, but the CV average is selected in the natural prediction geometry
+$C$, while the second average is weighted by pixel-control geometry $G$.
+Setting $A=I$, so that $C=\Sigma$, $G=I$, and $\tstar=\bstar$, recovers the
+pixel-space formula.
+
+Finally, $R_{\rm acc}^{2,\rm DE}=1-(z_{\rm acc}^{\rm DE})^2$ is a typical-fit
+plug-in, not generally the Monte Carlo mean.  The replacement of a random
+ratio by a ratio of deterministic means requires relative concentration of
+its denominator.  Precisely in the catastrophic regime where
+$N_{\rm acc}$ approaches or crosses zero, that expansion is nonuniform and
+rare realizations can dominate the empirical mean.  Medians, quantiles, and a
+joint fluctuation theory for $(N_{\rm acc},D_{\rm acc})$ are then essential.
 
 \section{Spectral feature maps and deterministic equivalents}
 \label{sec:spectral-de}
@@ -453,11 +872,13 @@ The main conclusions are:
         means/standard errors should both be reported.
 \end{enumerate}
 
-The present closed-form feature DE assumes a linear feature map aligned with
-the input covariance eigenbasis, so that $C$ and $G$ commute.  The exact
-finite-sample formulas in Sections 1--2 hold for arbitrary linear $A$.
-Extending the DE to noncommuting $C$ and $G$, nonlinear learned features, and
-joint peer-review fluctuations requires operator-valued or bilinear-resolvent
+The aggregate first-order formulas in
+Section~\ref{sec:fixed-feature-de} allow a fixed linear map with noncommuting
+$C$ and $G$ through a weighted two-resolvent DE.  The mode-resolved bias and
+variance formulas in Section~\ref{sec:spectral-de} additionally assume an
+aligned spectral map.  Full fluctuations of nonlinear ratios, joint
+peer-review statistics, feature maps learned from the same training sample,
+and nonlinear features still require joint multi-resolvent or operator-valued
 deterministic equivalents.
 
 A detailed derivation of the current noise-conditional
