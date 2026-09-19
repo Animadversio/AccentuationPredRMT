@@ -146,7 +146,11 @@ def level_plot(results,method,filename):
     fig.tight_layout();fig.savefig(FIGURE/filename,dpi=180);plt.close(fig)
 
 
-def predictor_benchmark_plot(results,endpoint,filename):
+def predictor_benchmark_plot(results,endpoint,filename,significance='raw'):
+    assert significance in {'raw','fdr'}
+    significance_column='cluster_p' if significance=='raw' else 'cluster_q_bh'
+    significance_label=('Raw site-clustered p < 0.05' if significance=='raw'
+                        else 'BH-FDR q < 0.05 across 24 predictors')
     d=results[results.endpoint==endpoint].copy()
     meta=(d[['predictor_id','label','group','display_order']].drop_duplicates()
           .sort_values('display_order'))
@@ -175,7 +179,7 @@ def predictor_benchmark_plot(results,endpoint,filename):
             # BH correction within this endpoint/outcome/subset panel.
             for xvalue,subset in [(xa,'all_models'),(xr,'without_robust'),
                                   (xt,'without_robust_and_untrained')]:
-                if pair.loc[subset,'cluster_q_bh'] < .05:
+                if pair.loc[subset,significance_column] < .05:
                     ax.text(xvalue,yi+.20,'★',color=color,ha='center',va='bottom',
                             fontsize=10,zorder=6)
             conventional=pair.loc['without_robust_and_untrained']
@@ -195,14 +199,14 @@ def predictor_benchmark_plot(results,endpoint,filename):
              plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
                         color='.25',label='Also without untrained AlexNet'),
              plt.Line2D([],[],marker='*',linestyle='',color='.25',markersize=9,
-                        label='BH-FDR q < 0.05 above that marker')]
+                        label=significance_label+' above that marker')]
     group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
                    [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),
                     ('step','Finite step'),('stein','Stein')]]
     fig.legend(handles=handles+group_handles,ncol=6,loc='lower center',frameon=False,fontsize=8)
     fig.suptitle('Benchmark of control-geometry predictors of biological outcomes\n'
-                 f'{d.endpoint_label.iloc[0]}; site means removed from log predictor and outcome',y=.985)
+                 f'{d.endpoint_label.iloc[0]}; site means removed; stars: {significance_label}',y=.985)
     fig.subplots_adjust(left=.23,right=.98,top=.91,bottom=.12,wspace=.08)
     fig.savefig(FIGURE/filename,dpi=200)
     plt.close(fig)
@@ -245,11 +249,14 @@ def main():
     benchmark=build_benchmark_table(data)
     benchmark.to_csv(TABLE/'predictor_benchmark_site_centered.csv',index=False)
     predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
-                             'site_centered_predictor_benchmark_control_session.png')
+                             'site_centered_predictor_benchmark_control_session.png',significance='raw')
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_fdr.png',significance='fdr')
     predictor_benchmark_plot(benchmark,'control_session_identity_reference',
-                             'site_centered_predictor_benchmark_control_session_identity_reference.png')
+                             'site_centered_predictor_benchmark_control_session_identity_reference.png',
+                             significance='raw')
     predictor_benchmark_plot(benchmark,'encoding_session',
-                             'site_centered_predictor_benchmark_encoding_session.png')
+                             'site_centered_predictor_benchmark_encoding_session.png',significance='raw')
     print(results[(results.subset=='without_robust')&(results.method=='smooth')&
                   results.outcome.isin(['control_slope','control_mse'])].to_string(index=False))
 

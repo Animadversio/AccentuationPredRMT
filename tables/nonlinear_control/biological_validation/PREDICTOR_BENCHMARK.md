@@ -30,9 +30,11 @@ Each endpoint benchmark contains 24 predictors:
 The figures show Spearman correlation because model rankings are the primary
 question and the predictors span very different scales. The CSV also stores
 Pearson correlation and a linear standardized coefficient with site-clustered
-standard error. A filled five-point star directly above any filled circle,
-open circle or open diamond marks Benjamini-Hochberg q < 0.05 for that marker's model subset. It
-does not represent a clustered significance test of Spearman correlation.
+standard error. In the default exploratory figures, a filled five-point star
+directly above a marker denotes an unadjusted site-clustered linear-effect
+`p < 0.05` for that model subset. The separately named `_fdr` figure instead
+uses Benjamini-Hochberg `q < 0.05` across the 24 predictors in that panel. The
+stars do not represent a clustered significance test of Spearman correlation.
 
 The Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
@@ -40,7 +42,9 @@ next to the markers. These small-n correlations are unstable and should not be
 ranked directly against the full-coverage subset estimates.
 
 `site_centered_predictor_benchmark_control_session.png` is the calibrated
-default. `site_centered_predictor_benchmark_control_session_identity_reference.png`
+default with raw-p stars. `site_centered_predictor_benchmark_control_session_fdr.png`
+is the identical benchmark with BH-FDR stars.
+`site_centered_predictor_benchmark_control_session_identity_reference.png`
 preserves the previous direct identity-scale comparison. The encoding-session
 figure remains an explicitly labeled identity reference because the
 encoding-to-control map targets control-session response units.

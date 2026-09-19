@@ -122,6 +122,10 @@ to the linear site-residual coefficient; they are not p values for Spearman's
 rho. Stein rows retain their actual positive-V sample counts because the
 large-noise estimators can be nonpositive.
 
+The default benchmark figures mark unadjusted site-clustered `p < 0.05`. The
+separate `_fdr` control-session figure marks BH-FDR `q < 0.05` across the 24
+predictors. Both statistics remain in the plot-ready CSV.
+
 The `control_session_anchor_affine` rows are the default benchmark: outcomes
 are `control_anchor_affine_slope/MSE`, heldout error is measured after the
 training-anchor site map, and every V uses
