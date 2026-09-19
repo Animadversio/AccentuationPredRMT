@@ -14,8 +14,10 @@ For every predictor, the analysis first takes `log10`, subtracts the mean of
 the 10 encoding models within each biological site, and subtracts the same site
 mean from the biological outcome. This is a site fixed-intercept comparison of
 models and removes all between-site and between-monkey level differences. The
-filled marker uses all 10 models. The open marker removes CLIPAG and robust
-RN50. Their connecting segment exposes sensitivity to those two model families.
+filled circle uses all 10 models. The open circle removes CLIPAG and robust
+RN50. The open diamond additionally removes the untrained AlexNet, leaving the
+seven conventionally trained models. Their connecting segment exposes
+sensitivity to these three model-family outliers.
 
 Each endpoint benchmark contains 24 predictors:
 
@@ -29,13 +31,13 @@ The figures show Spearman correlation because model rankings are the primary
 question and the predictors span very different scales. The CSV also stores
 Pearson correlation and a linear standardized coefficient with site-clustered
 standard error. Stars mark Benjamini-Hochberg q < 0.05 for that clustered
-linear coefficient within each endpoint, outcome and model subset. They do not
-represent a clustered significance test of Spearman correlation.
+linear coefficient in the strict seven-model subset. They do not represent a
+clustered significance test of Spearman correlation.
 
 The Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
 next to the markers. These small-n correlations are unstable and should not be
-ranked directly against the 200-row conventional-model estimates.
+ranked directly against the full-coverage subset estimates.
 
 `site_centered_predictor_benchmark_control_session.png` is the calibrated
 default. `site_centered_predictor_benchmark_control_session_identity_reference.png`

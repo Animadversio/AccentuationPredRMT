@@ -85,7 +85,12 @@ def build_benchmark_table(data):
             suffix='trace_mean' if config.pop('quantity')=='trace' else f'V_{geometry_endpoint}_mean'
             config['predictor']=f"{config.pop('base')}__{suffix}"
             configs.append(config)
-        for subset,d in [('all_models',data),('without_robust',data[~data.robust_model])]:
+        benchmark_subsets=[
+            ('all_models',data),
+            ('without_robust',data[~data.robust_model]),
+            ('without_robust_and_untrained',
+             data[(~data.robust_model)&(data.model!='AlexNet_training_seed_01')])]
+        for subset,d in benchmark_subsets:
             for order,config in enumerate(configs):
                 for outcome_role,outcome,direction in [
                         ('control_slope',spec['slope_outcome'],-1),
@@ -154,19 +159,22 @@ def predictor_benchmark_plot(results,endpoint,filename):
         panel=d[d.outcome_role==outcome]
         for _,row in meta.iterrows():
             pair=panel[panel.predictor_id==row.predictor_id].set_index('subset')
-            if not {'all_models','without_robust'}.issubset(pair.index):
+            required={'all_models','without_robust','without_robust_and_untrained'}
+            if not required.issubset(pair.index):
                 continue
             xa=pair.loc['all_models','direction_aligned_spearman']
-            xc=pair.loc['without_robust','direction_aligned_spearman']
+            xr=pair.loc['without_robust','direction_aligned_spearman']
+            xt=pair.loc['without_robust_and_untrained','direction_aligned_spearman']
             yi=ymap[row.predictor_id];color=METHOD_COLORS[row.group]
-            ax.plot([xa,xc],[yi,yi],color='.76',lw=2,zorder=1)
+            ax.plot([xa,xr,xt],[yi,yi,yi],color='.76',lw=2,zorder=1)
             ax.scatter(xa,yi,s=62,color=color,edgecolor=color,zorder=3)
-            ax.scatter(xc,yi,s=62,facecolor='white',edgecolor=color,lw=2,zorder=4)
-            conventional=pair.loc['without_robust']
+            ax.scatter(xr,yi,s=62,facecolor='white',edgecolor=color,lw=2,zorder=4)
+            ax.scatter(xt,yi,s=62,marker='D',facecolor='white',edgecolor=color,lw=2,zorder=5)
+            conventional=pair.loc['without_robust_and_untrained']
             if conventional.cluster_q_bh < .05:
-                ax.text(xc,yi+.22,'★',color=color,ha='center',va='bottom',fontsize=10)
-            if conventional.n < 200:
-                ax.text(max(xa,xc)+.018,yi,f"n={int(conventional.n)}",color='.35',
+                ax.text(xt,yi+.22,'★',color=color,ha='center',va='bottom',fontsize=10)
+            if conventional.n < 175:
+                ax.text(max(xa,xr,xt)+.018,yi,f"n={int(conventional.n)}",color='.35',
                         va='center',fontsize=7)
         ax.axvline(0,color='.55',lw=.9)
         ax.grid(axis='x',color='.91',lw=.8)
@@ -178,12 +186,14 @@ def predictor_benchmark_plot(results,endpoint,filename):
     handles=[plt.Line2D([],[],marker='o',linestyle='',color='.25',label='All 10 models'),
              plt.Line2D([],[],marker='o',linestyle='',markerfacecolor='white',markeredgewidth=2,
                         color='.25',label='Without CLIPAG + robust RN50'),
-             plt.Line2D([],[],marker='$★$',linestyle='',color='.25',label='BH-FDR q < 0.05')]
+             plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
+                        color='.25',label='Also without untrained AlexNet'),
+             plt.Line2D([],[],marker='$★$',linestyle='',color='.25',label='7-model BH-FDR q < 0.05')]
     group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
                    [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),
                     ('step','Finite step'),('stein','Stein')]]
-    fig.legend(handles=handles+group_handles,ncol=5,loc='lower center',frameon=False,fontsize=8)
+    fig.legend(handles=handles+group_handles,ncol=6,loc='lower center',frameon=False,fontsize=8)
     fig.suptitle('Benchmark of control-geometry predictors of biological outcomes\n'
                  f'{d.endpoint_label.iloc[0]}; site means removed from log predictor and outcome',y=.985)
     fig.subplots_adjust(left=.23,right=.98,top=.91,bottom=.12,wspace=.08)

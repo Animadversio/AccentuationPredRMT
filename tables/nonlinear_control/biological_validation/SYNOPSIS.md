@@ -112,8 +112,9 @@ control-MSE computation/scatter separately.
 fixed benchmark of 24 predictors: held-out generalization MSE, exact trace,
 exact/local-MC V, and four noise levels for smooth, neighborhood, variance,
 finite-step and Stein V. It stores both raw and direction-aligned Pearson and
-Spearman correlations for all ten models and after removing CLIPAG and robust
-RN50. Direction alignment multiplies slope correlations by -1 and leaves MSE
+Spearman correlations for all ten models, after removing CLIPAG and robust
+RN50, and after additionally removing the untrained AlexNet. Direction
+alignment multiplies slope correlations by -1 and leaves MSE
 correlations unchanged, so positive values consistently mean that a larger
 predicted control-error term accompanies worse biological control. The
 clustered regression p value and within-panel Benjamini-Hochberg q value refer
