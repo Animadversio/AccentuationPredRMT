@@ -1,4 +1,4 @@
-"""Matched-layer, matched-seed standard/robust RN50 geometry comparison."""
+"""Matched-seed geometry comparison, with explicit opt-in for different layers."""
 import argparse
 import csv
 import json
@@ -24,21 +24,27 @@ def kappa_at_df2(s, target):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--standard', type=Path, required=True)
-    ap.add_argument('--robust', type=Path, required=True)
+    ap.add_argument('--standard', '--first', dest='standard', type=Path, required=True)
+    ap.add_argument('--robust', '--second', dest='robust', type=Path, required=True)
+    ap.add_argument('--first-label', default='Standard RN50')
+    ap.add_argument('--second-label', default='Robust RN50')
+    ap.add_argument('--allow-different-layers', action='store_true')
+    ap.add_argument('--filename-base', default='rn50_comparison')
     ap.add_argument('--output', type=Path, required=True)
     args = ap.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     paths = [args.standard, args.robust]
     audits = [json.loads((p/'audit.json').read_text()) for p in paths]
     images = [json.loads((p/'evaluation_images.json').read_text()) for p in paths]
-    assert audits[0]['layer'] == audits[1]['layer']
+    if not args.allow_different_layers:
+        assert audits[0]['layer'] == audits[1]['layer'], 'Different layers require explicit opt-in'
     assert audits[0]['n_train'] == audits[1]['n_train']
     assert images[0] == images[1], 'Must compare the same seed images in the same order'
     plt.rcParams['pdf.fonttype'] = 42
     fig, axs = plt.subplots(2, 2, figsize=(11, 8))
     rows, seed_traces = [], []
-    for path, label, color in zip(paths, ['Standard RN50', 'Robust RN50'], ['#c04a36', '#2378ad']):
+    labels = [args.first_label, args.second_label]
+    for path, label, color in zip(paths, labels, ['#c04a36', '#2378ad']):
         d = np.genfromtxt(path/'pc_summary.csv', names=True, delimiter=',')
         s, q, rank = d['variance'], d['mean_power'], d['pc']
         assert len(s) == 750
@@ -74,16 +80,23 @@ def main():
     for ax in axs.flat:
         ax.legend(fontsize=8)
         ax.spines[['top', 'right']].set_visible(False)
-    fig.suptitle(f"Standard vs robust RN50 | {audits[0]['layer']} | 10 fixed seeds\n"
-                 'Separate training PCA750 bases; RGB input metric; trace geometry only')
+    layer_title = audits[0]['layer'] if audits[0]['layer']==audits[1]['layer'] else 'different architectures / selected layers'
+    fig.suptitle(f"{labels[0]} vs {labels[1]} | {len(images[0])} fixed seeds\n"
+                 f'{layer_title}; separate training PCA750; RGB metric')
     fig.tight_layout()
     for ext in ['png', 'pdf']:
-        fig.savefig(args.output/f'rn50_comparison.{ext}', dpi=150)
+        fig.savefig(args.output/f'{args.filename_base}.{ext}', dpi=150)
     with (args.output/'matched_df2.csv').open('w') as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader(); writer.writerows(rows)
     ratios = seed_traces[0]/seed_traces[1]
-    print('Per-seed standard/robust T ratios at matched df2/750=0.5:', ratios)
+    np.savetxt(args.output/'paired_seed_traces.csv',
+               np.column_stack((np.arange(1, len(images[0])+1), seed_traces[0], seed_traces[1], ratios)),
+               delimiter=',', header='seed_index,first_trace,second_trace,first_over_second', comments='')
+    (args.output/'comparison_config.json').write_text(json.dumps(dict(
+        first=str(paths[0]), second=str(paths[1]), labels=labels, audits=audits,
+        different_layers=audits[0]['layer']!=audits[1]['layer']), indent=2))
+    print(f'Per-seed {labels[0]}/{labels[1]} T ratios at matched df2/750=0.5:', ratios)
     print(json.dumps(rows, indent=2))
 
 

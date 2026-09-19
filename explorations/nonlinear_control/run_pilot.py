@@ -93,6 +93,9 @@ def main():
     if len(norms) != 1 or transform.transforms[-1] is not norms[0]:
         raise ValueError('Explicit preprocessing derivative adapter needed for this model')
     std = norms[0].std
+    (args.output/'preprocessing.json').write_text(json.dumps(dict(
+        model=config['model_name'], transform=repr(transform), channel_std=list(std),
+        gradient_coordinate='RGB [0,1] on post-spatial-preprocessing grid'), indent=2))
     pilot_pcs = np.unique(np.linspace(0, len(spectrum)-1, 32 if args.benchmark_chunks else 8, dtype=int))
     # Fixed RNG; evaluation distribution is training images for this first pilot.
     candidates = np.flatnonzero(mask)
