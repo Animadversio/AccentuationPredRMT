@@ -2,6 +2,10 @@
 
 This benchmark compares alternative empirical approximations to the variance
 term in the feature-space control-error theory against two biological outcomes.
+The default control-session benchmark now uses the one-per-site cross-session
+affine fitted on encoding-training natural anchors and shared unchanged across
+all ten models. Its slope, MSE, heldout generalization error and V therefore use
+the same response mapping.
 The slope panel is direction-aligned as `-Spearman rho`: larger predicted error
 should correspond to a smaller control slope. The direct-MSE panel uses
 `+Spearman rho`: larger predicted error should correspond to larger MSE.
@@ -13,7 +17,7 @@ models and removes all between-site and between-monkey level differences. The
 filled marker uses all 10 models. The open marker removes CLIPAG and robust
 RN50. Their connecting segment exposes sensitivity to those two model families.
 
-The benchmark contains 24 predictors:
+Each endpoint benchmark contains 24 predictors:
 
 - held-out natural-image generalization MSE and exact control trace as
   baselines;
@@ -32,6 +36,12 @@ The Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
 next to the markers. These small-n correlations are unstable and should not be
 ranked directly against the 200-row conventional-model estimates.
+
+`site_centered_predictor_benchmark_control_session.png` is the calibrated
+default. `site_centered_predictor_benchmark_control_session_identity_reference.png`
+preserves the previous direct identity-scale comparison. The encoding-session
+figure remains an explicitly labeled identity reference because the
+encoding-to-control map targets control-session response units.
 
 The central descriptive result is outcome-specific. After removing the two
 robust models, neighborhood V at 16/255 has a stronger direction-aligned slope

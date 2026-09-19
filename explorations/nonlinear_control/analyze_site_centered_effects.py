@@ -18,6 +18,20 @@ ENDPOINTS=['control_session','encoding_session_matched','encoding_session']
 ENDPOINT_LABELS={'control_session':'Control session, matched images',
                  'encoding_session_matched':'Encoding session, matched images',
                  'encoding_session':'Encoding session, all 195 images'}
+BENCHMARK_SPECS=[
+    dict(endpoint='control_session_anchor_affine',geometry_endpoint='control_session_site_train_anchor_affine',
+         gen_predictor='control_session_site_train_anchor_affine_gen_test_mse',
+         slope_outcome='control_anchor_affine_slope',mse_outcome='control_anchor_affine_mse',
+         endpoint_label='Control session; one train-anchor site affine shared across all models'),
+    dict(endpoint='control_session_identity_reference',geometry_endpoint='control_session',
+         gen_predictor='control_session_gen_test_mse',slope_outcome='control_slope',
+         mse_outcome='control_mse',endpoint_label='Control session; identity-scale reference'),
+    dict(endpoint='encoding_session_matched',geometry_endpoint='encoding_session_matched',
+         gen_predictor='encoding_session_matched_gen_test_mse',slope_outcome='control_slope',
+         mse_outcome='control_mse',endpoint_label='Encoding session, matched images; identity reference'),
+    dict(endpoint='encoding_session',geometry_endpoint='encoding_session',
+         gen_predictor='encoding_session_gen_test_mse',slope_outcome='control_slope',
+         mse_outcome='control_mse',endpoint_label='Encoding session, all 195 images; identity reference')]
 MONKEY_COLORS={'red':'#cc3311','paul':'#4477aa','venus':'#009988','leap':'#aa4499','three0':'#997700'}
 METHOD_COLORS={'baseline':'#666666','local':'#0072b2','smooth':'#cc79a7',
                'neighborhood':'#009e73','variance':'#e69f00','step':'#56b4e9','stein':'#d55e00'}
@@ -62,26 +76,31 @@ def geometry_configs():
 def build_benchmark_table(data):
     """One plot-ready row per endpoint × predictor × outcome × model subset."""
     rows=[]
-    for endpoint in ENDPOINTS:
+    for spec in BENCHMARK_SPECS:
+        endpoint=spec['endpoint'];geometry_endpoint=spec['geometry_endpoint']
         configs=[dict(predictor_id='generalization_mse',label='Held-out generalization MSE',
-                      group='baseline',predictor=f'{endpoint}_gen_test_mse')]
+                      group='baseline',predictor=spec['gen_predictor'])]
         for config in geometry_configs():
             config=config.copy()
-            suffix='trace_mean' if config.pop('quantity')=='trace' else f'V_{endpoint}_mean'
+            suffix='trace_mean' if config.pop('quantity')=='trace' else f'V_{geometry_endpoint}_mean'
             config['predictor']=f"{config.pop('base')}__{suffix}"
             configs.append(config)
         for subset,d in [('all_models',data),('without_robust',data[~data.robust_model])]:
             for order,config in enumerate(configs):
-                for outcome,direction in [('control_slope',-1),('control_mse',1)]:
+                for outcome_role,outcome,direction in [
+                        ('control_slope',spec['slope_outcome'],-1),
+                        ('control_mse',spec['mse_outcome'],1)]:
                     stats=association(d,config['predictor'],outcome)
-                    rows.append(dict(endpoint=endpoint,subset=subset,outcome=outcome,
+                    rows.append(dict(endpoint=endpoint,endpoint_label=spec['endpoint_label'],
+                                     geometry_endpoint=geometry_endpoint,subset=subset,
+                                     outcome_role=outcome_role,outcome=outcome,
                                      display_order=order,direction_sign=direction,**config,**stats))
     result=pd.DataFrame(rows)
     result['direction_aligned_pearson']=result.direction_sign*result.pearson
     result['direction_aligned_spearman']=result.direction_sign*result.spearman
     result['direction_aligned_standardized_beta']=result.direction_sign*result.standardized_beta
     result['cluster_q_bh']=np.nan
-    for _,idx in result.groupby(['endpoint','subset','outcome']).groups.items():
+    for _,idx in result.groupby(['endpoint','subset','outcome_role']).groups.items():
         idx=list(idx)
         result.loc[idx,'cluster_q_bh']=multipletests(result.loc[idx,'cluster_p'],method='fdr_bh')[1]
     return result
@@ -122,7 +141,7 @@ def level_plot(results,method,filename):
     fig.tight_layout();fig.savefig(FIGURE/filename,dpi=180);plt.close(fig)
 
 
-def predictor_benchmark_plot(results,endpoint):
+def predictor_benchmark_plot(results,endpoint,filename):
     d=results[results.endpoint==endpoint].copy()
     meta=(d[['predictor_id','label','group','display_order']].drop_duplicates()
           .sort_values('display_order'))
@@ -132,7 +151,7 @@ def predictor_benchmark_plot(results,endpoint):
     outcomes=[('control_slope','Control slope',r'$-\rho$'),
               ('control_mse','Direct control MSE',r'$+\rho$')]
     for ax,(outcome,title,sign) in zip(axs,outcomes):
-        panel=d[d.outcome==outcome]
+        panel=d[d.outcome_role==outcome]
         for _,row in meta.iterrows():
             pair=panel[panel.predictor_id==row.predictor_id].set_index('subset')
             if not {'all_models','without_robust'}.issubset(pair.index):
@@ -166,9 +185,9 @@ def predictor_benchmark_plot(results,endpoint):
                     ('step','Finite step'),('stein','Stein')]]
     fig.legend(handles=handles+group_handles,ncol=5,loc='lower center',frameon=False,fontsize=8)
     fig.suptitle('Benchmark of control-geometry predictors of biological outcomes\n'
-                 f'{ENDPOINT_LABELS[endpoint]}; site means removed from log predictor and outcome',y=.985)
+                 f'{d.endpoint_label.iloc[0]}; site means removed from log predictor and outcome',y=.985)
     fig.subplots_adjust(left=.23,right=.98,top=.91,bottom=.12,wspace=.08)
-    fig.savefig(FIGURE/f'site_centered_predictor_benchmark_{endpoint}.png',dpi=200)
+    fig.savefig(FIGURE/filename,dpi=200)
     plt.close(fig)
 
 
@@ -208,8 +227,12 @@ def main():
     control_mse_plot(data,results)
     benchmark=build_benchmark_table(data)
     benchmark.to_csv(TABLE/'predictor_benchmark_site_centered.csv',index=False)
-    for endpoint in ['control_session','encoding_session']:
-        predictor_benchmark_plot(benchmark,endpoint)
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session.png')
+    predictor_benchmark_plot(benchmark,'control_session_identity_reference',
+                             'site_centered_predictor_benchmark_control_session_identity_reference.png')
+    predictor_benchmark_plot(benchmark,'encoding_session',
+                             'site_centered_predictor_benchmark_encoding_session.png')
     print(results[(results.subset=='without_robust')&(results.method=='smooth')&
                   results.outcome.isin(['control_slope','control_mse'])].to_string(index=False))
 

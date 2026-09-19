@@ -120,3 +120,10 @@ clustered regression p value and within-panel Benjamini-Hochberg q value refer
 to the linear site-residual coefficient; they are not p values for Spearman's
 rho. Stein rows retain their actual positive-V sample counts because the
 large-noise estimators can be nonpositive.
+
+The `control_session_anchor_affine` rows are the default benchmark: outcomes
+are `control_anchor_affine_slope/MSE`, heldout error is measured after the
+training-anchor site map, and every V uses
+`V_control_session_site_train_anchor_affine`. The
+`control_session_identity_reference` rows preserve the previous direct-scale
+analysis. Their figures are saved separately and never overwrite each other.
