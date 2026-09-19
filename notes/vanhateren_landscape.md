@@ -108,8 +108,37 @@ saturate extremes; they do not clip the cached data. White is n-sample DE
 prediction optimum; pink is leading-DE acc grid optimum, in all panels.
 Gray cuts mark sigma²/S=0.001,0.01,0.1,1 and fixed lambda=0.1.
 
+To render the same cached surfaces on a kappa y axis without rewriting data:
+
+```bash
+python -m scripts.plot_vanhateren_landscape \
+  --data "$STORE_DIR/Projects/AccentuationPredRMT/vanhateren_landscape_v1_20260918" \
+  --figures figures/vanhateren_landscape --plot-only --y-axis kappa
+```
+
+This produces `landscape_{error,r2,slope}_kappa.{png,pdf}`. Both the mesh
+coordinates and the overlaid paths are transformed, not just tick labels.
+The lambda=0.1 reference cut is mapped to its corresponding kappa. Color
+limits and underlying metrics are unchanged. The nonzero physical lower
+bound in kappa compresses the near-ridgeless region; no data below that bound
+are extrapolated. Existing lambda-axis exports are retained.
+
 Entry points: `scripts/vanhateren_landscape.py`,
 `scripts/plot_vanhateren_landscape.py`,
 `scripts/validate_vanhateren_landscape.py`.
 Unit test: `tests/test_vanhateren_landscape.py` checks direct ridge metrics
 and explicit leave-one-out refits on a small independent problem.
+
+## One-dimensional cuts
+
+`scripts/plot_vanhateren_landscape_slices.py` extracts three families directly
+from the common grid: fixed lambda versus noise, fixed noise versus kappa, and
+the prediction-selected DE / trialwise empirical-LOOCV paths. Each family is
+exported for normalized error, R2, and true-on-fitted slope as PNG and
+vector-font PDF under `figures/vanhateren_landscape/slices/`.
+
+The R2 panels use a symmetric-log scale because accentuation R2 can be very
+negative; the slope panels also use symmetric-log so rare negative MC values
+are not silently dropped. Reference lines mark R2=0, R2=1, or slope=1. The
+plot-ready cut coordinates and DE/MC summaries are cached in
+`tables/vanhateren_landscape/slice_summary.csv`.
