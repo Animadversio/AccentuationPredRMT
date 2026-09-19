@@ -1,0 +1,16 @@
+{
+  "grid_shape": [
+    114,
+    478
+  ],
+  "trials": 100,
+  "previous_trial_0_max_absolute_error": {
+    "E_gen": 1.6930901125533637e-14,
+    "E_acc": 5.195843755245733e-13,
+    "slope_acc": 5.864198016070077e-13
+  },
+  "input_sha256": "4fc570a46fe77d1dce211b5db2c448fbfe5d9791924c3d091255030817506c7f",
+  "input_path": "/scratch/tmp/AccentuationPredRMT_landscape.vTGqSG/vanhateren_log_gray_100px_22000_uint8.npy",
+  "all_grid_arrays_finite": true,
+  "raw_summary_consistent": true
+}
