@@ -8,7 +8,15 @@ build/
 .DS_Store
 *.npz
 *.npy
+!tables/ffhq_disk_teacher_spectrum.npz
+!tables/sigma_sweep_*.npz
 logs/
 *.aux
 *.log
 *.out
+
+# Transient notebook execution caches. Curated summaries and final figures
+# belong under tables/ and figures/ instead.
+notebooks/outputs/pixel_ridge/[0-9a-f]*/
+notebooks/outputs/top_pc_rotation/[0-9a-f]*/
+notebooks/outputs/iso_error_geometry_explorer/

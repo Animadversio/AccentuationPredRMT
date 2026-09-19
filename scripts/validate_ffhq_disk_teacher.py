@@ -52,6 +52,10 @@ from rmt_core import (  # noqa: E402
     ridge_error_per_pc_theory,
 )
 from scripts.validate_r2_peer_review import configure_logging, float_tag  # noqa: E402
+from scripts.storage_paths import (  # noqa: E402
+    configured_bulk_path,
+    require_bulk_path,
+)
 
 
 FFHQ_ZIP = Path(
@@ -63,11 +67,12 @@ HISTORICAL_ROOT = Path(
 
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_de_summary.csv'
 SPECTRUM_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_spectrum.npz'
-CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_cases'
-METRIC_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_de_validation.png'
-GAP_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_gen_acc_gap.png'
-WEIGHT_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_weights.png'
-SPECTRAL_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_disk_teacher_eigenbasis.png'
+CASE_DIR = configured_bulk_path('tables/ffhq_disk_teacher_cases')
+FIGURE_DIR = REPO_ROOT / 'figures' / 'natural_image_disk_teacher'
+METRIC_FIGURE_PATH = FIGURE_DIR / 'ffhq_disk_teacher_de_validation.png'
+GAP_FIGURE_PATH = FIGURE_DIR / 'ffhq_disk_teacher_gen_acc_gap.png'
+WEIGHT_FIGURE_PATH = FIGURE_DIR / 'ffhq_disk_teacher_weights.png'
+SPECTRAL_FIGURE_PATH = FIGURE_DIR / 'ffhq_disk_teacher_eigenbasis.png'
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_disk_teacher_de.log'
 DEFAULT_BASE_SIGMAS = np.asarray(
     [0.0, 0.01, 0.03, 0.1, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0,
@@ -408,7 +413,8 @@ def summarize_historical(
 
 
 def case_path(args: argparse.Namespace, sigma: float) -> Path:
-    return CASE_DIR / (
+    case_dir = require_bulk_path(CASE_DIR, 'FFHQ disk-teacher case caches')
+    return case_dir / (
         f'ffhq_disk_d{args.img_size ** 2}_n{args.n}_sigma{float_tag(sigma)}'
         f'_trials{args.n_trials}_pop{args.population_size}_seed{args.seed}'
         f'_alpha{args.alpha_grid_size}_emin{float_tag(args.alpha_min_exp)}'
@@ -1088,7 +1094,9 @@ def main() -> None:
     logger.info('Finished post-spectrum workload in %.1fs',
                 time.perf_counter() - run_start)
     logger.info('Summary: %s', SUMMARY_PATH)
-    logger.info('Cases: %s', CASE_DIR)
+    logger.info(
+        'Cases: %s',
+        require_bulk_path(CASE_DIR, 'FFHQ disk-teacher case caches'))
     logger.info('Figures: %s, %s, %s, %s',
                 METRIC_FIGURE_PATH, GAP_FIGURE_PATH, WEIGHT_FIGURE_PATH,
                 SPECTRAL_FIGURE_PATH)

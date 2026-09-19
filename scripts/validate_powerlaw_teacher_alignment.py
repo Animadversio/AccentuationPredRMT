@@ -43,17 +43,19 @@ from scripts.validate_r2_peer_review import (  # noqa: E402
     configure_logging,
     float_tag,
 )
+from scripts.storage_paths import configured_bulk_path, require_bulk_path
 
 
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'powerlaw_teacher_alignment_summary.csv'
 COEFFICIENT_PATH = REPO_ROOT / 'tables' / 'powerlaw_teacher_weight_summary.csv'
-CASE_DIR = REPO_ROOT / 'tables' / 'powerlaw_teacher_alignment_cases'
-R2_FIGURE_PATH = REPO_ROOT / 'figures' / 'powerlaw_teacher_alignment_r2.png'
-LAMBDA_FIGURE_PATH = REPO_ROOT / 'figures' / 'powerlaw_teacher_alignment_lambda.png'
-PROFILE_FIGURE_PATH = REPO_ROOT / 'figures' / 'powerlaw_teacher_signal_profiles.png'
-WEIGHT_FIGURE_PATH = REPO_ROOT / 'figures' / 'powerlaw_teacher_weights_eigenbasis.png'
+CASE_DIR = configured_bulk_path('tables/powerlaw_teacher_alignment_cases')
+FIGURE_DIR = REPO_ROOT / 'figures' / 'teacher_alignment'
+R2_FIGURE_PATH = FIGURE_DIR / 'powerlaw_teacher_alignment_r2.png'
+LAMBDA_FIGURE_PATH = FIGURE_DIR / 'powerlaw_teacher_alignment_lambda.png'
+PROFILE_FIGURE_PATH = FIGURE_DIR / 'powerlaw_teacher_signal_profiles.png'
+WEIGHT_FIGURE_PATH = FIGURE_DIR / 'powerlaw_teacher_weights_eigenbasis.png'
 SCALED_WEIGHT_FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'powerlaw_teacher_response_weights_eigenbasis.png')
+    FIGURE_DIR / 'powerlaw_teacher_response_weights_eigenbasis.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'powerlaw_teacher_alignment.log'
 
 
@@ -84,7 +86,8 @@ def case_path(args: argparse.Namespace, profile_id: str, sigma: float,
         f'_grid{args.n_lambda}_{float_tag(args.lambda_min)}-'
         f'{float_tag(args.lambda_max)}_trials{args.n_trials}_seed{mc_seed}.npz'
     )
-    return CASE_DIR / tag
+    return require_bulk_path(
+        CASE_DIR, 'power-law teacher-alignment case caches') / tag
 
 
 def save_case(path: Path, row: dict[str, object],
@@ -584,7 +587,10 @@ def main() -> None:
     logger.info('Finished in %.1fs', time.perf_counter() - start)
     logger.info('Progress log: %s', args.log_file)
     logger.info('Summary tables: %s and %s', SUMMARY_PATH, COEFFICIENT_PATH)
-    logger.info('Raw case caches: %s', CASE_DIR)
+    logger.info(
+        'Raw case caches: %s',
+        require_bulk_path(
+            CASE_DIR, 'power-law teacher-alignment case caches'))
     logger.info('Figures: %s, %s, %s, %s, %s',
                 R2_FIGURE_PATH, LAMBDA_FIGURE_PATH, PROFILE_FIGURE_PATH,
                 WEIGHT_FIGURE_PATH, SCALED_WEIGHT_FIGURE_PATH)

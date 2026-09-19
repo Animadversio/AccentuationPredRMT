@@ -26,10 +26,12 @@ from scripts.validate_ffhq_disk_teacher import (  # noqa: E402
     add_noise_ratio_axis,
     load_case,
 )
+from scripts.storage_paths import require_bulk_path
 
 
 FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_disk_teacher_coarse_alpha_aligned.png')
+    REPO_ROOT / 'figures' / 'model_selection' /
+    'ffhq_disk_teacher_coarse_alpha_aligned.png')
 TABLE_PATH = (
     REPO_ROOT / 'tables' / 'ffhq_disk_teacher_coarse_alpha_aligned.csv')
 
@@ -39,10 +41,12 @@ def coarse_case_paths() -> list[Path]:
     pattern = (
         'ffhq_disk_d10000_n1000_sigma*_trials100_pop20000_'
         'seed20260814.npz')
-    paths = list(CASE_DIR.glob(pattern))
+    case_dir = require_bulk_path(
+        CASE_DIR, 'FFHQ disk-teacher coarse-grid case caches')
+    paths = list(case_dir.glob(pattern))
     if not paths:
         raise FileNotFoundError(
-            f'No preserved coarse-grid cases matching {CASE_DIR / pattern}')
+            f'No preserved coarse-grid cases matching {case_dir / pattern}')
     return paths
 
 

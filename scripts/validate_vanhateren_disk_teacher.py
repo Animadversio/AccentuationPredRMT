@@ -35,6 +35,7 @@ from scripts.validate_ffhq_disk_teacher import (
     theory_metrics,
 )
 from scripts.validate_r2_peer_review import float_tag
+from scripts.storage_paths import configured_bulk_path, require_bulk_path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -43,9 +44,10 @@ VANHATEREN_DIR = Path(
     'Datasets/vanhateren_natural_stimuli')
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'vanhateren_fixed_vs_cv_summary.csv'
 SPECTRUM_PATH = REPO_ROOT / 'tables' / 'vanhateren_disk_teacher_spectrum.npz'
-CASE_DIR = REPO_ROOT / 'tables' / 'vanhateren_fixed_vs_cv_cases'
+CASE_DIR = configured_bulk_path('tables/vanhateren_fixed_vs_cv_cases')
 FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'vanhateren_fixed_vs_cv_gen_acc_gap.png')
+    REPO_ROOT / 'figures' / 'model_selection' /
+    'vanhateren_fixed_vs_cv_gen_acc_gap.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'vanhateren_fixed_vs_cv.log'
 
 # Exactly the 26 normalized noise levels used in the FFHQ comparison.  Using
@@ -330,7 +332,9 @@ def ridge_cv_and_fixed_fit(
 
 
 def case_path(args: argparse.Namespace, sigma: float) -> Path:
-    return CASE_DIR / (
+    case_dir = require_bulk_path(
+        CASE_DIR, 'Van Hateren fixed-vs-CV case caches')
+    return case_dir / (
         f'vanhateren_disk_d{args.img_size ** 2}_n{args.n}'
         f'_sigma{float_tag(sigma)}_trials{args.n_trials}'
         f'_pop{args.population_size}_seed{args.seed}'
@@ -734,7 +738,10 @@ def main() -> None:
     logger.info('Finished paired simulation in %.1fs',
                 time.perf_counter() - run_start)
     logger.info('Summary: %s', SUMMARY_PATH)
-    logger.info('Raw case caches: %s', CASE_DIR)
+    logger.info(
+        'Raw case caches: %s',
+        require_bulk_path(
+            CASE_DIR, 'Van Hateren fixed-vs-CV case caches'))
     logger.info('Figure: %s', FIGURE_PATH)
 
 
