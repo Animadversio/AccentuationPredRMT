@@ -1,0 +1,17 @@
+{
+  "upstream_sha": "9b6fd95228d1b77146f8b279c7c228914ca34bb8",
+  "spectrum": "training PCA spectrum, ddof=1; population-spectrum proxy",
+  "regularization": "lambda=alpha/n; kappa*(1-sum(s/(s+kappa))/n)=lambda",
+  "estimand": "V=MSE_test*T/n, variance contribution proxy, not full predicted slope",
+  "test_noise": "MSE against trial-averaged measured responses; no extra sigma squared added",
+  "leap_audit": "reconstructed flattened native RGB correlation, threshold 0.90",
+  "fd_qc": "CLIP RN50 smooth/neighborhood/local_mc provisional; marginal directional FD QC",
+  "signed_masses": "No clipping; nonpositive aggregate predictors omitted only from log associations/CV",
+  "counts": {
+    "site_models": 250,
+    "predictor_rows": 5500,
+    "seed_rows": 55000
+  },
+  "negative_site_traces": 564,
+  "missing_control_slopes": 0
+}

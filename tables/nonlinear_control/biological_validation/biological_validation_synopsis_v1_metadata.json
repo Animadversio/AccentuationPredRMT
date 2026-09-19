@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "rows": 250,
+  "columns": 221,
+  "key": [
+    "subject",
+    "monkey",
+    "unit",
+    "model"
+  ],
+  "parquet_written": true,
+  "canonical_geometry_source": "variance_predictors_by_seed.csv.gz",
+  "normalization_note": "Theory S is latent natural teacher signal variance. gen_test_S_nat_noise_corrected is the primary empirical denominator (100% repeat coverage). Control numerator noise correction is sensitivity-only because repeat coverage varies; raw control MSE over corrected natural S is the primary normalized control error.",
+  "robust_models": [
+    "clipag_vitb32",
+    "resnet50_robust"
+  ]
+}

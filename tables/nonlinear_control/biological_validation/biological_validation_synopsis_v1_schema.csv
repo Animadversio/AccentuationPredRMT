@@ -1,0 +1,222 @@
+column,group,dtype,description
+subject,identity,object,Recording/encoding subject identifier.
+monkey,identity,object,Short animal identifier.
+unit,identity,int64,Absolute recording channel/unit index.
+model,identity,object,Encoding feature model identifier.
+geometry_id,identity,object,Shared feature/layer/split geometry identifier.
+layer,identity,object,layer.
+n_total,identity,int64,n total.
+n_pcs,identity,int64,n pcs.
+n_train,identity,int64,n train.
+ridge_alpha,ridge,float64,Ridge/DE alpha.
+ridge_coef_rel_error,ridge,float64,Ridge/DE coef rel error.
+ridge_prediction_max_error,ridge,float64,Ridge/DE prediction max error.
+ridge_n_train,ridge,int64,Ridge/DE n train.
+ridge_n_test,ridge,int64,Ridge/DE n test.
+ridge_lambda_normalized,ridge,float64,Ridge/DE lambda normalized.
+ridge_kappa,ridge,float64,Ridge/DE kappa.
+ridge_kappa_residual,ridge,float64,Ridge/DE kappa residual.
+ridge_df2,ridge,float64,Ridge/DE df2.
+geometry_fd_error,identity,float64,geometry fd error.
+region,identity,object,Recorded visual area.
+robust_model,identity,bool,Upstream robust-model group: CLIPAG or robust RN50.
+site_id,identity,object,Stable subject-unit identifier.
+biology_reliability,identity,float64,Source neural reliability metadata.
+firing_floor,identity,float64,firing floor.
+gen_test_n,generalization,int64,Held-out natural-image n.
+gen_test_mse,generalization,float64,Held-out natural-image mse.
+gen_test_rmse,generalization,float64,Held-out natural-image rmse.
+gen_test_mae,generalization,float64,Held-out natural-image mae.
+gen_test_bias_measured_minus_predicted,generalization,float64,Held-out natural-image bias measured minus predicted.
+gen_test_measured_mean,generalization,float64,Held-out natural-image measured mean.
+gen_test_predicted_mean,generalization,float64,Held-out natural-image predicted mean.
+gen_test_measured_variance,generalization,float64,Held-out natural-image measured variance.
+gen_test_predicted_variance,generalization,float64,Held-out natural-image predicted variance.
+gen_test_r,generalization,float64,Held-out natural-image r.
+gen_test_slope,generalization,float64,Held-out natural-image slope.
+gen_test_intercept,generalization,float64,Held-out natural-image intercept.
+gen_test_refit_mse,generalization,float64,Held-out natural-image refit mse.
+gen_test_r2_identity,generalization,float64,Held-out natural-image r2 identity.
+gen_test_r2_refit,generalization,float64,Held-out natural-image r2 refit.
+crossphase_anchor_n,crossphase,int64,Control-session anchor n.
+crossphase_anchor_mse,crossphase,float64,Control-session anchor mse.
+crossphase_anchor_rmse,crossphase,float64,Control-session anchor rmse.
+crossphase_anchor_mae,crossphase,float64,Control-session anchor mae.
+crossphase_anchor_bias_measured_minus_predicted,crossphase,float64,Control-session anchor bias measured minus predicted.
+crossphase_anchor_measured_mean,crossphase,float64,Control-session anchor measured mean.
+crossphase_anchor_predicted_mean,crossphase,float64,Control-session anchor predicted mean.
+crossphase_anchor_measured_variance,crossphase,float64,Control-session anchor measured variance.
+crossphase_anchor_predicted_variance,crossphase,float64,Control-session anchor predicted variance.
+crossphase_anchor_r,crossphase,float64,Control-session anchor r.
+crossphase_anchor_slope,crossphase,float64,Control-session anchor slope.
+crossphase_anchor_intercept,crossphase,float64,Control-session anchor intercept.
+crossphase_anchor_refit_mse,crossphase,float64,Control-session anchor refit mse.
+crossphase_anchor_r2_identity,crossphase,float64,Control-session anchor r2 identity.
+crossphase_anchor_r2_refit,crossphase,float64,Control-session anchor r2 refit.
+control_n,control,int64,Biological control n.
+control_mse,control,float64,Biological control mse.
+control_rmse,control,float64,Biological control rmse.
+control_mae,control,float64,Biological control mae.
+control_bias_measured_minus_predicted,control,float64,Biological control bias measured minus predicted.
+control_measured_mean,control,float64,Biological control measured mean.
+control_predicted_mean,control,float64,Biological control predicted mean.
+control_measured_variance,control,float64,Biological control measured variance.
+control_predicted_variance,control,float64,Biological control predicted variance.
+control_r,control,float64,Biological control r.
+control_slope,control,float64,Biological control slope.
+control_intercept,control,float64,Biological control intercept.
+control_refit_mse,control,float64,Biological control refit mse.
+control_r2_identity,control,float64,Biological control r2 identity.
+control_r2_refit,control,float64,Biological control r2 refit.
+gen_test_error_over_S_nat_observed,generalization,float64,Held-out natural-image error over S nat observed.
+gen_test_trialmean_noise_variance,generalization,float64,Held-out natural-image trialmean noise variance.
+gen_test_trialmean_noise_n_stim,generalization,int64,Held-out natural-image trialmean noise n stim.
+gen_test_trialmean_noise_fraction,generalization,float64,Held-out natural-image trialmean noise fraction.
+gen_test_S_nat_noise_corrected,generalization,float64,Held-out natural measured-response variance minus the repeat-estimated contribution of trial-mean measurement noise; empirical proxy for latent natural teacher signal power S.
+control_error_over_S_nat_observed,control,float64,"Control identity MSE divided by held-out natural measured-response variance; closest available empirical proxy to E_acc/S, but its denominator includes measurement noise."
+control_error_over_S_control_observed,control,float64,Control identity MSE divided by control measured-response variance; exactly 1-control_r2_identity and therefore descriptive/tautological.
+control_trialmean_noise_variance,control,float64,Biological control trialmean noise variance.
+control_trialmean_noise_n_stim,control,int64,Biological control trialmean noise n stim.
+control_trialmean_noise_fraction,control,float64,Biological control trialmean noise fraction.
+control_trialmean_noise_high_coverage,control,bool,True when at least 80% of matched control stimuli have at least two trials for noise estimation.
+control_mse_noise_corrected,control,float64,Control identity MSE minus repeat-estimated trial-mean response noise; may be negative and is not clipped.
+control_error_over_S_nat_noise_corrected,control,float64,Raw control identity MSE divided by repeat-noise-corrected natural signal variance.
+control_error_noise_corrected_over_S_nat_noise_corrected,control,float64,Repeat-noise-corrected control identity MSE divided by repeat-noise-corrected natural signal variance; sensitivity metric because control repeat coverage varies and can be sparse.
+control_slope_within_seed,control,float64,Biological control slope within seed.
+control_noise_ceiling_r,control,float64,Biological control noise ceiling r.
+control_noise_ceiling_signal_variance,control,float64,Biological control noise ceiling signal variance.
+control_noise_ceiling_noise_variance,control,float64,Biological control noise ceiling noise variance.
+control_noise_ceiling_n_stim,control,int64,Biological control noise ceiling n stim.
+control_error_over_ceiling_signal_variance,control,float64,"Control identity MSE divided by upstream control noise-ceiling signal variance; unavailable for Leap and Three0 and is path-specific, not natural S."
+geom_exact__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_local_mc__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_neighborhood_tau255_0p5__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_neighborhood_tau255_16__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_neighborhood_tau255_2__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_neighborhood_tau255_8__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_smooth_tau255_0p5__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_smooth_tau255_16__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_smooth_tau255_2__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_smooth_tau255_8__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_stein_tau255_0p5__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_stein_tau255_16__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_stein_tau255_2__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_stein_tau255_8__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_step_tau255_0p5__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_step_tau255_16__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_step_tau255_2__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_step_tau255_8__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_variance_tau255_0p5__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_variance_tau255_16__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_variance_tau255_2__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_variance_tau255_8__raw_energy_mean,geometry,float64,Across 10 image seeds: mean of raw_energy.
+geom_exact__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_local_mc__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_neighborhood_tau255_0p5__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_neighborhood_tau255_16__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_neighborhood_tau255_2__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_neighborhood_tau255_8__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_smooth_tau255_0p5__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_smooth_tau255_16__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_smooth_tau255_2__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_smooth_tau255_8__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_stein_tau255_0p5__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_stein_tau255_16__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_stein_tau255_2__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_stein_tau255_8__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_step_tau255_0p5__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_step_tau255_16__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_step_tau255_2__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_step_tau255_8__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_variance_tau255_0p5__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_variance_tau255_16__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_variance_tau255_2__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_variance_tau255_8__raw_energy_std,geometry,float64,Across 10 image seeds: sample SD of raw_energy.
+geom_exact__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_local_mc__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_neighborhood_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_neighborhood_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_neighborhood_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_neighborhood_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_smooth_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_smooth_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_smooth_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_smooth_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_step_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_step_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_step_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_step_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_variance_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_variance_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_variance_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_variance_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_exact__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_local_mc__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_neighborhood_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_neighborhood_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_neighborhood_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_neighborhood_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_smooth_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_smooth_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_smooth_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_smooth_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_stein_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_stein_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_stein_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_stein_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_step_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_step_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_step_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_step_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_variance_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_variance_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_variance_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_variance_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_exact__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_local_mc__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_neighborhood_tau255_0p5__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_neighborhood_tau255_16__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_neighborhood_tau255_2__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_neighborhood_tau255_8__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_smooth_tau255_0p5__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_smooth_tau255_16__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_smooth_tau255_2__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_smooth_tau255_8__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_stein_tau255_0p5__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_stein_tau255_16__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_stein_tau255_2__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_stein_tau255_8__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_step_tau255_0p5__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_step_tau255_16__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_step_tau255_2__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_step_tau255_8__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_variance_tau255_0p5__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_variance_tau255_16__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_variance_tau255_2__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_variance_tau255_8__V_mean,geometry,float64,Across 10 image seeds: mean of V.
+geom_exact__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_local_mc__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_neighborhood_tau255_0p5__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_neighborhood_tau255_16__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_neighborhood_tau255_2__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_neighborhood_tau255_8__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_smooth_tau255_0p5__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_smooth_tau255_16__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_smooth_tau255_2__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_smooth_tau255_8__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_stein_tau255_0p5__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_stein_tau255_16__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_stein_tau255_2__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_stein_tau255_8__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_step_tau255_0p5__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_step_tau255_16__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_step_tau255_2__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_step_tau255_8__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_variance_tau255_0p5__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_variance_tau255_16__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_variance_tau255_2__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
+geom_variance_tau255_8__V_std,geometry,float64,Across 10 image seeds: sample SD of V.
