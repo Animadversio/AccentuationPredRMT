@@ -88,3 +88,10 @@ per row but may be affected by recording-session drift.
 resampling held-out image identities jointly within each monkey. This preserves
 the shared-stimulus dependence among sites/models. It does not quantify animal,
 site, trial-response, Jacobian-probe or model-family uncertainty.
+
+`site_centered_associations.csv` subtracts each site's mean from log10 V and
+the outcome, then reports Pearson, Spearman, the fixed-intercept regression
+coefficient and a site-clustered standard error. It covers control slope,
+within-seed slope and direct control MSE for exact, smooth and neighborhood
+geometry. The maintained figures show the smoothing paths and the direct
+control-MSE computation/scatter separately.

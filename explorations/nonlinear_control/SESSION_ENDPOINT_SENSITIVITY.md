@@ -78,6 +78,42 @@ is that the pooled sign is endpoint- and grouping-sensitive. More control-
 session natural anchors, especially for Leap and Three0, are needed to resolve
 the marginal pooled association.
 
+## Site-within effects and control error
+
+The primary descriptive association now subtracts each site's model mean from
+both log10 V and the biological outcome. Equivalently, it fits a site fixed
+intercept. The regression table also reports a coefficient per log10 V and a
+site-clustered standard error.
+
+After excluding CLIPAG and robust RN50, control-session smooth V has the
+following site-within associations:
+
+| noise SD × 255 | slope Pearson / Spearman | direct control-MSE Pearson / Spearman |
+|---:|---:|---:|
+| 0.5 | -0.029 / -0.100 | +0.158 / +0.129 |
+| 2 | -0.146 / -0.159 | +0.277 / +0.216 |
+| 8 | -0.280 / -0.189 | +0.327 / +0.238 |
+| 16 | -0.307 / -0.179 | +0.324 / +0.228 |
+
+Thus larger V is associated within a site with lower control slope and higher
+direct control error, the paired directional prediction of the theory. At
+smooth 2/255 the pooled V--control-MSE correlation is almost zero (Pearson
+0.015, Spearman 0.018), whereas the site-within association is positive. Site
+baselines were masking rather than producing this error association.
+
+Direct control MSE is computed without recalibration:
+
+    MSE_control = mean_i (y_i_control - yhat_i_posthoc,floor)^2.
+
+`y_i_control` is the trial-averaged standardized neural response to each
+presented accentuated image. `yhat_i_posthoc,floor` is the generating model's
+post-hoc prediction for its own target unit, clamped to the unit's firing floor
+at comparison time. No slope or intercept is refitted; `control_refit_mse` is
+stored separately and answers a different question.
+
+Numerical site-within outputs:
+`tables/nonlinear_control/biological_validation/site_centered_associations.csv`.
+
 Numerical outputs:
 `tables/nonlinear_control/biological_validation/session_endpoint_image_bootstrap_summary.csv`
 and `session_endpoint_image_bootstrap_draws.csv.gz`.
