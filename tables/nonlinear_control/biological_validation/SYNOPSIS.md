@@ -95,3 +95,16 @@ coefficient and a site-clustered standard error. It covers control slope,
 within-seed slope and direct control MSE for exact, smooth and neighborhood
 geometry. The maintained figures show the smoothing paths and the direct
 control-MSE computation/scatter separately.
+
+`predictor_benchmark_site_centered.csv` applies that same transformation to a
+fixed benchmark of 24 predictors: held-out generalization MSE, exact trace,
+exact/local-MC V, and four noise levels for smooth, neighborhood, variance,
+finite-step and Stein V. It stores both raw and direction-aligned Pearson and
+Spearman correlations for all ten models and after removing CLIPAG and robust
+RN50. Direction alignment multiplies slope correlations by -1 and leaves MSE
+correlations unchanged, so positive values consistently mean that a larger
+predicted control-error term accompanies worse biological control. The
+clustered regression p value and within-panel Benjamini-Hochberg q value refer
+to the linear site-residual coefficient; they are not p values for Spearman's
+rho. Stein rows retain their actual positive-V sample counts because the
+large-noise estimators can be nonpositive.
