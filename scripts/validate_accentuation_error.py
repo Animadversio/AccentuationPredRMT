@@ -65,7 +65,9 @@ def main():
               f"R_th={R_th:.3f}  R_mc={mc['acc_alignment']:.3f}  "
               f"Err_th={err_th:.4f}  Err_mc={mc['acc_error']:.4f}")
 
-    os.makedirs('figures', exist_ok=True)
+    figdir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 'figures', 'accentuation')
+    os.makedirs(figdir, exist_ok=True)
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
     ax = axes[0]
@@ -85,7 +87,8 @@ def main():
     ax.legend()
 
     plt.tight_layout()
-    figpath = f'figures/accentuation_error_d{d}_lam{lam}_sigma{sigma}.png'
+    figpath = os.path.join(
+        figdir, f'accentuation_error_d{d}_lam{lam}_sigma{sigma}.png')
     plt.savefig(figpath, dpi=150, bbox_inches='tight')
     print(f"Saved: {figpath}")
     plt.close()

@@ -39,9 +39,10 @@ from scripts.validate_r2_peer_review import float_tag
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_fixed_vs_cv_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_fixed_alpha_cases'
-FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_fixed_vs_cv_comparison.png'
+FIGURE_DIR = REPO_ROOT / 'figures' / 'model_selection'
+FIGURE_PATH = FIGURE_DIR / 'ffhq_fixed_vs_cv_comparison.png'
 GAP_FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_fixed_vs_cv_gen_acc_gap.png')
+    FIGURE_DIR / 'ffhq_fixed_vs_cv_gen_acc_gap.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_fixed_vs_cv.log'
 
 

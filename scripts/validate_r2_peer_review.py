@@ -47,8 +47,9 @@ from rmt_core import (  # noqa: E402
 
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'r2_peer_validation_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'r2_peer_validation_cases'
-FIGURE_PATH = REPO_ROOT / 'figures' / 'r2_peer_validation.png'
-ERROR_FIGURE_PATH = REPO_ROOT / 'figures' / 'error_peer_validation.png'
+FIGURE_PATH = REPO_ROOT / 'figures' / 'peer_validation' / 'r2_peer_validation.png'
+ERROR_FIGURE_PATH = (
+    REPO_ROOT / 'figures' / 'peer_validation' / 'error_peer_validation.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'r2_peer_validation.log'
 
 

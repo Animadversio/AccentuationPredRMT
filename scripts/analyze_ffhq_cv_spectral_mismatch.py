@@ -37,7 +37,9 @@ SPECTRUM_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_spectrum.npz'
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_disk_teacher_de_summary.csv'
 DYNAMIC_TABLE_PATH = REPO_ROOT / 'tables' / 'ffhq_cv_spectral_mismatch.csv'
 PROFILE_TABLE_PATH = REPO_ROOT / 'tables' / 'ffhq_spectral_teacher_profile.csv'
-FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_cv_spectral_mismatch.png'
+FIGURE_PATH = (
+    REPO_ROOT / 'figures' / 'model_selection' /
+    'ffhq_cv_spectral_mismatch.png')
 LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_cv_spectral_mismatch.log'
 
 

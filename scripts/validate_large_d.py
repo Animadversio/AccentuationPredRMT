@@ -36,7 +36,8 @@ from rmt_core import get_spectrum, SpectrumKappa, ridge_error_per_pc_theory
 from rmt_core.gpu_simulation_lib import run_monte_carlo_gpu, get_device
 
 
-FIGDIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'figures')
+FIGDIR = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'figures', 'ridge_error')
 
 
 def main():

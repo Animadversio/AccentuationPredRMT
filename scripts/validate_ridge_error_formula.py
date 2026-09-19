@@ -88,8 +88,9 @@ def main():
           f"error: {mc['acc_error']:.5f}")
 
     # ── Figure ──
-    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'figures'),
-                exist_ok=True)
+    figdir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), 'figures', 'ridge_error')
+    os.makedirs(figdir, exist_ok=True)
     fig, axes = plt.subplots(1, 3, figsize=(16, 4))
     fig.suptitle(f'spectrum={args.spectrum}  d={d}, n={n}, λ={lam}, σ={sigma}',
                  fontsize=11)
@@ -125,7 +126,6 @@ def main():
     ax.legend()
 
     plt.tight_layout()
-    figdir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'figures')
     tag = f'{args.spectrum}_d{d}_n{n}_lam{lam}_sigma{sigma}'
     figpath = os.path.join(figdir, f'ridge_error_{tag}.png')
     plt.savefig(figpath, dpi=150, bbox_inches='tight')

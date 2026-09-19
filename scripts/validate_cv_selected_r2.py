@@ -42,8 +42,9 @@ from scripts.validate_r2_peer_review import (  # noqa: E402
 
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'cv_selected_r2_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'cv_selected_r2_cases'
-R2_FIGURE_PATH = REPO_ROOT / 'figures' / 'cv_selected_r2.png'
-LAMBDA_FIGURE_PATH = REPO_ROOT / 'figures' / 'cv_selected_lambda.png'
+R2_FIGURE_PATH = REPO_ROOT / 'figures' / 'model_selection' / 'cv_selected_r2.png'
+LAMBDA_FIGURE_PATH = (
+    REPO_ROOT / 'figures' / 'model_selection' / 'cv_selected_lambda.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'cv_selected_r2.log'
 
 

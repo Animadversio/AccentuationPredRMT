@@ -30,8 +30,8 @@ from matplotlib.patches import Circle, Ellipse, FancyArrowPatch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_FIGURE = REPO_ROOT / "figures" / "iso_error_geometry.png"
-DEFAULT_PDF = REPO_ROOT / "figures" / "iso_error_geometry.pdf"
+DEFAULT_FIGURE = REPO_ROOT / "figures" / "geometry" / "iso_error_geometry.png"
+DEFAULT_PDF = REPO_ROOT / "figures" / "geometry" / "iso_error_geometry.pdf"
 DEFAULT_TABLE = REPO_ROOT / "tables" / "iso_error_geometry_contours.csv"
 
 

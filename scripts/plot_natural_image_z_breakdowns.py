@@ -62,7 +62,8 @@ DATASETS = {
         'fixed_table': (
             REPO_ROOT / 'tables' / 'ffhq_fixed_lambda_z_breakdown.csv'),
         'fixed_figure': (
-            REPO_ROOT / 'figures' / 'ffhq_fixed_lambda_z_breakdown.png'),
+            REPO_ROOT / 'figures' / 'model_selection' /
+            'ffhq_fixed_lambda_z_breakdown.png'),
     },
     'vanhateren': {
         'label': 'Van Hateren',
@@ -75,7 +76,7 @@ DATASETS = {
             REPO_ROOT / 'tables' /
             'vanhateren_fixed_lambda_z_breakdown.csv'),
         'fixed_figure': (
-            REPO_ROOT / 'figures' /
+            REPO_ROOT / 'figures' / 'model_selection' /
             'vanhateren_fixed_lambda_z_breakdown.png'),
         'cv_table': (
             REPO_ROOT / 'tables' /
@@ -84,7 +85,7 @@ DATASETS = {
             REPO_ROOT / 'tables' /
             'vanhateren_spectral_teacher_profile.csv'),
         'cv_figure': (
-            REPO_ROOT / 'figures' /
+            REPO_ROOT / 'figures' / 'model_selection' /
             'vanhateren_cv_spectral_mismatch.png'),
     },
 }

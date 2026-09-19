@@ -63,7 +63,7 @@ E_acc ≍ (β*ᵀΣβ*) · (1 − R_det)²
 | Van Hateren 8×8 | 64 | 500 | 0.13 | 0.05 | ✓ | ✓ |
 
 Theory matches MC per-PC across all PCs, with correct decomposition
-into the three terms. See `figures/nb_small_d_per_pc.png`.
+into the three terms. See `figures/ridge_error/nb_small_d_per_pc.png`.
 
 ### Large d: GPU validation (A100 40 GB)
 
@@ -82,7 +82,8 @@ Key implementation details for large d:
 
 *γ_eff = K/n for van Hateren (K = number of retained PCs)
 
-See `figures/nb_large_d.png` and `figures/ridge_error_large_*.png`.
+See `figures/ridge_error/nb_large_d.png` and
+`figures/ridge_error/ridge_error_large_*.png`.
 
 ### σ sweep: varying noise level
 
@@ -94,7 +95,8 @@ Theory and MC tracked across σ ∈ [0.05, 3.0] at d=256, n=512, λ=0.05.
 **Accentuation alignment R**:
 - After the formula bug fix (see below), theory matches MC to < 0.1%.
 
-See `figures/sigma_sweep_fixed_accentuation.png` and `tables/sigma_sweep_*.npz`.
+See `figures/accentuation/sigma_sweep_fixed_accentuation.png` and
+`tables/sigma_sweep_*.npz`.
 
 ### λ sweep: varying ridge penalty
 
@@ -104,7 +106,7 @@ vs λ ∈ [10⁻³, 10] (power-law d=256, n=512, σ=1.0):
 - R_det monotonically decreases toward 1 as λ → 0 (no regularization), and drops below 1 for large λ.
 - Optimal λ (min gen error) can be read off from theory curve.
 
-See `figures/nb_lambda_sweep.png`.
+See `figures/accentuation/nb_lambda_sweep.png`.
 
 ---
 
@@ -186,7 +188,7 @@ Two missing terms:
 | R_det | 1.2171 | 1.2174 | **0.02%** |
 
 Theory/MC gap on R_det drops from **3% → 0.02%** across all σ values.
-See `figures/sigma_sweep_fixed_accentuation.png`.
+See `figures/accentuation/sigma_sweep_fixed_accentuation.png`.
 
 ---
 
@@ -222,7 +224,8 @@ AccentuationPredRMT/
 │   └── validate_sigma_sweep.py          # σ sweep across noise levels (CLI)
 ├── notebooks/
 │   └── validation_overview.ipynb        # Recreates all plots interactively
-├── figures/                             # Saved PNG outputs
+├── figures/                             # Outputs grouped by analysis/topic
+│   └── README.md                        # Figure taxonomy and folder index
 ├── tables/                              # Saved .npz result tables
 └── REPORT.md                            # This file
 ```
@@ -295,7 +298,7 @@ rates.  Generalization error grows as σ² (noise-dominated at large σ),
 while accentuation error saturates (R → 0 as σ → ∞, but the Var term
 keeps E_acc finite).
 
-See `figures/gen_vs_acc_error_crossing.png`.
+See `figures/accentuation/gen_vs_acc_error_crossing.png`.
 
 ### Optimal λ*(σ)
 
@@ -317,7 +320,7 @@ approximation.
 At σ > 0.58 theory underestimates E_acc badly (Var dominates), but that
 regime is _above_ the crossing and does not affect the location of σ*.
 
-See `figures/gen_vs_acc_optimal_lambda_vh.png`.
+See `figures/accentuation/gen_vs_acc_optimal_lambda_vh.png`.
 
 **Interpretation:**
 - At low noise (σ < σ*): accentuation error is the larger concern.
@@ -434,7 +437,8 @@ The main conclusions are:
 - The new independent-peer correction performs especially well: its maximum
   R² gap is below 0.005 across the nine tested conditions.
 
-See `figures/r2_peer_validation.png`, `figures/error_peer_validation.png`, and
+See `figures/peer_validation/r2_peer_validation.png`,
+`figures/peer_validation/error_peer_validation.png`, and
 the plot-ready cache `tables/r2_peer_validation_summary.csv`. Compressed
 per-trial caches are in `tables/r2_peer_validation_cases/` and are intentionally
 ignored by git.
@@ -516,7 +520,8 @@ Scientifically, generalization-selected regularization keeps own-path
 remain apparently well calibrated even when independently trained models no
 longer agree strongly on the accentuation direction.
 
-See `figures/cv_selected_lambda.png`, `figures/cv_selected_r2.png`, and the
+See `figures/model_selection/cv_selected_lambda.png`,
+`figures/model_selection/cv_selected_r2.png`, and the
 plot-ready cache `tables/cv_selected_r2_summary.csv`. Per-trial selected
 penalties, metrics, and DE risk paths are cached under
 `tables/cv_selected_r2_cases/` and ignored by git.
@@ -575,11 +580,12 @@ The random teacher has nearly the same signal-rank centroid as the localized
 sufficient description of peer agreement: the full distribution of teacher
 power over PCs matters because ridge shrinkage varies mode by mode.
 
-See `figures/powerlaw_teacher_alignment_r2.png`,
-`figures/powerlaw_teacher_alignment_lambda.png`,
-`figures/powerlaw_teacher_signal_profiles.png`,
-`figures/powerlaw_teacher_weights_eigenbasis.png`, and
-`figures/powerlaw_teacher_response_weights_eigenbasis.png`. Plot-ready data are
+See `figures/teacher_alignment/powerlaw_teacher_alignment_r2.png`,
+`figures/teacher_alignment/powerlaw_teacher_alignment_lambda.png`,
+`figures/teacher_alignment/powerlaw_teacher_signal_profiles.png`,
+`figures/teacher_alignment/powerlaw_teacher_weights_eigenbasis.png`, and
+`figures/teacher_alignment/powerlaw_teacher_response_weights_eigenbasis.png`.
+Plot-ready data are
 stored in `tables/powerlaw_teacher_alignment_summary.csv` and
 `tables/powerlaw_teacher_weight_summary.csv`; raw per-case metrics and fitted
 coefficient ensembles are cached under
@@ -661,10 +667,11 @@ the DE mean recover a clean disk-like shape. This is precisely the
 prediction/accentuation dissociation in the note, now observed beyond the
 Gaussian-design assumption using real natural images.
 
-See `figures/ffhq_disk_teacher_de_validation.png`,
-`figures/ffhq_disk_teacher_gen_acc_gap.png`,
-`figures/ffhq_disk_teacher_weights.png`, and
-`figures/ffhq_disk_teacher_eigenbasis.png`. Plot-ready results are in
+See `figures/natural_image_disk_teacher/ffhq_disk_teacher_de_validation.png`,
+`figures/natural_image_disk_teacher/ffhq_disk_teacher_gen_acc_gap.png`,
+`figures/natural_image_disk_teacher/ffhq_disk_teacher_weights.png`, and
+`figures/natural_image_disk_teacher/ffhq_disk_teacher_eigenbasis.png`.
+Plot-ready results are in
 `tables/ffhq_disk_teacher_de_summary.csv`; reusable per-condition arrays are
 cached under `tables/ffhq_disk_teacher_cases/`. The default processing log is
 `logs/ffhq_disk_teacher_de.log`; the dense-grid run reported here is preserved
@@ -765,7 +772,7 @@ contradictory. Fixed-alpha E_acc/S saturates near one because it is normalized
 by the natural teacher signal S. Pathwise R²_acc is normalized by the true
 teacher variance along the generated direction; that variance approaches
 zero, so R²_acc diverges negatively. See
-figures/ffhq_fixed_vs_cv_comparison.png; plot-ready results are in
+`figures/model_selection/ffhq_fixed_vs_cv_comparison.png`; plot-ready results are in
 tables/ffhq_fixed_vs_cv_summary.csv, and fixed-alpha trial caches are under
 tables/ffhq_fixed_alpha_cases/.
 
@@ -814,7 +821,7 @@ post-warmup GPU benchmark projected 33.7 seconds for 2,600 paired fits; the
 simulation completed in 39.8 seconds. Plot-ready values are cached in
 tables/vanhateren_fixed_vs_cv_summary.csv, per-noise trial data and mean weights
 under tables/vanhateren_fixed_vs_cv_cases/, and the rendered comparison in
-figures/vanhateren_fixed_vs_cv_gen_acc_gap.png.
+`figures/model_selection/vanhateren_fixed_vs_cv_gen_acc_gap.png`.
 
 ### Ratio-of-expectations versus response-noise second order
 
@@ -891,7 +898,8 @@ trials select 1000 and the mean returns to 0.994. However, negative values at
 regularization jump is not necessary. Around the later 1000-to-10000
 transition, the empirical median recovers near one while rare under-regularized
 fits keep the nonlinear mean strongly negative. See
-`figures/ffhq_disk_teacher_coarse_alpha_aligned.png`; its plot-ready values are
+`figures/model_selection/ffhq_disk_teacher_coarse_alpha_aligned.png`; its
+plot-ready values are
 in `tables/ffhq_disk_teacher_coarse_alpha_aligned.csv`.
 
 ### Linear PCA features with pixel-space backpropagation
@@ -948,10 +956,10 @@ Sweeping the top-PC cutoff reveals an adaptive bias-variance tradeoff. The
 generalization-optimal retained dimension decreases from `K=200` at
 `sigma²/S=0.01`, to 150 at 0.1, 50 at 1, and 20 at 10. Thus higher response
 noise favors a smaller, more signal-focused feature space. See
-`figures/ffhq_linear_feature_comparison.png` and
-`figures/ffhq_linear_feature_gen_acc_gap.png` for the direct experimental
+`figures/feature_space/ffhq_linear_feature_comparison.png` and
+`figures/feature_space/ffhq_linear_feature_gen_acc_gap.png` for the direct experimental
 generalization--accentuation gaps, and
-`figures/ffhq_top_pc_cutoff_sweep.png`; plot-ready data are in
+`figures/feature_space/ffhq_top_pc_cutoff_sweep.png`; plot-ready data are in
 `tables/ffhq_linear_feature_summary.csv` and
 `tables/ffhq_top_pc_cutoff_summary.csv`.
 

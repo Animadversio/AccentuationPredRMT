@@ -33,10 +33,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_linear_feature_summary.csv'
 CUTOFF_PATH = REPO_ROOT / 'tables' / 'ffhq_top_pc_cutoff_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_linear_feature_cases'
-FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_linear_feature_comparison.png'
-CUTOFF_FIGURE_PATH = REPO_ROOT / 'figures' / 'ffhq_top_pc_cutoff_sweep.png'
+FIGURE_DIR = REPO_ROOT / 'figures' / 'feature_space'
+FIGURE_PATH = FIGURE_DIR / 'ffhq_linear_feature_comparison.png'
+CUTOFF_FIGURE_PATH = FIGURE_DIR / 'ffhq_top_pc_cutoff_sweep.png'
 GAP_FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_linear_feature_gen_acc_gap.png')
+    FIGURE_DIR / 'ffhq_linear_feature_gen_acc_gap.png')
 DEFAULT_LOG_PATH = REPO_ROOT / 'logs' / 'ffhq_linear_feature_validation.log'
 FEATURE_NAMES = ('pca_full', 'whiten_full', 'top_pc_100')
 FEATURE_LABELS = {

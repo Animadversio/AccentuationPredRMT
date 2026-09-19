@@ -52,23 +52,24 @@ from scripts.validate_r2_peer_review import float_tag
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SUMMARY_PATH = REPO_ROOT / 'tables' / 'ffhq_feature_interpolation_summary.csv'
 CASE_DIR = REPO_ROOT / 'tables' / 'ffhq_feature_interpolation_cases'
+FIGURE_DIR = REPO_ROOT / 'figures' / 'feature_space'
 FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_feature_interpolation_noise_metrics.png')
+    FIGURE_DIR / 'ffhq_feature_interpolation_noise_metrics.png')
 ABLATION_FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_feature_interpolation_ablation.png')
+    FIGURE_DIR / 'ffhq_feature_interpolation_ablation.png')
 PROFILE_FIGURE_PATH = (
-    REPO_ROOT / 'figures' / 'ffhq_feature_interpolation_profiles.png')
+    FIGURE_DIR / 'ffhq_feature_interpolation_profiles.png')
 FACET_COLUMN_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'ffhq_feature_interpolation_gen_acc_by_feature.png')
 FACET_TRANSPOSED_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'ffhq_feature_interpolation_gen_acc_transposed.png')
 POWER_FACET_COLUMN_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'ffhq_power_interpolation_gen_acc_by_feature.png')
 POWER_FACET_TRANSPOSED_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'ffhq_power_interpolation_gen_acc_transposed.png')
 DEFAULT_LOG_PATH = (
     REPO_ROOT / 'logs' / 'ffhq_feature_interpolation_validation.log')

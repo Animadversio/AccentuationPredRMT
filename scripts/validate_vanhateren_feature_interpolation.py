@@ -45,24 +45,25 @@ SUMMARY_PATH = (
 CASE_DIR = REPO_ROOT / 'tables' / 'vanhateren_feature_interpolation_cases'
 DEFAULT_LOG_PATH = (
     REPO_ROOT / 'logs' / 'vanhateren_feature_interpolation_validation.log')
+FIGURE_DIR = REPO_ROOT / 'figures' / 'feature_space'
 
 COUPLED_COLUMN_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_feature_interpolation_gen_acc_by_feature.png')
 COUPLED_TRANSPOSED_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_feature_interpolation_gen_acc_transposed.png')
 POWER_COLUMN_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_power_interpolation_gen_acc_by_feature.png')
 POWER_TRANSPOSED_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_power_interpolation_gen_acc_transposed.png')
 COUPLED_PROFILE_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_feature_interpolation_profiles.png')
 POWER_PROFILE_FIGURE_PATH = (
-    REPO_ROOT / 'figures' /
+    FIGURE_DIR /
     'vanhateren_power_interpolation_profiles.png')
 
 COUPLED_MC_PATH_VALUES = np.asarray([0.4, 0.6, 0.8, 1.0])
