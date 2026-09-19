@@ -22,3 +22,10 @@ Plot-ready numerical results belong in `tables/`; notebook-local previews and
 run-specific diagnostics remain under `notebooks/outputs/`. New publication or
 report figures should be written to one of the topic folders above rather than
 directly into `figures/`.
+
+For backward compatibility, figures that previously lived directly under
+`figures/` retain relative symbolic-link aliases at their original paths.
+This keeps old notebooks, reports, and agent conversations resolvable while
+the canonical image remains in exactly one topic folder. New figures should
+not add top-level aliases unless an old path already exists in published or
+shared material.
