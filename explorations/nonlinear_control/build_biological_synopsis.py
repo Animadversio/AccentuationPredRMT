@@ -21,7 +21,7 @@ TABLE = REPO / 'tables/nonlinear_control/biological_validation'
 FIGURE = REPO / 'figures/nonlinear_control/biological_validation'
 KEY = ['subject', 'monkey', 'unit', 'model']
 ROBUST_MODELS = {'clipag_vitb32', 'resnet50_robust'}
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 
 sys.path.insert(0, str(HERE))
 from validate_biology import upstream_modules  # noqa: E402
@@ -76,6 +76,22 @@ def trial_mean_noise(trial_stim, trial_values, requested_names):
             len(estimates), len(requested_names))
 
 
+def control_session_test_cloud(loader, monkey, unit, model):
+    """Encoding-held-out natural images re-presented during the control session."""
+    brain=loader.load_brain(monkey)
+    encoding=loader.load_encoding(monkey)
+    ui=list(brain['units']).index(unit)
+    mi=list(encoding['models']).index(model)
+    predicted=dict(zip(encoding['stim'].tolist(),encoding['pred'][ui,mi]))
+    test_names=set(loader._test_names(monkey))
+    control=brain['control']
+    x,y,names=[],[],[]
+    for i,(name,kind) in enumerate(zip(control['stim'],control['kind'])):
+        if kind=='calibration' and name in test_names and name in predicted:
+            x.append(predicted[name]); y.append(control['resp_z'][i,ui]); names.append(name)
+    return np.asarray(x,float),np.asarray(y,float),names
+
+
 def biological_metrics(manifest):
     _, loader, _ = upstream_modules()
     control = pd.read_csv(TABLE/'control_clouds.csv.gz')
@@ -89,29 +105,41 @@ def biological_metrics(manifest):
         ci = np.where((ceilings['unit']==row.unit) & (ceilings['model']==row.model))[0]
         assert len(ci)==1
         ci = ci[0]
-        x_test, y_test = loader.encoding_cloud(monkey, row.unit, row.model, split='test')
+        x_encoding_test, y_encoding_test = loader.encoding_cloud(monkey, row.unit, row.model, split='test')
+        x_control_test, y_control_test, control_test_names = control_session_test_cloud(
+            loader,monkey,row.unit,row.model)
         x_anchor, y_anchor = loader.anchor_cloud(monkey, row.unit, row.model)
         cg = control_groups[(row.subject, row.unit, row.model)]
-        gen = regression_metrics(x_test, y_test)
+        encoding_gen = regression_metrics(x_encoding_test, y_encoding_test)
+        control_gen = regression_metrics(x_control_test, y_control_test)
         cross = regression_metrics(x_anchor, y_anchor)
         ctl = regression_metrics(cg.predicted, cg.measured)
+        calibration=brain['calibration']
+        encoding_measured=dict(zip(calibration['stim'].astype(str),calibration['resp_z'][:,ui]))
+        y_encoding_matched=np.asarray([encoding_measured[str(name)] for name in control_test_names],float)
+        drift=regression_metrics(y_encoding_matched,y_control_test)
         centered = cg[['predicted','measured']]-cg.groupby('seed')[['predicted','measured']].transform('mean')
         within_denom = float(np.square(centered.predicted).sum())
         control_slope_within_seed = (float((centered.predicted*centered.measured).sum()/within_denom)
                                      if within_denom > 0 else np.nan)
-        s_nat = gen['measured_variance']
+        s_nat_encoding = encoding_gen['measured_variance']
+        s_nat_control = control_gen['measured_variance']
         s_control = ctl['measured_variance']
         test_names=set(loader._test_names(monkey))
-        calibration=brain['calibration']
         heldout_names=[n for n in calibration['stim'] if n in test_names]
-        gen_noise,n_gen_noise,n_gen_total=trial_mean_noise(
+        encoding_gen_noise,n_encoding_gen_noise,n_encoding_gen_total=trial_mean_noise(
             calibration['trial_stim'],calibration['trial_z'][:,ui],heldout_names)
         control_data=brain['control']
+        control_gen_noise,n_control_gen_noise,n_control_gen_total=trial_mean_noise(
+            control_data['trial_stim'],control_data['trial_z'][:,ui],control_test_names)
         control_noise,n_control_noise,n_control_total=trial_mean_noise(
             control_data['trial_stim'],control_data['trial_z'][:,ui],cg.stimulus.tolist())
         # Across M fixed stimuli, centering removes mean(v_i)/M from the expected
         # population variance. With incomplete repeat coverage, mean(v_i) is a plug-in.
-        s_nat_corrected=s_nat-(1-1/len(y_test))*gen_noise if np.isfinite(gen_noise) else np.nan
+        s_nat_encoding_corrected=(s_nat_encoding-(1-1/len(y_encoding_test))*encoding_gen_noise
+                                  if np.isfinite(encoding_gen_noise) else np.nan)
+        s_nat_control_corrected=(s_nat_control-(1-1/len(y_control_test))*control_gen_noise
+                                 if np.isfinite(control_gen_noise) else np.nan)
         control_mse_corrected=ctl['mse']-control_noise if np.isfinite(control_noise) else np.nan
         signal_var = float(ceilings['signal_var'][ci])
         noise_var = float(ceilings['noise_var'][ci])
@@ -120,24 +148,42 @@ def biological_metrics(manifest):
             site_id=f'{row.subject}:unit{row.unit}', geometry_id=row.geometry_id,
             biology_reliability=float(brain['reliability'][ui]),
             firing_floor=float(brain['firing_floor'][ui]),
-            **prefix(gen, 'gen_test'), **prefix(cross, 'crossphase_anchor'), **prefix(ctl, 'control'))
+            **prefix(encoding_gen, 'encoding_session_gen_test'),
+            **prefix(control_gen, 'control_session_gen_test'),
+            **prefix(drift, 'session_drift_response'),
+            **prefix(cross, 'crossphase_anchor'), **prefix(ctl, 'control'))
         values.update(
-            gen_test_error_over_S_nat_observed=gen['mse']/s_nat if s_nat > 0 else np.nan,
-            gen_test_trialmean_noise_variance=gen_noise,
-            gen_test_trialmean_noise_n_stim=n_gen_noise,
-            gen_test_trialmean_noise_fraction=n_gen_noise/n_gen_total,
-            gen_test_S_nat_noise_corrected=s_nat_corrected,
-            control_error_over_S_nat_observed=ctl['mse']/s_nat if s_nat > 0 else np.nan,
+            session_drift_gen_mse_control_minus_encoding=control_gen['mse']-encoding_gen['mse'],
+            session_drift_gen_mse_control_over_encoding=control_gen['mse']/encoding_gen['mse'],
+            encoding_session_gen_test_error_over_S_nat_observed=(encoding_gen['mse']/s_nat_encoding
+                if s_nat_encoding > 0 else np.nan),
+            encoding_session_gen_test_trialmean_noise_variance=encoding_gen_noise,
+            encoding_session_gen_test_trialmean_noise_n_stim=n_encoding_gen_noise,
+            encoding_session_gen_test_trialmean_noise_fraction=n_encoding_gen_noise/n_encoding_gen_total,
+            encoding_session_gen_test_S_nat_noise_corrected=s_nat_encoding_corrected,
+            control_session_gen_test_error_over_S_nat_observed=(control_gen['mse']/s_nat_control
+                if s_nat_control > 0 else np.nan),
+            control_session_gen_test_trialmean_noise_variance=control_gen_noise,
+            control_session_gen_test_trialmean_noise_n_stim=n_control_gen_noise,
+            control_session_gen_test_trialmean_noise_fraction=n_control_gen_noise/n_control_gen_total,
+            control_session_gen_test_trialmean_noise_high_coverage=n_control_gen_noise/n_control_gen_total >= .8,
+            control_session_gen_test_S_nat_noise_corrected=s_nat_control_corrected,
+            control_error_over_S_nat_encoding_session_observed=(ctl['mse']/s_nat_encoding
+                if s_nat_encoding > 0 else np.nan),
+            control_error_over_S_nat_control_session_observed=(ctl['mse']/s_nat_control
+                if s_nat_control > 0 else np.nan),
             control_error_over_S_control_observed=ctl['mse']/s_control if s_control > 0 else np.nan,
             control_trialmean_noise_variance=control_noise,
             control_trialmean_noise_n_stim=n_control_noise,
             control_trialmean_noise_fraction=n_control_noise/n_control_total,
             control_trialmean_noise_high_coverage=n_control_noise/n_control_total >= .8,
             control_mse_noise_corrected=control_mse_corrected,
-            control_error_over_S_nat_noise_corrected=(ctl['mse']/s_nat_corrected
-                if np.isfinite(s_nat_corrected) and s_nat_corrected > 0 else np.nan),
-            control_error_noise_corrected_over_S_nat_noise_corrected=(control_mse_corrected/s_nat_corrected
-                if np.isfinite(control_mse_corrected) and np.isfinite(s_nat_corrected) and s_nat_corrected > 0 else np.nan),
+            control_error_over_S_nat_encoding_session_noise_corrected=(ctl['mse']/s_nat_encoding_corrected
+                if np.isfinite(s_nat_encoding_corrected) and s_nat_encoding_corrected > 0 else np.nan),
+            control_error_over_S_nat_control_session_noise_corrected=(ctl['mse']/s_nat_control_corrected
+                if np.isfinite(s_nat_control_corrected) and s_nat_control_corrected > 0 else np.nan),
+            control_error_noise_corrected_over_S_nat_control_session_noise_corrected=(control_mse_corrected/s_nat_control_corrected
+                if np.isfinite(control_mse_corrected) and np.isfinite(s_nat_control_corrected) and s_nat_control_corrected > 0 else np.nan),
             control_slope_within_seed=control_slope_within_seed,
             control_noise_ceiling_r=float(ceilings['nc_r'][ci]),
             control_noise_ceiling_signal_variance=signal_var,
@@ -150,9 +196,8 @@ def biological_metrics(manifest):
 
 
 def geometry_wide():
-    means = pd.read_csv(TABLE/'variance_predictors.csv')
     seeds = pd.read_csv(TABLE/'variance_predictors_by_seed.csv.gz')
-    metric_cols = ['raw_energy', 'trace', 'V']
+    metric_cols = ['raw_energy', 'trace']
     seed_stats = seeds.groupby(KEY+['method','tau_255'])[metric_cols].agg(['mean','std'])
     seed_stats.columns = [f'{metric}_{stat}' for metric,stat in seed_stats.columns]
     seed_stats = seed_stats.reset_index()
@@ -166,6 +211,18 @@ def geometry_wide():
                             values=[f'{m}_{s}' for m in metric_cols for s in ['mean','std']])
     wide.columns = [f'geom_{label}__{metric}' for metric,label in wide.columns]
     return wide.reset_index()
+
+
+def add_session_specific_V(synopsis):
+    """Attach both generalization-error choices to every geometry trace."""
+    trace_columns=synopsis.filter(regex=r'^geom_.*__trace_(mean|std)$').columns
+    for trace_col in trace_columns:
+        root_name,stat=trace_col.rsplit('__trace_',1)
+        synopsis[f'{root_name}__V_control_session_{stat}']=(
+            synopsis.control_session_gen_test_mse*synopsis[trace_col]/synopsis.n_train)
+        synopsis[f'{root_name}__V_encoding_session_{stat}']=(
+            synopsis.encoding_session_gen_test_mse*synopsis[trace_col]/synopsis.n_train)
+    return synopsis
 
 
 def ridge_and_qc(manifest):
@@ -187,12 +244,11 @@ def schema_for(frame):
         'site_id':'Stable subject-unit identifier.', 'geometry_id':'Shared feature/layer/split geometry identifier.',
         'region':'Recorded visual area.', 'robust_model':'Upstream robust-model group: CLIPAG or robust RN50.',
         'biology_reliability':'Source neural reliability metadata.',
-        'control_error_over_S_nat_observed':'Control identity MSE divided by held-out natural measured-response variance; closest available empirical proxy to E_acc/S, but its denominator includes measurement noise.',
+        'control_error_over_S_nat_control_session_observed':'Primary empirical E_acc/S proxy: control identity MSE divided by held-out natural response variance measured in the control session.',
+        'control_error_over_S_nat_control_session_noise_corrected':'Sensitivity E_acc/S proxy using repeat-noise correction in the control-session natural response denominator; correction coverage is low for Leap and Three0.',
         'control_error_over_S_control_observed':'Control identity MSE divided by control measured-response variance; exactly 1-control_r2_identity and therefore descriptive/tautological.',
-        'gen_test_S_nat_noise_corrected':'Held-out natural measured-response variance minus the repeat-estimated contribution of trial-mean measurement noise; empirical proxy for latent natural teacher signal power S.',
         'control_mse_noise_corrected':'Control identity MSE minus repeat-estimated trial-mean response noise; may be negative and is not clipped.',
-        'control_error_over_S_nat_noise_corrected':'Raw control identity MSE divided by repeat-noise-corrected natural signal variance.',
-        'control_error_noise_corrected_over_S_nat_noise_corrected':'Repeat-noise-corrected control identity MSE divided by repeat-noise-corrected natural signal variance; sensitivity metric because control repeat coverage varies and can be sparse.',
+        'control_error_noise_corrected_over_S_nat_control_session_noise_corrected':'Repeat-noise-corrected control identity MSE divided by control-session repeat-noise-corrected natural signal variance; sensitivity metric because accentuated-stimulus repeat coverage varies and can be sparse.',
         'control_trialmean_noise_high_coverage':'True when at least 80% of matched control stimuli have at least two trials for noise estimation.',
         'control_error_over_ceiling_signal_variance':'Control identity MSE divided by upstream control noise-ceiling signal variance; unavailable for Leap and Three0 and is path-specific, not natural S.',
     }
@@ -201,7 +257,9 @@ def schema_for(frame):
         if col.startswith('geom_'):
             group='geometry'
             desc='Across 10 image seeds: '+('mean' if col.endswith('_mean') else 'sample SD')+' of '+col.split('__',1)[1].rsplit('_',1)[0]+'.'
-        elif col.startswith('gen_test_'): group,desc='generalization','Held-out natural-image '+col.removeprefix('gen_test_').replace('_',' ')+'.'
+        elif col.startswith('encoding_session_gen_test_'): group,desc='generalization_encoding_session','Encoding-session held-out natural-image '+col.removeprefix('encoding_session_gen_test_').replace('_',' ')+'.'
+        elif col.startswith('control_session_gen_test_'): group,desc='generalization_control_session','Control-session response on encoding-held-out natural-image '+col.removeprefix('control_session_gen_test_').replace('_',' ')+'.'
+        elif col.startswith('session_drift_'): group,desc='session_drift','Encoding-to-control recording-session drift '+col.removeprefix('session_drift_').replace('_',' ')+'.'
         elif col.startswith('crossphase_'): group,desc='crossphase','Control-session anchor '+col.removeprefix('crossphase_anchor_').replace('_',' ')+'.'
         elif col.startswith('control_'): group,desc='control','Biological control '+col.removeprefix('control_').replace('_',' ')+'.'
         elif col.startswith('ridge_'): group,desc='ridge','Ridge/DE '+col.removeprefix('ridge_').replace('_',' ')+'.'
@@ -217,13 +275,15 @@ def correlation_table(synopsis):
     rows=[]
     for method,tau in configurations:
         label=method if method in ['exact','local_mc'] else f'{method}_tau255_{str(int(tau)) if tau.is_integer() else str(tau).replace(".","p")}'
-        for quantity in ['trace','V']:
+        for quantity in ['trace','V_control_session','V_encoding_session']:
             predictor=f'geom_{label}__{quantity}_mean'
             for subset,data in [('all_250',synopsis),
                                 ('without_CLIPAG_and_robust_RN50',synopsis[~synopsis.robust_model])]:
                 for outcome in ['control_slope','control_slope_within_seed','control_mse',
-                        'control_error_over_S_nat_observed','control_error_over_S_nat_noise_corrected',
-                        'control_error_noise_corrected_over_S_nat_noise_corrected',
+                        'control_error_over_S_nat_control_session_observed',
+                        'control_error_over_S_nat_control_session_noise_corrected',
+                        'control_error_over_S_nat_encoding_session_noise_corrected',
+                        'control_error_noise_corrected_over_S_nat_control_session_noise_corrected',
                         'control_r2_identity']:
                     valid=np.isfinite(data[predictor])&np.isfinite(data[outcome])
                     d=data.loc[valid,[predictor,outcome,'site_id']].copy()
@@ -251,7 +311,7 @@ def plot_smoothing(corr):
     fig,axs=plt.subplots(1,2,figsize=(11,4.3),sharey=True)
     for ax,method in zip(axs,['smooth','neighborhood']):
         for subset,color in colors.items():
-            d=corr[(corr.method==method)&(corr.quantity=='V')&(corr.outcome=='control_slope')&(corr.subset==subset)]
+            d=corr[(corr.method==method)&(corr.quantity=='V_control_session')&(corr.outcome=='control_slope')&(corr.subset==subset)]
             ax.plot(d.tau_255,d.spearman,'o-',color=color,label=subset.replace('_',' '))
             ax.plot(d.tau_255,d.pearson_log10,'s--',color=color,alpha=.75)
         ax.axhline(0,color='.6',linewidth=.8); ax.set_xscale('log',base=2)
@@ -259,7 +319,7 @@ def plot_smoothing(corr):
         ax.spines[['top','right']].set_visible(False)
     axs[0].set_ylabel('Correlation with biological control slope')
     axs[0].legend(fontsize=8)
-    fig.suptitle('250-row synopsis: circles = Spearman; squares = Pearson(log10 V)')
+    fig.suptitle('250-row synopsis: control-session generalization V\ncircles = Spearman; squares = Pearson(log10 V)')
     fig.tight_layout(); FIGURE.mkdir(parents=True,exist_ok=True)
     fig.savefig(FIGURE/'synopsis_smoothing_level_correlations.png',dpi=180)
     plt.close(fig)
@@ -270,19 +330,23 @@ def validate(synopsis, schema):
     assert synopsis.groupby(['subject','unit']).size().eq(10).all()
     assert synopsis.groupby('model').size().eq(25).all()
     assert len(schema)==len(synopsis.columns) and schema.column.is_unique
-    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==6
-    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==24
+    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==8
+    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==32
     numeric=synopsis.select_dtypes(include=[np.number])
     assert not np.isinf(numeric.to_numpy()).any()
-    for v_col in synopsis.filter(regex=r'^geom_.*__V_mean$').columns:
-        trace_col=v_col.replace('__V_mean','__trace_mean')
-        np.testing.assert_allclose(synopsis[v_col],synopsis.gen_test_mse*synopsis[trace_col]/synopsis.n_train,
-                                   rtol=2e-7,atol=1e-12)
+    for session in ['control','encoding']:
+        mse=synopsis[f'{session}_session_gen_test_mse']
+        for v_col in synopsis.filter(regex=rf'^geom_.*__V_{session}_session_mean$').columns:
+            trace_col=v_col.replace(f'__V_{session}_session_mean','__trace_mean')
+            np.testing.assert_allclose(synopsis[v_col],mse*synopsis[trace_col]/synopsis.n_train,
+                                       rtol=2e-7,atol=1e-12)
     np.testing.assert_allclose(synopsis.control_error_over_S_control_observed,
                                1-synopsis.control_r2_identity,rtol=1e-10,atol=1e-10)
-    np.testing.assert_allclose(synopsis.gen_test_error_over_S_nat_observed,
-                               1-synopsis.gen_test_r2_identity,rtol=1e-10,atol=1e-10)
-    assert synopsis.gen_test_trialmean_noise_fraction.min()==1
+    for session in ['control','encoding']:
+        np.testing.assert_allclose(synopsis[f'{session}_session_gen_test_error_over_S_nat_observed'],
+                                   1-synopsis[f'{session}_session_gen_test_r2_identity'],rtol=1e-10,atol=1e-10)
+    assert synopsis.encoding_session_gen_test_trialmean_noise_fraction.min()==1
+    assert synopsis.control_session_gen_test_trialmean_noise_fraction.between(0,1).all()
     assert synopsis.control_trialmean_noise_fraction.between(0,1).all()
 
 
@@ -293,6 +357,7 @@ def main():
     base=ridge_and_qc(manifest)
     bio=biological_metrics(manifest)
     synopsis=base.merge(bio,on=KEY+['geometry_id'],validate='one_to_one').merge(geometry_wide(),on=KEY,validate='one_to_one')
+    synopsis=add_session_specific_V(synopsis)
     synopsis=synopsis.sort_values(KEY).reset_index(drop=True)
     schema=schema_for(synopsis)
     validate(synopsis,schema)
@@ -308,7 +373,10 @@ def main():
     plot_smoothing(corr)
     metadata=dict(version=VERSION,rows=len(synopsis),columns=len(synopsis.columns),key=KEY,
         parquet_written=parquet,canonical_geometry_source='variance_predictors_by_seed.csv.gz',
-        normalization_note='Theory S is latent natural teacher signal variance. gen_test_S_nat_noise_corrected is the primary empirical denominator (100% repeat coverage). Control numerator noise correction is sensitivity-only because repeat coverage varies; raw control MSE over corrected natural S is the primary normalized control error.',
+        primary_generalization='control_session_gen_test: encoding-held-out natural images evaluated with responses recorded during the control session',
+        secondary_generalization='encoding_session_gen_test: original encoding-session responses; retained to quantify session drift',
+        primary_geometry_V='V_control_session = control_session_gen_test_mse * trace / n_train',
+        normalization_note='Theory S is latent natural teacher signal variance. Control-session observed held-out natural-response variance is primary because it matches the control recording session. Its repeat-noise correction is sensitivity-only: repeat coverage is complete for red/paul/venus but low for Leap/Three0. Encoding-session observed and fully repeat-noise-corrected versions are retained.',
         robust_models=sorted(ROBUST_MODELS))
     (TABLE/'biological_validation_synopsis_v1_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
     print(json.dumps(metadata,indent=2))

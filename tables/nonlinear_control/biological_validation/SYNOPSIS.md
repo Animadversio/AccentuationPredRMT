@@ -15,10 +15,12 @@ levels; rebuild the synopsis rather than manually adding columns.
 |---|---|
 | identity / provenance | subject, monkey, unit, model, region, site and geometry IDs, robust-model flag |
 | `ridge_` | original RidgeCV alpha, alpha/n, solved kappa, df2 and readout verification |
-| `gen_test_` | held-out natural-image MSE, RMSE, MAE, bias, Pearson r, slope/intercept, identity R², refit R², response and prediction variance |
+| `control_session_gen_test_` | primary generalization metrics: encoding-held-out natural images evaluated with responses recorded during the control session |
+| `encoding_session_gen_test_` | the same held-out split evaluated with original encoding-session responses; retained for session-drift sensitivity |
+| `session_drift_` | direct matched-image response drift between encoding and control sessions, plus the two generalization-MSE difference/ratio |
 | `crossphase_anchor_` | same metrics on natural-image anchors repeated in the control sessions |
 | `control_` | biological accentuation MSE, slope, within-seed slope, identity R², refit R², normalization and repeat-noise quantities |
-| `geom_<method>[_tau255_<level>]__` | ten-seed mean and sample SD of raw energy, actual-kappa control trace and V=MSE_test×trace/n |
+| `geom_<method>[_tau255_<level>]__` | ten-seed mean and sample SD of raw energy, actual-kappa trace, `V_control_session` and `V_encoding_session` |
 
 `r2_identity = 1 - MSE(y, prediction) / Var(y)` measures absolute prediction
 calibration. `r2_refit = Pearson r²` measures linear association after fitting
@@ -29,17 +31,22 @@ slope and intercept. They answer different questions and should not be merged.
 Theory uses the latent natural teacher signal power
 `S = beta*' Sigma beta*`. It is not directly observed here.
 
-- `gen_test_measured_variance` is `S_nat_observed`: variance across held-out
-  natural-image trial means. It includes response measurement noise.
-- `gen_test_S_nat_noise_corrected` subtracts the estimated trial-mean noise
-  contribution using single-trial repeats. Repeat coverage is 100% for all 250
-  rows, so this is the preferred empirical denominator.
-- `control_error_over_S_nat_noise_corrected` is the primary normalized control
-  error: raw biological control MSE divided by corrected natural signal power.
-  It retains the observed held-out response error, matching the decision to use
-  held-out prediction MSE in V.
-- `control_error_noise_corrected_over_S_nat_noise_corrected` also subtracts
-  estimated control trial-mean noise from the numerator. It is sensitivity-only:
+- `control_session_gen_test_measured_variance` is the primary empirical
+  `S_nat_observed`: variance across held-out natural images re-presented during
+  the control session. This controls recording-session drift but includes
+  response measurement noise.
+- `control_session_gen_test_S_nat_noise_corrected` subtracts a repeat-estimated
+  noise contribution. Repeat coverage is complete for red, paul and venus, but
+  only 20.8% for Leap and 18.2% for Three0, so this is sensitivity-only.
+- `encoding_session_gen_test_S_nat_noise_corrected` uses all 195 held-out images
+  and has 100% repeat coverage. It is statistically cleaner but can reflect a
+  different neuronal state from the subsequent control experiment.
+- `control_error_over_S_nat_control_session_observed` is the primary normalized
+  control error: biological control MSE divided by control-session natural
+  response variance.
+- `control_error_noise_corrected_over_S_nat_control_session_noise_corrected`
+  also subtracts estimated control-stimulus trial-mean noise. It is
+  sensitivity-only:
   control repeat coverage ranges from 0.070 to 1.000, and only 102/250 rows have
   at least 80% coverage.
 - `control_error_over_S_control_observed` is exactly `1-control_r2_identity`.
@@ -60,8 +67,9 @@ XDG_CACHE_HOME=/tmp/xdg-biological-synopsis \
 ```
 
 The builder asserts 250 unique keys, ten models per site, 25 rows per model,
-the expected exact/smooth geometry blocks, full natural-image repeat coverage,
-and the two normalized-error/R² identities. Add new raw measurements to the
+the expected exact/smooth geometry blocks, full encoding-session natural-image
+repeat coverage, bounded control-session coverage, session-specific V identities,
+and the normalized-error/R² identities. Add new raw measurements to the
 long tables or biological cache first, then extend the builder and schema.
 
 `synopsis_correlations.csv` contains raw-scale Pearson, log10-predictor

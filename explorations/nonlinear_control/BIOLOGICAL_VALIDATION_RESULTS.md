@@ -2,7 +2,7 @@
 
 Date: 2026-09-19. Completed CPU job **47276723** (2m50s, exit 0).
 
-We computed `V = MSE_test / n × sum(q_k s_k / (s_k + kappa)^2)` for all 250 site/model pairs. This is an empirical variance-contribution proxy, not an identified prediction of absolute biological slope. Teacher signal/alignment and the stimulus optimization metric are deferred.
+We computed `V = MSE_test / n × sum(q_k s_k / (s_k + kappa)^2)` for all 250 site/model pairs. The initial run used encoding-session held-out responses; synopsis v1.1 adds and prioritizes held-out natural responses recorded during the control session. This is an empirical variance-contribution proxy, not an identified prediction of absolute biological slope. Teacher signal/alignment and the stimulus optimization metric are deferred.
 
 ## Reproduction and coverage
 
@@ -16,7 +16,7 @@ We computed `V = MSE_test / n × sum(q_k s_k / (s_k + kappa)^2)` for all 250 sit
 - Three0 session 250508 has zero anchors and uses the upstream allday normalization fallback. Other sessions do not. Leap/three0 official noise ceilings are unavailable; no ceiling correction is used.
 - Bulk caches and pinned upstream source: `$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/biological_validation_v1`.
 
-## Descriptive evidence
+## Initial descriptive evidence: encoding-session generalization error
 
 Exact V versus biological slope: pooled Spearman **−0.314**, site-demeaned Spearman **−0.421**. For within-seed control slope, corresponding values are **−0.313** and **−0.410**. These are descriptive correlations, not independent-observation significance tests.
 
@@ -77,42 +77,52 @@ These are empirical regressions of slope on log10 predictors, not a theoretical 
 
 The product outperforms MSE-only in this basic comparison, but improves only slightly over trace alone. No uncertainty interval or claim of significant incremental improvement is made.
 
-## Maintained 250-row synopsis
+## Maintained 250-row synopsis: control-session generalization is primary
 
 `tables/nonlinear_control/biological_validation/biological_validation_synopsis_v1.parquet`
 is the maintained fast analysis table: one row per subject × unit × model, 250
-rows and 221 columns. It combines provenance, RidgeCV/DE quantities, held-out
+rows and 305 columns. It combines provenance, RidgeCV/DE quantities, held-out
 natural-image generalization, cross-phase anchor metrics, biological control
 metrics, error normalizations and all geometry estimator/noise summaries.
 
-At the individual 250-row level, exact V versus control slope gives Pearson
-`r=-0.093` on the raw V scale, Pearson `r=-0.378` on log10 V, and Spearman
-`rho=-0.314`. Removing CLIPAG and robust RN50 gives `-0.003`, `-0.063`, and
-`-0.067`, respectively. The original site-demeaned log10-V Spearman is
-`-0.421`; without those models it is `-0.057`.
+The primary generalization endpoint uses the original encoding-held-out image
+identities but biological responses from the control session. Coverage is 50
+images for red/paul/venus, 24 for Leap and 22 for Three0. The secondary
+encoding-session endpoint retains all 195 held-out images. The two MSEs have
+only Pearson `r=0.303` and Spearman `rho=0.238`, consistent with meaningful
+session dependence plus different stimulus counts. The control/encoding MSE
+ratio has monkey medians 0.933 (red), 0.606 (paul), 1.840 (venus), 3.515
+(Leap), and 2.652 (Three0).
+
+Directly pairing the same held-out natural images across recording sessions
+confirms that this is not only a model-error artifact. Mean cross-session
+response correlation is 0.945 (red), 0.850 (paul), 0.636 (venus), 0.170
+(Leap), and 0.423 (Three0). These matched-image drift metrics are stored under
+`session_drift_response_*` and repeat identically across the ten model rows of
+each biological site.
+
+Using primary control-session V, exact V versus control slope gives Pearson
+`r=-0.044` on the raw V scale, Pearson `r=-0.285` on log10 V, and Spearman
+`rho=-0.195`. Removing CLIPAG and robust RN50 gives `+0.039`, `+0.105`, and
+`+0.117`, respectively. Site-demeaned log10-V Spearman is `-0.415`; without
+those models it is `-0.042`.
 
 Smooth V gives the following 250-row correlations with control slope:
 
 | noise SD × 255 | Pearson(raw V) | Pearson(log10 V) | Spearman | Spearman without CLIPAG/robust RN50 |
 |---:|---:|---:|---:|---:|
-| 0.5 | -0.144 | -0.386 | -0.327 | -0.091 |
-| 2 | -0.290 | -0.397 | -0.351 | -0.134 |
-| 8 | -0.280 | -0.382 | -0.359 | -0.158 |
-| 16 | -0.271 | -0.339 | -0.309 | -0.148 |
-
-For error outcomes, exact log10 V correlates `+0.283` with raw control MSE
-(Spearman `+0.344`) and `+0.269` with control MSE divided by the repeat-noise-
-corrected natural signal variance (Spearman `+0.269`). After removing CLIPAG
-and robust RN50, the latter becomes `+0.076` and `+0.072`. This is directionally
-consistent with V as an error contribution, while again showing that the
-cross-model separation drives much of the effect.
+| 0.5 | -0.059 | -0.280 | -0.186 | +0.127 |
+| 2 | -0.156 | -0.265 | -0.201 | +0.092 |
+| 8 | -0.225 | -0.207 | -0.171 | +0.069 |
+| 16 | -0.224 | -0.144 | -0.114 | +0.062 |
 
 The theory denominator S is latent natural teacher signal power. The synopsis
-therefore keeps observed, natural-repeat-noise-corrected, control-cloud and
-control-noise-corrected normalizations under distinct names. Natural repeat
-coverage is complete; control repeat coverage is incomplete, so raw control
-MSE over corrected natural S is primary and numerator correction is a
-sensitivity analysis. See `tables/nonlinear_control/biological_validation/SYNOPSIS.md`.
+therefore keeps control-session observed, control-session noise-corrected,
+encoding-session observed, encoding-session noise-corrected and control-cloud
+normalizations under distinct names. The control-session observed denominator
+is primary. Noise correction is sensitivity-only for Leap/Three0 because their
+held-out anchor repeat coverage is low. See
+`tables/nonlinear_control/biological_validation/SYNOPSIS.md`.
 
 ## Outputs and rerun
 
