@@ -76,3 +76,9 @@ long tables or biological cache first, then extend the builder and schema.
 Pearson, Spearman, and site-demeaned Spearman correlations for the full 250
 rows and after removing CLIPAG and robust RN50. Correlations are descriptive:
 rows share animals, sites, feature geometries and image seeds.
+
+The smoothing-level correlation figures are stored separately for
+`V_control_session` and `V_encoding_session`. Neither endpoint overwrites the
+other. The control-session endpoint matches the control recording state but
+has only 22–50 held-out anchors; the encoding-session endpoint has 195 images
+per row but may be affected by recording-session drift.

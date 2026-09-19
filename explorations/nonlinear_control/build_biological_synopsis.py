@@ -308,21 +308,30 @@ def correlation_table(synopsis):
 
 def plot_smoothing(corr):
     colors={'all_250':'#3366aa','without_CLIPAG_and_robust_RN50':'#aa3377'}
-    fig,axs=plt.subplots(1,2,figsize=(11,4.3),sharey=True)
-    for ax,method in zip(axs,['smooth','neighborhood']):
-        for subset,color in colors.items():
-            d=corr[(corr.method==method)&(corr.quantity=='V_control_session')&(corr.outcome=='control_slope')&(corr.subset==subset)]
-            ax.plot(d.tau_255,d.spearman,'o-',color=color,label=subset.replace('_',' '))
-            ax.plot(d.tau_255,d.pearson_log10,'s--',color=color,alpha=.75)
-        ax.axhline(0,color='.6',linewidth=.8); ax.set_xscale('log',base=2)
-        ax.set_xticks([.5,2,8,16],[.5,2,8,16]); ax.set_xlabel('Noise SD × 255'); ax.set_title(method)
-        ax.spines[['top','right']].set_visible(False)
-    axs[0].set_ylabel('Correlation with biological control slope')
-    axs[0].legend(fontsize=8)
-    fig.suptitle('250-row synopsis: control-session generalization V\ncircles = Spearman; squares = Pearson(log10 V)')
-    fig.tight_layout(); FIGURE.mkdir(parents=True,exist_ok=True)
-    fig.savefig(FIGURE/'synopsis_smoothing_level_correlations.png',dpi=180)
-    plt.close(fig)
+    endpoints={
+        'control_session': ('V_control_session',
+            'Control-session generalization V\nheld-out n = 50 (red/paul/venus), 24 (Leap), 22 (Three0)'),
+        'encoding_session': ('V_encoding_session',
+            'Encoding-session generalization V\nheld-out n = 195 for every site/model'),
+    }
+    FIGURE.mkdir(parents=True,exist_ok=True)
+    for endpoint,(quantity,title) in endpoints.items():
+        fig,axs=plt.subplots(1,2,figsize=(11,4.5),sharey=True)
+        for ax,method in zip(axs,['smooth','neighborhood']):
+            for subset,color in colors.items():
+                d=corr[(corr.method==method)&(corr.quantity==quantity)&
+                       (corr.outcome=='control_slope')&(corr.subset==subset)]
+                ax.plot(d.tau_255,d.spearman,'o-',color=color,label=subset.replace('_',' '))
+                ax.plot(d.tau_255,d.pearson_log10,'s--',color=color,alpha=.75)
+            ax.axhline(0,color='.6',linewidth=.8); ax.set_xscale('log',base=2)
+            ax.set_xticks([.5,2,8,16],[.5,2,8,16]); ax.set_xlabel('Noise SD × 255'); ax.set_title(method)
+            ax.spines[['top','right']].set_visible(False)
+        axs[0].set_ylabel('Correlation with biological control slope')
+        axs[0].legend(fontsize=8)
+        fig.suptitle(title+'\nCircles = Spearman; squares = Pearson(log10 V)')
+        fig.tight_layout()
+        fig.savefig(FIGURE/f'synopsis_smoothing_level_correlations_{endpoint}.png',dpi=180)
+        plt.close(fig)
 
 
 def validate(synopsis, schema):
