@@ -170,9 +170,15 @@ def predictor_benchmark_plot(results,endpoint,filename):
             ax.scatter(xa,yi,s=62,color=color,edgecolor=color,zorder=3)
             ax.scatter(xr,yi,s=62,facecolor='white',edgecolor=color,lw=2,zorder=4)
             ax.scatter(xt,yi,s=62,marker='D',facecolor='white',edgecolor=color,lw=2,zorder=5)
+            # Mark significance separately for each model subset. A star sits
+            # directly above the marker whose clustered linear effect survives
+            # BH correction within this endpoint/outcome/subset panel.
+            for xvalue,subset in [(xa,'all_models'),(xr,'without_robust'),
+                                  (xt,'without_robust_and_untrained')]:
+                if pair.loc[subset,'cluster_q_bh'] < .05:
+                    ax.text(xvalue,yi+.20,'*',color=color,ha='center',va='bottom',
+                            fontsize=15,fontweight='bold',zorder=6)
             conventional=pair.loc['without_robust_and_untrained']
-            if conventional.cluster_q_bh < .05:
-                ax.text(xt,yi+.22,'★',color=color,ha='center',va='bottom',fontsize=10)
             if conventional.n < 175:
                 ax.text(max(xa,xr,xt)+.018,yi,f"n={int(conventional.n)}",color='.35',
                         va='center',fontsize=7)
@@ -188,7 +194,8 @@ def predictor_benchmark_plot(results,endpoint,filename):
                         color='.25',label='Without CLIPAG + robust RN50'),
              plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
                         color='.25',label='Also without untrained AlexNet'),
-             plt.Line2D([],[],marker='$★$',linestyle='',color='.25',label='7-model BH-FDR q < 0.05')]
+             plt.Line2D([],[],marker='$*$',linestyle='',color='.25',markersize=10,
+                        label='BH-FDR q < 0.05 above that marker')]
     group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
                    [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),

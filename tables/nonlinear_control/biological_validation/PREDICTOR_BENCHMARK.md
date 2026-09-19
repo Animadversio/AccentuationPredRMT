@@ -30,9 +30,9 @@ Each endpoint benchmark contains 24 predictors:
 The figures show Spearman correlation because model rankings are the primary
 question and the predictors span very different scales. The CSV also stores
 Pearson correlation and a linear standardized coefficient with site-clustered
-standard error. Stars mark Benjamini-Hochberg q < 0.05 for that clustered
-linear coefficient in the strict seven-model subset. They do not represent a
-clustered significance test of Spearman correlation.
+standard error. A star directly above any filled circle, open circle or open
+diamond marks Benjamini-Hochberg q < 0.05 for that marker's model subset. It
+does not represent a clustered significance test of Spearman correlation.
 
 The Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
