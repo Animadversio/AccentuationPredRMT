@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "rows": 250,
-  "columns": 364,
+  "columns": 558,
   "key": [
     "subject",
     "monkey",
@@ -10,10 +10,16 @@
   ],
   "parquet_written": true,
   "canonical_geometry_source": "variance_predictors_by_seed.csv.gz",
-  "primary_generalization": "control_session_gen_test: encoding-held-out natural images evaluated with responses recorded during the control session",
+  "primary_generalization": "control_session_site_train_anchor_affine_gen_test: encoding-heldout natural predictions mapped by the site-level affine fitted on encoding-training anchors",
+  "identity_generalization_reference": "control_session_gen_test: encoding-heldout natural predictions compared directly with control-session responses",
   "secondary_generalization": "encoding_session_gen_test: original encoding-session responses; retained to quantify session drift",
   "matched_generalization": "encoding_session_matched_gen_test: encoding-session responses restricted to the exact control-session held-out image subset",
-  "primary_geometry_V": "V_control_session = control_session_gen_test_mse * trace / n_train",
+  "primary_geometry_V": "V_control_session_site_train_anchor_affine = control_session_site_train_anchor_affine_gen_test_mse * trace / n_train",
+  "identity_geometry_V_reference": "V_control_session = control_session_gen_test_mse * trace / n_train",
+  "control_response_scale": "Official anchorDay normalization is applied within each control day before stimulus averaging. The unqualified control_* metrics already use this response scale.",
+  "anchor_affine_sensitivity": "control_anchor_affine_* is one site/neuron encoding-response to control-response affine fitted on encoding-training natural anchors and shared unchanged across all ten models.",
+  "recommended_theory_control_endpoint": "control_site_train_anchor_affine_mse: site-level encoding-neural to control-neural affine fitted on encoding-training natural anchors, then frozen on accentuated stimuli",
+  "recommended_theory_generalization": "control_session_site_train_anchor_affine_gen_test_mse: the same train-anchor affine evaluated on held-out natural anchors",
   "normalization_note": "Theory S is latent natural teacher signal variance. Control-session observed held-out natural-response variance is primary because it matches the control recording session. Its repeat-noise correction is sensitivity-only: repeat coverage is complete for red/paul/venus but low for Leap/Three0. Encoding-session observed and fully repeat-noise-corrected versions are retained.",
   "robust_models": [
     "clipag_vitb32",

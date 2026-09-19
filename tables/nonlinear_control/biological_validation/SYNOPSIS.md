@@ -21,11 +21,23 @@ levels; rebuild the synopsis rather than manually adding columns.
 | `session_drift_` | direct matched-image response drift between encoding and control sessions, plus the two generalization-MSE difference/ratio |
 | `crossphase_anchor_` | same metrics on natural-image anchors repeated in the control sessions |
 | `control_` | biological accentuation MSE, slope, within-seed slope, identity R², refit R², normalization and repeat-noise quantities |
+| `crosssession_*_anchor_fit_` | frozen encoding-to-control affine parameters fitted only on matched natural-image anchors |
+| `control_site_*_anchor_affine_` | control metrics after a site-level neural-response affine shared across models |
 | `geom_<method>[_tau255_<level>]__` | ten-seed mean and sample SD of raw energy, actual-kappa trace, `V_control_session` and `V_encoding_session` |
 
 `r2_identity = 1 - MSE(y, prediction) / Var(y)` measures absolute prediction
 calibration. `r2_refit = Pearson r²` measures linear association after fitting
 slope and intercept. They answer different questions and should not be merged.
+
+All unqualified `control_*` measurements already use the official within-day
+`anchorDay` normalization. They do not include an encoding-to-control affine.
+For theory-facing cross-session calibration, the recommended endpoint is
+`control_site_train_anchor_affine_mse`, paired with
+`control_session_site_train_anchor_affine_gen_test_mse` and the corresponding
+`V_control_session_site_train_anchor_affine` geometry columns. This site-level
+map is fitted on encoding-training natural anchors and frozen before evaluating
+heldout natural anchors or accentuated stimuli. See
+`CROSSSESSION_AFFINE_CALIBRATION.md` for equations, alternatives and results.
 
 ## Error normalization
 

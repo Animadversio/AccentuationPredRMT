@@ -113,6 +113,156 @@ control_intercept,control,float64,Biological control intercept.
 control_refit_mse,control,float64,Biological control refit mse.
 control_r2_identity,control,float64,Biological control r2 identity.
 control_r2_refit,control,float64,Biological control r2 refit.
+crosssession_site_anchor_fit_n,identity,int64,crosssession site anchor fit n.
+crosssession_site_anchor_fit_mse,identity,float64,crosssession site anchor fit mse.
+crosssession_site_anchor_fit_rmse,identity,float64,crosssession site anchor fit rmse.
+crosssession_site_anchor_fit_mae,identity,float64,crosssession site anchor fit mae.
+crosssession_site_anchor_fit_bias_measured_minus_predicted,identity,float64,crosssession site anchor fit bias measured minus predicted.
+crosssession_site_anchor_fit_measured_mean,identity,float64,crosssession site anchor fit measured mean.
+crosssession_site_anchor_fit_predicted_mean,identity,float64,crosssession site anchor fit predicted mean.
+crosssession_site_anchor_fit_measured_variance,identity,float64,crosssession site anchor fit measured variance.
+crosssession_site_anchor_fit_predicted_variance,identity,float64,crosssession site anchor fit predicted variance.
+crosssession_site_anchor_fit_r,identity,float64,crosssession site anchor fit r.
+crosssession_site_anchor_fit_slope,identity,float64,crosssession site anchor fit slope.
+crosssession_site_anchor_fit_intercept,identity,float64,crosssession site anchor fit intercept.
+crosssession_site_anchor_fit_refit_mse,identity,float64,crosssession site anchor fit refit mse.
+crosssession_site_anchor_fit_r2_identity,identity,float64,crosssession site anchor fit r2 identity.
+crosssession_site_anchor_fit_r2_refit,identity,float64,crosssession site anchor fit r2 refit.
+control_site_anchor_affine_n,control,int64,Biological control site anchor affine n.
+control_site_anchor_affine_mse,control,float64,Biological control site anchor affine mse.
+control_site_anchor_affine_rmse,control,float64,Biological control site anchor affine rmse.
+control_site_anchor_affine_mae,control,float64,Biological control site anchor affine mae.
+control_site_anchor_affine_bias_measured_minus_predicted,control,float64,Biological control site anchor affine bias measured minus predicted.
+control_site_anchor_affine_measured_mean,control,float64,Biological control site anchor affine measured mean.
+control_site_anchor_affine_predicted_mean,control,float64,Biological control site anchor affine predicted mean.
+control_site_anchor_affine_measured_variance,control,float64,Biological control site anchor affine measured variance.
+control_site_anchor_affine_predicted_variance,control,float64,Biological control site anchor affine predicted variance.
+control_site_anchor_affine_r,control,float64,Biological control site anchor affine r.
+control_site_anchor_affine_slope,control,float64,Biological control site anchor affine slope.
+control_site_anchor_affine_intercept,control,float64,Biological control site anchor affine intercept.
+control_site_anchor_affine_refit_mse,control,float64,Biological control site anchor affine refit mse.
+control_site_anchor_affine_r2_identity,control,float64,Biological control site anchor affine r2 identity.
+control_site_anchor_affine_r2_refit,control,float64,Biological control site anchor affine r2 refit.
+control_session_site_anchor_affine_gen_test_n,control,int64,Biological control session site anchor affine gen test n.
+control_session_site_anchor_affine_gen_test_mse,control,float64,Biological control session site anchor affine gen test mse.
+control_session_site_anchor_affine_gen_test_rmse,control,float64,Biological control session site anchor affine gen test rmse.
+control_session_site_anchor_affine_gen_test_mae,control,float64,Biological control session site anchor affine gen test mae.
+control_session_site_anchor_affine_gen_test_bias_measured_minus_predicted,control,float64,Biological control session site anchor affine gen test bias measured minus predicted.
+control_session_site_anchor_affine_gen_test_measured_mean,control,float64,Biological control session site anchor affine gen test measured mean.
+control_session_site_anchor_affine_gen_test_predicted_mean,control,float64,Biological control session site anchor affine gen test predicted mean.
+control_session_site_anchor_affine_gen_test_measured_variance,control,float64,Biological control session site anchor affine gen test measured variance.
+control_session_site_anchor_affine_gen_test_predicted_variance,control,float64,Biological control session site anchor affine gen test predicted variance.
+control_session_site_anchor_affine_gen_test_r,control,float64,Biological control session site anchor affine gen test r.
+control_session_site_anchor_affine_gen_test_slope,control,float64,Biological control session site anchor affine gen test slope.
+control_session_site_anchor_affine_gen_test_intercept,control,float64,Biological control session site anchor affine gen test intercept.
+control_session_site_anchor_affine_gen_test_refit_mse,control,float64,Biological control session site anchor affine gen test refit mse.
+control_session_site_anchor_affine_gen_test_r2_identity,control,float64,Biological control session site anchor affine gen test r2 identity.
+control_session_site_anchor_affine_gen_test_r2_refit,control,float64,Biological control session site anchor affine gen test r2 refit.
+crosssession_site_train_anchor_fit_n,identity,int64,crosssession site train anchor fit n.
+crosssession_site_train_anchor_fit_mse,identity,float64,crosssession site train anchor fit mse.
+crosssession_site_train_anchor_fit_rmse,identity,float64,crosssession site train anchor fit rmse.
+crosssession_site_train_anchor_fit_mae,identity,float64,crosssession site train anchor fit mae.
+crosssession_site_train_anchor_fit_bias_measured_minus_predicted,identity,float64,crosssession site train anchor fit bias measured minus predicted.
+crosssession_site_train_anchor_fit_measured_mean,identity,float64,crosssession site train anchor fit measured mean.
+crosssession_site_train_anchor_fit_predicted_mean,identity,float64,crosssession site train anchor fit predicted mean.
+crosssession_site_train_anchor_fit_measured_variance,identity,float64,crosssession site train anchor fit measured variance.
+crosssession_site_train_anchor_fit_predicted_variance,identity,float64,crosssession site train anchor fit predicted variance.
+crosssession_site_train_anchor_fit_r,identity,float64,crosssession site train anchor fit r.
+crosssession_site_train_anchor_fit_slope,identity,float64,crosssession site train anchor fit slope.
+crosssession_site_train_anchor_fit_intercept,identity,float64,crosssession site train anchor fit intercept.
+crosssession_site_train_anchor_fit_refit_mse,identity,float64,crosssession site train anchor fit refit mse.
+crosssession_site_train_anchor_fit_r2_identity,identity,float64,crosssession site train anchor fit r2 identity.
+crosssession_site_train_anchor_fit_r2_refit,identity,float64,crosssession site train anchor fit r2 refit.
+control_site_train_anchor_affine_n,control,int64,Biological control site train anchor affine n.
+control_site_train_anchor_affine_mse,control,float64,Biological control site train anchor affine mse.
+control_site_train_anchor_affine_rmse,control,float64,Biological control site train anchor affine rmse.
+control_site_train_anchor_affine_mae,control,float64,Biological control site train anchor affine mae.
+control_site_train_anchor_affine_bias_measured_minus_predicted,control,float64,Biological control site train anchor affine bias measured minus predicted.
+control_site_train_anchor_affine_measured_mean,control,float64,Biological control site train anchor affine measured mean.
+control_site_train_anchor_affine_predicted_mean,control,float64,Biological control site train anchor affine predicted mean.
+control_site_train_anchor_affine_measured_variance,control,float64,Biological control site train anchor affine measured variance.
+control_site_train_anchor_affine_predicted_variance,control,float64,Biological control site train anchor affine predicted variance.
+control_site_train_anchor_affine_r,control,float64,Biological control site train anchor affine r.
+control_site_train_anchor_affine_slope,control,float64,Biological control site train anchor affine slope.
+control_site_train_anchor_affine_intercept,control,float64,Biological control site train anchor affine intercept.
+control_site_train_anchor_affine_refit_mse,control,float64,Biological control site train anchor affine refit mse.
+control_site_train_anchor_affine_r2_identity,control,float64,Biological control site train anchor affine r2 identity.
+control_site_train_anchor_affine_r2_refit,control,float64,Biological control site train anchor affine r2 refit.
+control_session_site_train_anchor_affine_gen_test_n,control,int64,Biological control session site train anchor affine gen test n.
+control_session_site_train_anchor_affine_gen_test_mse,control,float64,Biological control session site train anchor affine gen test mse.
+control_session_site_train_anchor_affine_gen_test_rmse,control,float64,Biological control session site train anchor affine gen test rmse.
+control_session_site_train_anchor_affine_gen_test_mae,control,float64,Biological control session site train anchor affine gen test mae.
+control_session_site_train_anchor_affine_gen_test_bias_measured_minus_predicted,control,float64,Biological control session site train anchor affine gen test bias measured minus predicted.
+control_session_site_train_anchor_affine_gen_test_measured_mean,control,float64,Biological control session site train anchor affine gen test measured mean.
+control_session_site_train_anchor_affine_gen_test_predicted_mean,control,float64,Biological control session site train anchor affine gen test predicted mean.
+control_session_site_train_anchor_affine_gen_test_measured_variance,control,float64,Biological control session site train anchor affine gen test measured variance.
+control_session_site_train_anchor_affine_gen_test_predicted_variance,control,float64,Biological control session site train anchor affine gen test predicted variance.
+control_session_site_train_anchor_affine_gen_test_r,control,float64,Biological control session site train anchor affine gen test r.
+control_session_site_train_anchor_affine_gen_test_slope,control,float64,Biological control session site train anchor affine gen test slope.
+control_session_site_train_anchor_affine_gen_test_intercept,control,float64,Biological control session site train anchor affine gen test intercept.
+control_session_site_train_anchor_affine_gen_test_refit_mse,control,float64,Biological control session site train anchor affine gen test refit mse.
+control_session_site_train_anchor_affine_gen_test_r2_identity,control,float64,Biological control session site train anchor affine gen test r2 identity.
+control_session_site_train_anchor_affine_gen_test_r2_refit,control,float64,Biological control session site train anchor affine gen test r2 refit.
+crosssession_site_heldout_anchor_fit_n,identity,int64,crosssession site heldout anchor fit n.
+crosssession_site_heldout_anchor_fit_mse,identity,float64,crosssession site heldout anchor fit mse.
+crosssession_site_heldout_anchor_fit_rmse,identity,float64,crosssession site heldout anchor fit rmse.
+crosssession_site_heldout_anchor_fit_mae,identity,float64,crosssession site heldout anchor fit mae.
+crosssession_site_heldout_anchor_fit_bias_measured_minus_predicted,identity,float64,crosssession site heldout anchor fit bias measured minus predicted.
+crosssession_site_heldout_anchor_fit_measured_mean,identity,float64,crosssession site heldout anchor fit measured mean.
+crosssession_site_heldout_anchor_fit_predicted_mean,identity,float64,crosssession site heldout anchor fit predicted mean.
+crosssession_site_heldout_anchor_fit_measured_variance,identity,float64,crosssession site heldout anchor fit measured variance.
+crosssession_site_heldout_anchor_fit_predicted_variance,identity,float64,crosssession site heldout anchor fit predicted variance.
+crosssession_site_heldout_anchor_fit_r,identity,float64,crosssession site heldout anchor fit r.
+crosssession_site_heldout_anchor_fit_slope,identity,float64,crosssession site heldout anchor fit slope.
+crosssession_site_heldout_anchor_fit_intercept,identity,float64,crosssession site heldout anchor fit intercept.
+crosssession_site_heldout_anchor_fit_refit_mse,identity,float64,crosssession site heldout anchor fit refit mse.
+crosssession_site_heldout_anchor_fit_r2_identity,identity,float64,crosssession site heldout anchor fit r2 identity.
+crosssession_site_heldout_anchor_fit_r2_refit,identity,float64,crosssession site heldout anchor fit r2 refit.
+control_site_heldout_anchor_affine_n,control,int64,Biological control site heldout anchor affine n.
+control_site_heldout_anchor_affine_mse,control,float64,Biological control site heldout anchor affine mse.
+control_site_heldout_anchor_affine_rmse,control,float64,Biological control site heldout anchor affine rmse.
+control_site_heldout_anchor_affine_mae,control,float64,Biological control site heldout anchor affine mae.
+control_site_heldout_anchor_affine_bias_measured_minus_predicted,control,float64,Biological control site heldout anchor affine bias measured minus predicted.
+control_site_heldout_anchor_affine_measured_mean,control,float64,Biological control site heldout anchor affine measured mean.
+control_site_heldout_anchor_affine_predicted_mean,control,float64,Biological control site heldout anchor affine predicted mean.
+control_site_heldout_anchor_affine_measured_variance,control,float64,Biological control site heldout anchor affine measured variance.
+control_site_heldout_anchor_affine_predicted_variance,control,float64,Biological control site heldout anchor affine predicted variance.
+control_site_heldout_anchor_affine_r,control,float64,Biological control site heldout anchor affine r.
+control_site_heldout_anchor_affine_slope,control,float64,Biological control site heldout anchor affine slope.
+control_site_heldout_anchor_affine_intercept,control,float64,Biological control site heldout anchor affine intercept.
+control_site_heldout_anchor_affine_refit_mse,control,float64,Biological control site heldout anchor affine refit mse.
+control_site_heldout_anchor_affine_r2_identity,control,float64,Biological control site heldout anchor affine r2 identity.
+control_site_heldout_anchor_affine_r2_refit,control,float64,Biological control site heldout anchor affine r2 refit.
+control_session_site_heldout_anchor_affine_gen_test_n,control,int64,Biological control session site heldout anchor affine gen test n.
+control_session_site_heldout_anchor_affine_gen_test_mse,control,float64,Biological control session site heldout anchor affine gen test mse.
+control_session_site_heldout_anchor_affine_gen_test_rmse,control,float64,Biological control session site heldout anchor affine gen test rmse.
+control_session_site_heldout_anchor_affine_gen_test_mae,control,float64,Biological control session site heldout anchor affine gen test mae.
+control_session_site_heldout_anchor_affine_gen_test_bias_measured_minus_predicted,control,float64,Biological control session site heldout anchor affine gen test bias measured minus predicted.
+control_session_site_heldout_anchor_affine_gen_test_measured_mean,control,float64,Biological control session site heldout anchor affine gen test measured mean.
+control_session_site_heldout_anchor_affine_gen_test_predicted_mean,control,float64,Biological control session site heldout anchor affine gen test predicted mean.
+control_session_site_heldout_anchor_affine_gen_test_measured_variance,control,float64,Biological control session site heldout anchor affine gen test measured variance.
+control_session_site_heldout_anchor_affine_gen_test_predicted_variance,control,float64,Biological control session site heldout anchor affine gen test predicted variance.
+control_session_site_heldout_anchor_affine_gen_test_r,control,float64,Biological control session site heldout anchor affine gen test r.
+control_session_site_heldout_anchor_affine_gen_test_slope,control,float64,Biological control session site heldout anchor affine gen test slope.
+control_session_site_heldout_anchor_affine_gen_test_intercept,control,float64,Biological control session site heldout anchor affine gen test intercept.
+control_session_site_heldout_anchor_affine_gen_test_refit_mse,control,float64,Biological control session site heldout anchor affine gen test refit mse.
+control_session_site_heldout_anchor_affine_gen_test_r2_identity,control,float64,Biological control session site heldout anchor affine gen test r2 identity.
+control_session_site_heldout_anchor_affine_gen_test_r2_refit,control,float64,Biological control session site heldout anchor affine gen test r2 refit.
+control_anchor_affine_n,control,int64,Biological control anchor affine n.
+control_anchor_affine_mse,control,float64,Default cross-session-calibrated MSE: one site/neuron affine fitted on encoding-training natural anchors and shared unchanged across all models.
+control_anchor_affine_rmse,control,float64,Biological control anchor affine rmse.
+control_anchor_affine_mae,control,float64,Biological control anchor affine mae.
+control_anchor_affine_bias_measured_minus_predicted,control,float64,Biological control anchor affine bias measured minus predicted.
+control_anchor_affine_measured_mean,control,float64,Biological control anchor affine measured mean.
+control_anchor_affine_predicted_mean,control,float64,Biological control anchor affine predicted mean.
+control_anchor_affine_measured_variance,control,float64,Biological control anchor affine measured variance.
+control_anchor_affine_predicted_variance,control,float64,Biological control anchor affine predicted variance.
+control_anchor_affine_r,control,float64,Biological control anchor affine r.
+control_anchor_affine_slope,control,float64,Biological control anchor affine slope.
+control_anchor_affine_intercept,control,float64,Biological control anchor affine intercept.
+control_anchor_affine_refit_mse,control,float64,Biological control anchor affine refit mse.
+control_anchor_affine_r2_identity,control,float64,Biological control anchor affine r2 identity.
+control_anchor_affine_r2_refit,control,float64,Biological control anchor affine r2 refit.
 session_drift_gen_mse_control_minus_encoding,session_drift,float64,Encoding-to-control recording-session drift gen mse control minus encoding.
 session_drift_gen_mse_control_over_encoding,session_drift,float64,Encoding-to-control recording-session drift gen mse control over encoding.
 encoding_session_gen_test_error_over_S_nat_observed,generalization_encoding_session,float64,Encoding-session held-out natural-image error over S nat observed.
@@ -232,134 +382,178 @@ geom_variance_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sampl
 geom_variance_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
 geom_variance_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
 geom_exact__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_exact__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_exact__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_exact__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_local_mc__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_local_mc__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_local_mc__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_local_mc__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_neighborhood_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_neighborhood_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_neighborhood_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_neighborhood_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_neighborhood_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_neighborhood_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_neighborhood_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_neighborhood_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_smooth_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_smooth_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_smooth_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_smooth_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_smooth_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_smooth_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_smooth_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_smooth_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_stein_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_stein_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_stein_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_stein_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_step_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_step_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_step_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_step_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_step_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_step_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_step_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_step_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_step_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_step_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_step_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_step_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_variance_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_variance_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_variance_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_variance_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_variance_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_variance_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_variance_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
 geom_variance_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_exact__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_exact__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_exact__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_exact__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_local_mc__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_local_mc__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_local_mc__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_local_mc__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_neighborhood_tau255_0p5__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_neighborhood_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_neighborhood_tau255_16__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_neighborhood_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_neighborhood_tau255_2__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_neighborhood_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_neighborhood_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_neighborhood_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_neighborhood_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_smooth_tau255_0p5__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_smooth_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_smooth_tau255_16__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_smooth_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_smooth_tau255_2__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_smooth_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_smooth_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_smooth_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_smooth_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_stein_tau255_0p5__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_stein_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_stein_tau255_16__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_stein_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_stein_tau255_2__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_stein_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_stein_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_stein_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_stein_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_step_tau255_0p5__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_step_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_step_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_step_tau255_16__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_step_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_step_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_step_tau255_2__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_step_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_step_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_step_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_step_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_step_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_variance_tau255_0p5__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_variance_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_variance_tau255_16__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_variance_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_variance_tau255_2__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_variance_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
+geom_variance_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_variance_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.

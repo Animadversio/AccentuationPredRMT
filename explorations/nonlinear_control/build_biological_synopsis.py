@@ -21,7 +21,7 @@ TABLE = REPO / 'tables/nonlinear_control/biological_validation'
 FIGURE = REPO / 'figures/nonlinear_control/biological_validation'
 KEY = ['subject', 'monkey', 'unit', 'model']
 ROBUST_MODELS = {'clipag_vitb32', 'resnet50_robust'}
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 
 sys.path.insert(0, str(HERE))
 from validate_biology import upstream_modules  # noqa: E402
@@ -92,11 +92,42 @@ def control_session_test_cloud(loader, monkey, unit, model):
     return np.asarray(x,float),np.asarray(y,float),names
 
 
+def cross_session_neural_anchor_cloud(loader,monkey,unit,subset='all'):
+    """Matched natural anchors: encoding response and control response.
+
+    Control responses have already received the official within-control-day
+    anchorDay normalization. This cloud estimates the additional frozen affine
+    mapping from encoding-session units to control-session units.
+    """
+    brain=loader.load_brain(monkey)
+    ui=list(brain['units']).index(unit)
+    encoding_measured=dict(zip(brain['calibration']['stim'].astype(str),
+                               brain['calibration']['resp_z'][:,ui]))
+    assert subset in {'all','train','heldout'}
+    heldout=loader._test_names(monkey)
+    yenc,yctrl,names=[],[],[]
+    control=brain['control']
+    for name,kind,response in zip(control['stim'],control['kind'],control['resp_z'][:,ui]):
+        name=str(name)
+        selected=(subset=='all' or (subset=='heldout' and name in heldout) or
+                  (subset=='train' and name not in heldout))
+        if kind=='calibration' and name in encoding_measured and selected:
+            yenc.append(encoding_measured[name])
+            yctrl.append(response);names.append(name)
+    return tuple(np.asarray(x,float) for x in [yenc,yctrl]),names
+
+
+def affine_map(source,target):
+    metrics=regression_metrics(source,target)
+    assert metrics['n']>=2 and np.isfinite(metrics['slope']) and np.isfinite(metrics['intercept'])
+    return metrics['intercept'],metrics['slope'],metrics
+
+
 def biological_metrics(manifest):
     _, loader, _ = upstream_modules()
     control = pd.read_csv(TABLE/'control_clouds.csv.gz')
     control_groups = {k:g for k,g in control.groupby(['subject','unit','model'], sort=False)}
-    rows = []
+    rows = [];affine_cloud_rows=[];site_affine_cache={}
     for row in manifest.itertuples(index=False):
         monkey = row.monkey
         brain = loader.load_brain(monkey)
@@ -114,6 +145,31 @@ def biological_metrics(manifest):
         control_gen = regression_metrics(x_control_test, y_control_test)
         cross = regression_metrics(x_anchor, y_anchor)
         ctl = regression_metrics(cg.predicted, cg.measured)
+        # Leakage-free cross-session calibration: fit on natural anchors only,
+        # freeze the map, then evaluate it on the disjoint accentuated stimuli.
+        site_key=(monkey,row.unit)
+        if site_key not in site_affine_cache:
+            site_affine_cache[site_key]={}
+            for anchor_label,anchor_subset in [('anchor','all'),('train_anchor','train'),
+                                               ('heldout_anchor','heldout')]:
+                (anchor_enc,anchor_ctrl),anchor_names=cross_session_neural_anchor_cloud(
+                    loader,monkey,row.unit,subset=anchor_subset)
+                site_a,site_b,site_fit=affine_map(anchor_enc,anchor_ctrl)
+                site_affine_cache[site_key][anchor_label]=dict(
+                    site_fit=site_fit,site_a=site_a,site_b=site_b,anchor_names=anchor_names)
+        anchor_variants={}
+        for anchor_label,cached_map in site_affine_cache[site_key].items():
+            site_a,site_b=cached_map['site_a'],cached_map['site_b']
+            site_prediction=site_a+site_b*cg.predicted.to_numpy()
+            anchor_variants[anchor_label]=dict(cached_map,
+                site_control=regression_metrics(site_prediction,cg.measured))
+        all_map=anchor_variants['anchor'];train_map=anchor_variants['train_anchor']
+        for stimulus,seed,predicted,measured in zip(cg.stimulus,cg.seed,cg.predicted,cg.measured):
+            affine_cloud_rows.append(dict(subject=row.subject,monkey=monkey,unit=row.unit,
+                model=row.model,stimulus=stimulus,seed=seed,predicted_identity=predicted,
+                predicted_site_anchor_affine=all_map['site_a']+all_map['site_b']*predicted,
+                predicted_site_train_anchor_affine=train_map['site_a']+train_map['site_b']*predicted,
+                measured=measured))
         calibration=brain['calibration']
         encoding_measured=dict(zip(calibration['stim'].astype(str),calibration['resp_z'][:,ui]))
         y_encoding_matched=np.asarray([encoding_measured[str(name)] for name in control_test_names],float)
@@ -154,6 +210,17 @@ def biological_metrics(manifest):
             **prefix(control_gen, 'control_session_gen_test'),
             **prefix(drift, 'session_drift_response'),
             **prefix(cross, 'crossphase_anchor'), **prefix(ctl, 'control'))
+        for anchor_label,result in anchor_variants.items():
+            values.update(**prefix(result['site_fit'],f'crosssession_site_{anchor_label}_fit'),
+                          **prefix(result['site_control'],f'control_site_{anchor_label}_affine'))
+            # Held-out natural generalization after freezing the same affine.
+            site_gen_prediction=result['site_a']+result['site_b']*x_control_test
+            values.update(**prefix(regression_metrics(site_gen_prediction,y_control_test),
+                                   f'control_session_site_{anchor_label}_affine_gen_test'))
+        # One neuron/site mapping fitted on encoding-training anchors and
+        # shared unchanged across all ten model predictions.
+        for metric,value in anchor_variants['train_anchor']['site_control'].items():
+            values[f'control_anchor_affine_{metric}']=value
         values.update(
             session_drift_gen_mse_control_minus_encoding=control_gen['mse']-encoding_gen['mse'],
             session_drift_gen_mse_control_over_encoding=control_gen['mse']/encoding_gen['mse'],
@@ -194,6 +261,8 @@ def biological_metrics(manifest):
             control_error_over_ceiling_signal_variance=(ctl['mse']/signal_var
                 if np.isfinite(signal_var) and signal_var > 0 else np.nan))
         rows.append(values)
+    pd.DataFrame(affine_cloud_rows).to_csv(TABLE/'control_anchor_affine_clouds.csv.gz',index=False,
+        compression={'method':'gzip','compresslevel':6,'mtime':0})
     return pd.DataFrame(rows)
 
 
@@ -220,6 +289,7 @@ def add_session_specific_V(synopsis):
     trace_columns=synopsis.filter(regex=r'^geom_.*__trace_(mean|std)$').columns
     endpoints={
         'control_session':'control_session_gen_test_mse',
+        'control_session_site_train_anchor_affine':'control_session_site_train_anchor_affine_gen_test_mse',
         'encoding_session':'encoding_session_gen_test_mse',
         'encoding_session_matched':'encoding_session_matched_gen_test_mse',
     }
@@ -258,6 +328,7 @@ def schema_for(frame):
         'control_error_noise_corrected_over_S_nat_control_session_noise_corrected':'Repeat-noise-corrected control identity MSE divided by control-session repeat-noise-corrected natural signal variance; sensitivity metric because accentuated-stimulus repeat coverage varies and can be sparse.',
         'control_trialmean_noise_high_coverage':'True when at least 80% of matched control stimuli have at least two trials for noise estimation.',
         'control_error_over_ceiling_signal_variance':'Control identity MSE divided by upstream control noise-ceiling signal variance; unavailable for Leap and Three0 and is path-specific, not natural S.',
+        'control_anchor_affine_mse':'Default cross-session-calibrated MSE: one site/neuron affine fitted on encoding-training natural anchors and shared unchanged across all models.',
     }
     rows=[]
     for col,dtype in frame.dtypes.items():
@@ -283,7 +354,9 @@ def correlation_table(synopsis):
     rows=[]
     for method,tau in configurations:
         label=method if method in ['exact','local_mc'] else f'{method}_tau255_{str(int(tau)) if tau.is_integer() else str(tau).replace(".","p")}'
-        for quantity in ['trace','V_control_session','V_encoding_session','V_encoding_session_matched']:
+        for quantity in ['trace','V_control_session',
+                         'V_control_session_site_train_anchor_affine',
+                         'V_encoding_session','V_encoding_session_matched']:
             predictor=f'geom_{label}__{quantity}_mean'
             subsets=[('all_250',synopsis),
                      ('without_CLIPAG_and_robust_RN50',synopsis[~synopsis.robust_model]),
@@ -352,11 +425,12 @@ def validate(synopsis, schema):
     assert synopsis.groupby(['subject','unit']).size().eq(10).all()
     assert synopsis.groupby('model').size().eq(25).all()
     assert len(schema)==len(synopsis.columns) and schema.column.is_unique
-    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==10
-    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==40
+    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==12
+    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==48
     numeric=synopsis.select_dtypes(include=[np.number])
     assert not np.isinf(numeric.to_numpy()).any()
     endpoints={'control_session':'control_session_gen_test_mse',
+               'control_session_site_train_anchor_affine':'control_session_site_train_anchor_affine_gen_test_mse',
                'encoding_session':'encoding_session_gen_test_mse',
                'encoding_session_matched':'encoding_session_matched_gen_test_mse'}
     for endpoint,mse_col in endpoints.items():
@@ -367,6 +441,11 @@ def validate(synopsis, schema):
                                        rtol=2e-7,atol=1e-12)
     np.testing.assert_allclose(synopsis.control_error_over_S_control_observed,
                                1-synopsis.control_r2_identity,rtol=1e-10,atol=1e-10)
+    for metric in ['n','mse','rmse','mae','bias_measured_minus_predicted','measured_mean',
+                   'predicted_mean','measured_variance','predicted_variance','r','slope',
+                   'intercept','refit_mse','r2_identity','r2_refit']:
+        np.testing.assert_allclose(synopsis[f'control_anchor_affine_{metric}'],
+            synopsis[f'control_site_train_anchor_affine_{metric}'],rtol=0,atol=0)
     for session in ['control','encoding']:
         np.testing.assert_allclose(synopsis[f'{session}_session_gen_test_error_over_S_nat_observed'],
                                    1-synopsis[f'{session}_session_gen_test_r2_identity'],rtol=1e-10,atol=1e-10)
@@ -398,10 +477,16 @@ def main():
     plot_smoothing(corr)
     metadata=dict(version=VERSION,rows=len(synopsis),columns=len(synopsis.columns),key=KEY,
         parquet_written=parquet,canonical_geometry_source='variance_predictors_by_seed.csv.gz',
-        primary_generalization='control_session_gen_test: encoding-held-out natural images evaluated with responses recorded during the control session',
+        primary_generalization='control_session_site_train_anchor_affine_gen_test: encoding-heldout natural predictions mapped by the site-level affine fitted on encoding-training anchors',
+        identity_generalization_reference='control_session_gen_test: encoding-heldout natural predictions compared directly with control-session responses',
         secondary_generalization='encoding_session_gen_test: original encoding-session responses; retained to quantify session drift',
         matched_generalization='encoding_session_matched_gen_test: encoding-session responses restricted to the exact control-session held-out image subset',
-        primary_geometry_V='V_control_session = control_session_gen_test_mse * trace / n_train',
+        primary_geometry_V='V_control_session_site_train_anchor_affine = control_session_site_train_anchor_affine_gen_test_mse * trace / n_train',
+        identity_geometry_V_reference='V_control_session = control_session_gen_test_mse * trace / n_train',
+        control_response_scale='Official anchorDay normalization is applied within each control day before stimulus averaging. The unqualified control_* metrics already use this response scale.',
+        anchor_affine_sensitivity='control_anchor_affine_* is one site/neuron encoding-response to control-response affine fitted on encoding-training natural anchors and shared unchanged across all ten models.',
+        recommended_theory_control_endpoint='control_site_train_anchor_affine_mse: site-level encoding-neural to control-neural affine fitted on encoding-training natural anchors, then frozen on accentuated stimuli',
+        recommended_theory_generalization='control_session_site_train_anchor_affine_gen_test_mse: the same train-anchor affine evaluated on held-out natural anchors',
         normalization_note='Theory S is latent natural teacher signal variance. Control-session observed held-out natural-response variance is primary because it matches the control recording session. Its repeat-noise correction is sensitivity-only: repeat coverage is complete for red/paul/venus but low for Leap/Three0. Encoding-session observed and fully repeat-noise-corrected versions are retained.',
         robust_models=sorted(ROBUST_MODELS))
     (TABLE/'biological_validation_synopsis_v1_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
