@@ -28,6 +28,11 @@ fluctuations in the nonlinear own-path and peer ratios.  For the own-path
 ratio, the library exposes both the leading ratio of expectations and the
 response-noise correction to its mean and variance.
 
+The [nonzero/multiple-seed extension](notes/accentuation_nonzero_multiseed_theory.pdf)
+([LaTeX source](notes/accentuation_nonzero_multiseed_theory.tex)) derives MSE,
+R², slope, and Pearson R for uncentered steps and multiple seeds, distinguishes
+seed shifts from independent natural seeds, and identifies the extra RMT moments.
+
 ## Structure
 
 ```
@@ -55,7 +60,7 @@ notes/
   dissociation_prediction_control_feature_space.tex  # Updated derivation
   accentuation_varR_theory.tex  # Current Var(R) correction and full theory roadmap
 
-figures/           # Output figures
+figures/           # Output figures organized by analysis/topic (see figures/README.md)
 tables/            # Output tables
 bash/              # Slurm job scripts
 ```

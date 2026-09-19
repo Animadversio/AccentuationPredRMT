@@ -1,0 +1,235 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newcommand{\df}{\mathrm{df}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\Eg}{E_{\mathrm{gen,DE}}}
+\title{Generalization at Accentuation-Optimal Regularization:\\A Conditional Effective-Dimension Universality}
+\author{}
+\date{September 18, 2026}
+\begin{document}
+\maketitle
+
+\paragraph{Scope.}
+This note concerns pixel-space ridge and the leading deterministic-equivalent
+(DE) formulas. The identities below are exact identities between these DE
+expressions, not exact finite-sample risk identities. ``Universality'' means
+that teacher dependence can be absorbed into the calibration-selected effective
+dimension; it does not assert a new distributional universality theorem.
+
+\section{Setup and the calibration constraint}
+Let $\Sigma\succeq0$ have eigenvalues $s_j$, and let $\beta_j^*$ be the
+coordinates of a fixed teacher in its eigenbasis. Assume a finite spectrum,
+$S=\sum_j s_j\beta_j^{*2}>0$, and response-noise variance $\sigma^2>0$.
+The ridge objective is $n^{-1}\|y-X\beta\|^2+\lambda\|\beta\|^2$.
+Define
+\[
+ B_{p,q}(\kappa)=\sum_j\frac{\beta_j^{*2}s_j^p}{(s_j+\kappa)^q},\qquad
+ \df_{p,q}(\kappa)=\sum_j\frac{s_j^p}{(s_j+\kappa)^q},\qquad
+ \df_1=\df_{1,1},\quad \df_2=\df_{2,2}.
+\]
+On the physical branch,
+\[
+ \lambda(\kappa)=\kappa\left(1-\frac{\df_1(\kappa)}n\right),\qquad
+ \kappa>\kappa_0,\quad n-\df_1>0,\quad n-\df_2>0.
+\]
+Here $\kappa_0=0$ if $\operatorname{rank}\Sigma\le n$; otherwise it is the
+positive solution of $\df_1(\kappa_0)=n$.
+Write $V=\Eg+\sigma^2$. The generalization and norm/overlap DEs are
+\begin{align}
+ \Eg&=\frac{n(\kappa^2B_{1,2}+\sigma^2)}{n-\df_2}-\sigma^2,
+ &\mu_N&=B_{1,1},
+ &\mu_D&=B_{2,2}+\frac{\df_{1,2}}nV.
+\end{align}
+Since $B_{1,1}-B_{2,2}=\kappa B_{1,2}$, the condition
+$z=\mu_D/\mu_N-1=0$ is equivalent to
+\begin{equation}\label{eq:calibration}
+ V=n\kappa\frac{B_{1,2}}{\df_{1,2}},\qquad
+ \sigma^2=n\lambda(\kappa)\frac{B_{1,2}}{\df_{1,2}}.
+\end{equation}
+At such a point the leading quantities satisfy
+$E_{\mathrm{acc}}^{(0)}/S=(z/(1+z))^2=0$,
+$(R_{\mathrm{acc}}^2)^{(0)}=1-z^2=1$, and
+$\mathrm{slope}_{\mathrm{acc}}^{(0)}=1/(1+z)=1$.
+
+For completeness, a zero exists: the right-hand side of the second equation
+in \eqref{eq:calibration} is continuous, tends to zero as
+$\kappa\downarrow\kappa_0$, and tends to infinity as $\kappa\to\infty$,
+because $B_{1,2}/\df_{1,2}\to S/\tr\Sigma>0$ and $\lambda\sim\kappa$.
+The zero need not be unique. This is an existence statement for the DE
+expressions under consideration, not a finite-sample calibration guarantee.
+
+\section{The effective-dimension risk law}
+\begin{proposition}[Generalization at an accentuation zero]
+At any calibration point $\kappa_a>\kappa_0$ with $\lambda_a=\lambda(\kappa_a)$,
+\begin{equation}\label{eq:main}
+ \boxed{\quad
+ \Eg(\kappa_a)=\sigma^2\left(\frac{\kappa_a}{\lambda_a}-1\right)
+ =\sigma^2\frac{\df_1(\kappa_a)}{n-\df_1(\kappa_a)}.
+ \quad}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Divide the two equations in \eqref{eq:calibration} to obtain
+$V/\sigma^2=\kappa_a/\lambda_a$, and then use the physical-branch relation.
+\end{proof}
+
+\paragraph{A useful off-calibration identity.}
+For any $\lambda>0$ on the branch, direct algebra gives
+\[
+ \frac{\Eg+\sigma^2}{\sigma^2}-\frac{\kappa}{\lambda}
+ =-\frac{\kappa^2B_{1,1}}{\lambda\sigma^2}\,z.
+\]
+Thus the risk law is equivalent to calibration, not a formula valid at all
+regularizations. In particular it need not hold at a prediction optimum.
+
+\section{Why the result is structurally special}
+\subsection{From squared shrinkage to effective degrees of freedom}
+Set $q_j=s_j/(s_j+\kappa)$. Then
+\[
+ \df_1=\sum_jq_j,\qquad \df_2=\sum_jq_j^2,\qquad
+ \df_1-\df_2=\sum_jq_j(1-q_j)=\kappa\df_{1,2}.
+\]
+The general risk separates into a signal-dependent contribution and a
+response-noise contribution:
+\begin{equation}\label{eq:risk-decomp}
+ \Eg=\frac{n\kappa^2B_{1,2}}{n-\df_2}
+       +\frac{\sigma^2\df_2}{n-\df_2}.
+\end{equation}
+The first term includes the effect of random design on the signal; it should
+not be called solely the squared bias of the mean estimator.
+At calibration, the teacher-dependent shrinkage term obeys
+\begin{equation}\label{eq:bias}
+ \boxed{\kappa_a^2B_{1,2}(\kappa_a)
+ =\sigma^2\frac{\df_1(\kappa_a)-\df_2(\kappa_a)}
+ {n-\df_1(\kappa_a)}.}
+\end{equation}
+Substitution into \eqref{eq:risk-decomp} yields \eqref{eq:main}.
+The nonnegative signal contribution effectively promotes the complexity
+parameter from $\df_2$ to $\df_1$. Bias and variance do not cancel in the
+prediction MSE. Instead, calibration fixes their relation so that their sum
+has a single effective-dimension expression.
+
+The difference $\sum_jq_j(1-q_j)$ is supported on partially retained modes;
+it vanishes for a hard keep/discard filter. It quantifies the gap between
+linear and squared shrinkage. At calibration, the teacher's shrinkage loss
+is tied precisely to this gap and to the noise variance.
+
+\subsection{An error self-consistency relation}
+The general risk equation is equivalently
+\[
+ \Eg=\kappa^2B_{1,2}+\frac{\df_2}{n}V.
+\]
+Calibration substitutes
+$\kappa^2B_{1,2}=(\df_1-\df_2)V/n$, hence
+\begin{equation}
+ \Eg=\delta_a V,\qquad V=\sigma^2+\delta_a V,
+ \qquad \delta_a=\frac{\df_1(\kappa_a)}n\in(0,1).
+\end{equation}
+Consequently $V=\sigma^2/(1-\delta_a)$. This is an algebraic feedback
+interpretation of the DE, not a literal iterative training mechanism.
+It explains why perfect leading accentuation calibration can coexist with
+large prediction error when effective complexity approaches the sample budget.
+
+\subsection{OLS-like, but not an OLS equivalence theorem}
+Equation \eqref{eq:main} has the familiar leading-order OLS form
+$\sigma^2p_{\mathrm{eff}}/(n-p_{\mathrm{eff}})$ with
+$p_{\mathrm{eff}}=\df_1(\kappa_a)$. This does not identify ridge with a
+hard-truncated OLS estimator, assert unbiasedness, or give the exact
+finite-sample OLS expectation (whose finite-size denominators can differ).
+It is a risk-level structural analogy: shrinkage and estimation effects
+combine into an effective-complexity law at this particular constraint.
+
+\section{Weight-space geometry: calibration is radial optimality}
+For a fixed nonzero estimated weight, let
+$D=\|\hat\beta\|^2$ and $N=\beta^{*\top}\hat\beta$. Then
+\[
+ D=N\quad\Longleftrightarrow\quad
+ \hat\beta^\top(\beta^*-\hat\beta)=0.
+\]
+Moreover, for $L(c)=\|c\hat\beta-\beta^*\|^2$,
+\[
+ L'(1)=2(D-N),\qquad \arg\min_c L(c)=N/D.
+\]
+Thus exact calibration means that the fitted weight already has the optimal
+global Euclidean scale along its own direction. It does not imply optimal
+direction or teacher recovery. The analogous expectation-level statement is
+$\arg\min_c\mathbb E L(c)=\mathbb E N/\mathbb E D$ when the moments exist;
+the leading DE substitutes $\mu_N,\mu_D$ for these quantities.
+
+By contrast, prediction-optimal rescaling of a fixed weight uses
+$\beta^{*\top}\Sigma\hat\beta/(\hat\beta^\top\Sigma\hat\beta)$.
+The distinction is Euclidean versus data-covariance geometry. Even if
+$\beta^*=\hat\beta+u$ with $u\perp\hat\beta$, prediction error is
+$u^\top\Sigma u$, which need not be small.
+
+\section{What is universal, and what remains teacher-dependent?}
+At fixed spectrum, noise, sample size, and a shared calibration point
+$\kappa_a$, all teachers satisfying \eqref{eq:calibration} have the same
+DE generalization error. The constraint fixes the relevant quadratic teacher
+statistic at that point. Changing the teacher generally changes the location
+of the calibration point, and hence $\df_1(\kappa_a)$.
+
+Accordingly the result is a \emph{teacher-free risk expression at a
+teacher-dependent operating point}, not a teacher-independent numerical risk.
+Calibration is an oracle condition unless its needed statistics can be
+estimated. Finding a zero does not by itself supply a practical CV procedure.
+
+\section{Constructive oracle bound and simultaneous performance}
+\begin{corollary}
+Let $E_{\mathrm{gen}}^\star=\inf_{\lambda\ge0}\Eg(\kappa(\lambda))$.
+Every calibration point supplies a feasible witness, so
+\[
+ 0\le E_{\mathrm{gen}}^\star\le
+ \min\left\{S,\ \sigma^2\frac{\df_1(\kappa_a)}{n-\df_1(\kappa_a)}\right\}.
+\]
+The $S$ bound follows from the zero-predictor limit $\lambda\to\infty$.
+\end{corollary}
+The optimization inequality itself is elementary; what is constructive is
+the existence of a calibration solution with a computable risk and a second,
+simultaneously satisfied performance objective.
+Writing $\rho=\sigma^2/S$, one obtains
+\[
+ \frac{E_{\mathrm{gen}}^\star}{S}
+ \le\min\{1,\rho\delta_a/(1-\delta_a)\},\qquad
+ \frac{\Eg(\kappa_a)}S\le\varepsilon
+ \Longleftrightarrow
+ \delta_a\le\frac{\varepsilon}{\rho+\varepsilon}.
+\]
+Thus simultaneous perfect leading accentuation and small prediction error
+require sufficiently small effective complexity relative to the noise level.
+
+If two distinct calibration zeros satisfy $\kappa_{a,2}>\kappa_{a,1}$,
+then $\df_1'(\kappa)=-\df_{1,2}<0$ implies
+$\Eg(\kappa_{a,2})<\Eg(\kappa_{a,1})$.
+This orders risks \emph{among calibration zeros}, not along the whole ridge
+path. The bound concerns the continuous DE oracle; it is not a per-trial
+guarantee for empirical RidgeCV or an arbitrary finite selection grid.
+
+\section{Limits of the statement}
+\begin{itemize}
+\item Finite-sample ratio fluctuations remain. With $R=N/D$,
+$\mathbb E[(1-R)^2]=(1-\mathbb ER)^2+\operatorname{Var}(R)$.
+$\mu_N=\mu_D$ does not force this risk to vanish. A distributional optimum
+can move away from the leading calibration point.
+\item The displayed ratios assume $\sigma^2>0$ and $\lambda_a>0$.
+Zero noise requires boundary limits, especially when $\operatorname{rank}\Sigma=n$.
+In overparameterized problems, $\df_1(\kappa_a)\to n$ can offset a vanishing
+noise factor, so the formula does not imply noiseless recovery.
+\item No monotonicity of the oracle gap or of calibration-selected effective
+dimension is asserted without additional spectral/alignment assumptions.
+\item General feature regression uses the input-space metric $FF^\top$ in
+the norm term. The pixel-space cancellations here do not automatically extend
+to a nonorthogonal feature map.
+\end{itemize}
+
+\paragraph{Takeaway.}
+At leading order, zero accentuation error imposes a calibration constraint
+that converts the teacher-dependent shrinkage contribution into an
+effective-complexity contribution. Prediction risk then follows the OLS-like
+law $\sigma^2p_{\mathrm{eff}}/(n-p_{\mathrm{eff}})$, with teacher dependence
+retained through the calibration-selected effective dimension.
+\end{document}

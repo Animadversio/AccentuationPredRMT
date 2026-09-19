@@ -1,0 +1,760 @@
+\documentclass[11pt]{article}
+
+% Manuscript skeleton only: argument, formal results, and figure plan.
+% Full prose, proofs, citations, and production formatting are intentionally deferred.
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,bm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\bhat}{\widehat{\bm\beta}}
+\newcommand{\bstar}{\bm\beta^{\star}}
+\newcommand{\that}{\widehat{\bm\theta}}
+\newcommand{\tstar}{\bm\theta^{\star}}
+\newcommand{\Rcal}{\mathcal R}
+
+\title{Prediction Does Not Imply Control:\\
+Geometry and Random-Matrix Theory of Self-Generated Distribution Shift}
+\author{Author list to be added}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\begin{itemize}[leftmargin=1.5em]
+  \item Predictive models of neural responses can have similar held-out
+        accuracy yet differ sharply in their ability to synthesize stimuli
+        that control the true response.
+  \item We formalize this dissociation in a noisy linear teacher--student
+        model. Natural generalization is measured in the data-covariance
+        geometry, whereas gradient-based accentuation is evaluated along a
+        direction chosen by the fitted model itself.
+  \item Random-matrix deterministic equivalents quantify generalization,
+        accentuation, peer review, and cross-validated ridge selection under
+        anisotropic data.
+  \item For regression after a fixed linear feature map, prediction depends
+        on a smaller set of summary statistics than pixel-space control. We
+        construct continuous families of feature maps with identical
+        prediction and cross-validation behavior but dramatically different
+        accentuation.
+  \item Natural-image covariance experiments validate the theory and show
+        that moving prediction-equivalent features into low-variance spectral
+        directions can leave prediction intact while driving accentuation
+        $R^2$ from near one to very negative values.
+\end{itemize}
+\end{abstract}
+
+\section*{Status and intended scope}
+
+\begin{itemize}
+  \item This document is an author-facing manuscript skeleton, not a complete
+        draft.
+  \item Bullets specify the intended logical content of each paragraph.
+  \item Formal statements identify the results that should survive into the
+        main text. Proofs and long deterministic-equivalent calculations will
+        be placed in the supplement.
+  \item Citations, biological details, author list, and journal formatting are
+        placeholders.
+\end{itemize}
+
+\section{Introduction: the prediction--control paradox}
+\label{sec:introduction}
+
+\begin{itemize}
+  \item Start from the empirical observation: encoding models with comparable
+        held-out prediction can generate qualitatively different preferred
+        images and can differ sharply in closed-loop control.
+  \item Highlight the evaluation asymmetry: a poor generator can sometimes
+        evaluate stimuli produced by a better generator even though its own
+        synthesized stimuli fail under the ground-truth response.
+  \item State the conceptual reason. Standard generalization evaluates a
+        predictor on an externally specified natural distribution. Control
+        evaluates it on a distribution selected by the fitted predictor
+        itself.
+  \item State the paper's thesis: prediction and gradient-based control depend
+        on different geometries and, in feature models, on different
+        identifiable summary statistics.
+  \item Explain the role of random-matrix theory: the geometric gap is exact,
+        while RMT predicts how finite samples, response noise, anisotropy,
+        ridge shrinkage, and cross-validation determine its magnitude.
+  \item Preview the strongest result: a continuous family of feature maps can
+        have identical Gaussian training distributions and identical
+        prediction-optimal ridge penalties, while its pixel-space control
+        changes by orders of magnitude.
+\end{itemize}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.93\linewidth}{
+    \textbf{Figure 1 placeholder: empirical paradox and minimal geometry.}
+    Left: representative natural-image prediction, successful versus failed
+    accentuation, and peer-review asymmetry. Right: natural inputs probe the
+    covariance ellipsoid, whereas accentuation moves along the fitted gradient.
+  }}
+  \caption{Similar prediction does not guarantee similar control because the
+  model changes the distribution on which it is evaluated.}
+  \label{fig:empirical-paradox}
+\end{figure}
+
+\section{Teacher--student setup and evaluation metrics}
+\label{sec:setup}
+
+\begin{itemize}
+  \item Let centered inputs and noisy responses follow
+  \begin{equation}
+    \bm x\sim\mathcal N(0,\Sigma),\qquad
+    y=(\bstar)^{\top}\bm x+\sigma\epsilon,
+    \qquad \epsilon\sim\mathcal N(0,1).
+    \label{eq:teacher}
+  \end{equation}
+  \item Define the noiseless signal variance
+  \begin{equation}
+    S=(\bstar)^{\top}\Sigma\bstar.
+  \end{equation}
+  \item Distinguish evaluation against the noiseless teacher from evaluation
+        against a newly observed noisy response. The main text uses the
+        noiseless teacher; test noise can be added as an irreducible term.
+  \item For a fixed fitted pixel-space weight $\bhat$, define natural
+        generalization and own-gradient accentuation from the same underlying
+        teacher.
+\end{itemize}
+
+\begin{proposition}[Exact prediction and own-path control metrics]
+\label{prop:exact-metrics}
+For a fixed fitted weight $\bhat$, natural generalization satisfies
+\begin{align}
+  E_{\rm gen}
+    &=(\bhat-\bstar)^{\top}\Sigma(\bhat-\bstar),\label{eq:egen-exact}\\
+  R_{\rm gen}^{2}
+    &=1-\frac{E_{\rm gen}}{S}.\label{eq:rgen-exact}
+\end{align}
+Along the self-generated path $\bm x(t)=\bm x_0+t\bhat$, define
+\begin{equation}
+  N_{\rm acc}=\bhat^{\top}\bstar,
+  \qquad
+  D_{\rm acc}=\bhat^{\top}\bhat.
+\end{equation}
+The true-on-predicted path slope, student-range-normalized accentuation loss,
+and true-path coefficient of determination are
+\begin{align}
+  b_{\rm acc}
+    &=\frac{N_{\rm acc}}{D_{\rm acc}},\label{eq:bacc-exact}\\
+  \frac{E_{\rm acc}}{S}
+    &=\left(1-\frac{N_{\rm acc}}{D_{\rm acc}}\right)^2,\label{eq:eacc-exact}\\
+  R_{\rm acc}^{2}
+    &=1-\left(1-\frac{D_{\rm acc}}{N_{\rm acc}}\right)^2.\label{eq:racc-exact}
+\end{align}
+\end{proposition}
+
+\begin{itemize}
+  \item Explain the two opposite singularities. $E_{\rm acc}/S$ is unstable
+        when the fitted gradient norm $D_{\rm acc}$ approaches zero;
+        $R_{\rm acc}^{2}$ is unstable when the true path gain
+        $N_{\rm acc}$ approaches zero.
+  \item Emphasize that a very negative $R_{\rm acc}^{2}$ need not mean an
+        unbounded raw pathwise MSE: when $N_{\rm acc}\to0$ with
+        $D_{\rm acc}>0$, $R_{\rm acc}^{2}\to-\infty$ while
+        $E_{\rm acc}/S\to1$.
+  \item Use $b_{\rm acc}$ for slope and
+        $z_{\rm acc}=D_{\rm acc}/N_{\rm acc}-1$ for the $R^2$-controlling
+        ratio. Do not call either quantity $R_{\rm det}$.
+\end{itemize}
+
+\section{Direct pixel regression: anisotropy, noise, and ridge}
+\label{sec:pixel-ridge}
+
+\begin{itemize}
+  \item Fit normalized ridge regression using $n$ samples:
+  \begin{equation}
+    \bhat
+    =(\widehat\Sigma+\lambda I)^{-1}
+      \left(\widehat\Sigma\bstar+
+      \frac{\sigma}{n}X^{\top}\bm\eta\right),
+    \qquad \widehat\Sigma=\frac{X^{\top}X}{n}.
+    \label{eq:pixel-ridge}
+  \end{equation}
+  \item Make the ridge convention visible: software minimizing
+        $\lVert\bm y-X\bm\beta\rVert^2+alpha\lVert\bm\beta\rVert^2$
+        uses $\alpha=n\lambda$.
+  \item Introduce the effective deterministic-equivalent penalty $\kappa$:
+  \begin{equation}
+    \kappa-\lambda
+      =\frac{\kappa}{n}\tr\!\left[
+       \Sigma(\Sigma+\kappa I)^{-1}\right].
+    \label{eq:kappa-fixed-point}
+  \end{equation}
+  \item Define compact spectral summaries
+  \begin{align}
+    B_{p,q}(\kappa)
+      &=(\bstar)^{\top}\Sigma^p(\Sigma+\kappa I)^{-q}\bstar,\\
+    \mathrm{df}_{p,q}(\kappa)
+      &=\tr\!\left[\Sigma^p(\Sigma+\kappa I)^{-q}\right],
+  \end{align}
+  with $\mathrm{df}_{2}=\mathrm{df}_{2,2}$.
+\end{itemize}
+
+\begin{proposition}[Pixel-space deterministic equivalents]
+\label{prop:pixel-de}
+In the proportional high-dimensional limit, the leading deterministic
+equivalent of noiseless generalization error is
+\begin{equation}
+  E_{\rm gen}^{\rm DE}
+  =\frac{n}{n-\mathrm{df}_{2}}
+     \left(\kappa^2 B_{1,2}+\sigma^2\right)-\sigma^2.
+  \label{eq:pixel-egen-de}
+\end{equation}
+The leading means of the accentuation numerator and denominator are
+\begin{align}
+  \mu_N
+    &=B_{1,1},\label{eq:pixel-mu-n}\\
+  \mu_D
+    &=B_{2,2}
+      +\frac{\mathrm{df}_{1,2}}{n-\mathrm{df}_{2}}
+        \left(\kappa^2B_{1,2}+\sigma^2\right)\label{eq:pixel-mu-d}\\
+    &=B_{2,2}
+      +\frac{\mathrm{df}_{1,2}}{n}
+       \left(E_{\rm gen}^{\rm DE}+\sigma^2\right).
+\end{align}
+Consequently, the typical-fit leading approximation is
+\begin{equation}
+  z_{\rm acc}^{\rm DE}
+  =\frac{\mu_D}{\mu_N}-1
+  =\frac{\sigma^2\mathrm{df}_{1,2}-n\lambda B_{1,2}}
+         {(n-\mathrm{df}_{2})B_{1,1}}.
+  \label{eq:pixel-z-de}
+\end{equation}
+\end{proposition}
+
+\begin{itemize}
+  \item Interpret the per-PC error decomposition in one paragraph or inset:
+        ridge bias suppresses teacher signal below the $\kappa$ scale, while
+        finite-sample noise is largest in low-variance modes near that scale.
+  \item Explain the central dissociation: $E_{\rm gen}$ weights coefficient
+        error by $\Sigma$, whereas $D_{\rm acc}$ measures unweighted pixel
+        gradient energy.
+  \item Keep the one- and two-resolvent derivations in the supplement.
+\end{itemize}
+
+\begin{proposition}[Prediction-optimal ridge need not optimize control]
+\label{prop:pixel-cv}
+At an interior stationary point of the DE generalization curve,
+\begin{equation}
+  (n-\mathrm{df}_{2})\kappa B_{2,3}
+  =\mathrm{df}_{2,3}\left(\kappa^2B_{1,2}+\sigma^2\right).
+  \label{eq:pixel-cv-stationary}
+\end{equation}
+Substitution into Eq.~\eqref{eq:pixel-z-de} gives
+\begin{equation}
+  \boxed{
+  z_{\rm acc,CV}^{\rm DE}
+  =\kappa\frac{\mathrm{df}_{1,2}}{B_{1,1}}
+   \left(
+     \frac{B_{2,3}}{\mathrm{df}_{2,3}}
+     -\frac{B_{1,2}}{\mathrm{df}_{1,2}}
+   \right).}
+  \label{eq:pixel-z-cv}
+\end{equation}
+The right-hand side is not generically zero. Thus minimizing natural
+prediction risk does not in general calibrate the self-generated path.
+\end{proposition}
+
+\begin{itemize}
+  \item Separate the population/DE-CV optimum in
+        Proposition~\ref{prop:pixel-cv} from random fold-to-fold selection of
+        $\alpha$. The latter is a finite-sample fluctuation analyzed in the
+        supplement.
+  \item Use a dense logarithmic $\alpha$ grid in all experiments so apparent
+        transitions are not artifacts of coarse regularization stages.
+\end{itemize}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.93\linewidth}{
+    \textbf{Figure 2 placeholder: pixel-ridge mechanism and RMT validation.}
+    (a) Data spectrum and teacher power. (b) Mean per-PC coefficient error,
+    emphasizing low-variance directions. (c) Noise sweep with DE and Monte
+    Carlo for $R_{\rm gen}^{2}$ and $R_{\rm acc}^{2}$. (d) DE-CV and empirical
+    CV ridge penalties. Optional peer-review panel.
+  }}
+  \caption{RMT predicts the prediction--accentuation gap after
+  cross-validated ridge selection.}
+  \label{fig:pixel-rmt}
+\end{figure}
+
+\section{Linear features create two geometries}
+\label{sec:feature-geometry}
+
+\begin{itemize}
+  \item Map pixels to $p$ fixed linear features and fit ridge in feature
+        coordinates:
+  \begin{equation}
+    \bm z=F\bm x,\qquad
+    \widehat f(\bm x)=\that^{\top}F\bm x,
+    \qquad \bhat=F^{\top}\that.
+    \label{eq:feature-model}
+  \end{equation}
+  \item Define the prediction summaries
+  \begin{equation}
+    C=F\Sigma F^{\top},
+    \qquad \bm h=F\Sigma\bstar,
+  \end{equation}
+  and the pixel-control summaries
+  \begin{equation}
+    G=FF^{\top},
+    \qquad \bm q=F\bstar.
+  \end{equation}
+  \item Explain the distinction: $C$ is the natural feature covariance,
+        while $G$ measures the pixel norm of a back-propagated feature-space
+        direction. Likewise, $\bm h$ is the feature--teacher covariance on
+        natural inputs, while $\bm q$ is the teacher gain along a pixel
+        gradient.
+\end{itemize}
+
+\begin{proposition}[Prediction-optimal and control-optimal feature weights]
+\label{prop:two-centers}
+The best population predictor in the feature span and its irreducible error
+are
+\begin{align}
+  \tstar&=C^{\dagger}\bm h,\label{eq:theta-p}\\
+  S_{\perp}&=S-\bm h^{\top}C^{\dagger}\bm h.\label{eq:sperp}
+\end{align}
+The feature coefficient whose back-projected pixel weight is closest to the
+teacher in Euclidean norm is
+\begin{equation}
+  \bm\theta_{\rm E}=G^{\dagger}\bm q.
+  \label{eq:theta-e}
+\end{equation}
+Prediction training centers the estimator at $\tstar$ in the $C$ geometry,
+whereas exact pixel-gradient control is centered at $\bm\theta_{\rm E}$ in the
+$G$ geometry. These centers need not agree.
+\end{proposition}
+
+\begin{proposition}[Feature-space deterministic equivalents]
+\label{prop:feature-de}
+Let $\kappa$ solve Eq.~\eqref{eq:kappa-fixed-point} with $\Sigma$ replaced by
+$C$, and define
+\begin{equation}
+  \Rcal=(C+\kappa I)^{-1},
+  \qquad
+  \bm\mu=C\Rcal\tstar,
+\end{equation}
+\begin{equation}
+  v_0
+  =\frac{\kappa^2(\tstar)^{\top}\Rcal C\Rcal\tstar
+          +S_{\perp}+\sigma^2}
+         {n-\tr(C^2\Rcal^2)}.
+  \label{eq:v0}
+\end{equation}
+Then
+\begin{align}
+  E_{\rm gen}^{\rm DE}
+    &=S_{\perp}
+      +(\bm\mu-\tstar)^{\top}C(\bm\mu-\tstar)
+      +v_0\tr(C\Rcal C\Rcal),\label{eq:feature-egen-de}\\
+  N_{\rm acc}^{\rm DE}
+    &=\bm q^{\top}\bm\mu,\label{eq:feature-nacc-de}\\
+  D_{\rm acc}^{\rm DE}
+    &=\bm\mu^{\top}G\bm\mu
+      +v_0\tr(G\Rcal C\Rcal).\label{eq:feature-dacc-de}
+\end{align}
+Equivalently, $v_0=(E_{\rm gen}^{\rm DE}+\sigma^2)/n$.
+\end{proposition}
+
+\begin{theorem}[Prediction statistics do not identify pixel control]
+\label{thm:summary-separation}
+For Gaussian inputs and a deterministic feature map, the joint distribution
+of the training features and responses is determined by
+\begin{equation}
+  \left(C,\bm h,S,\sigma^2\right).
+\end{equation}
+Consequently, the distribution of the fitted ridge coefficient, the complete
+natural generalization curve, and population/DE cross-validated ridge
+selection depend only on
+\begin{equation}
+  \left(C,\bm h,S,\sigma^2,n\right).
+\end{equation}
+Pixel-gradient accentuation additionally depends on
+\begin{equation}
+  \left(G,\bm q\right)
+  =\left(FF^{\top},F\bstar\right).
+\end{equation}
+Therefore prediction and cross-validation alone do not identify
+$E_{\rm acc}$, $b_{\rm acc}$, or $R_{\rm acc}^{2}$.
+\end{theorem}
+
+\begin{itemize}
+  \item Present the summary-statistics dependency graph here, immediately
+        after Theorem~\ref{thm:summary-separation}.
+  \item For non-Gaussian natural inputs, state the weaker exact claim:
+        $(C,\bm h,S)$ determine the second-order prediction theory, but need
+        not determine the full feature--response distribution.
+\end{itemize}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.93\linewidth}{
+    \textbf{Figure 3 placeholder: dependency graph.}
+    Primitive quantities $(F,\Sigma,\bstar)$ feed into a prediction branch
+    $(C,\bm h,S,\tstar,S_\perp,\kappa_{\rm CV},E_{\rm gen})$ and a control
+    branch that additionally requires $(G,\bm q)$. Keep the two branches
+    visually separated and left-to-right topologically ordered.
+  }}
+  \caption{Prediction and pixel control use overlapping but nonidentical
+  summary statistics.}
+  \label{fig:dependency-graph}
+\end{figure}
+
+\section{An exact prediction-preserving family with changing control}
+\label{sec:gauge}
+
+\begin{itemize}
+  \item Move to whitened input coordinates:
+  \begin{equation}
+    A=F\Sigma^{1/2},\qquad
+    \bm b=\Sigma^{1/2}\bstar,
+    \qquad
+    \bm c=\Sigma^{-1/2}\bstar.
+  \end{equation}
+  \item In these coordinates, $C=AA^{\top}$, $\bm h=A\bm b$,
+        $\bm q=A\bm c$, while
+        $G=A\Sigma^{-1}A^{\top}$.
+\end{itemize}
+
+\begin{theorem}[Prediction-preserving gauge transformation]
+\label{thm:gauge}
+Let $Q\in O(d)$ be orthogonal and satisfy $Q\bm b=\bm b$. Define
+\begin{equation}
+  F_Q=F\Sigma^{1/2}Q\Sigma^{-1/2}
+      =AQ\Sigma^{-1/2}.
+  \label{eq:gauge-map}
+\end{equation}
+Then
+\begin{equation}
+  F_Q\Sigma F_Q^{\top}=F\Sigma F^{\top}=C,
+  \qquad
+  F_Q\Sigma\bstar=F\Sigma\bstar=\bm h.
+\end{equation}
+Hence the Gaussian training distribution, ridge estimator in feature
+coordinates, natural generalization curve, and cross-validated ridge penalty
+are invariant under $Q$. In contrast,
+\begin{align}
+  \bm q_Q&=F_Q\bstar=AQ\bm c,\\
+  G_Q&=F_QF_Q^{\top}=AQ\Sigma^{-1}Q^{\top}A^{\top},
+\end{align}
+which need not be invariant.
+\end{theorem}
+
+\begin{corollary}[Strong gauge: isolate the back-propagation metric]
+\label{cor:strong-gauge}
+If $Q$ fixes both $\bm b$ and $\bm c$, then $C$, $\bm h$, and $\bm q$ are
+all invariant, while $G_Q$ can still change whenever $\Sigma$ is anisotropic.
+Along this stronger family, the distribution of
+$N_{\rm acc}=\bm q^{\top}\that$ is fixed and all changes in accentuation arise
+through the back-propagated gradient energy
+$D_{\rm acc}=\that^{\top}G_Q\that$.
+\end{corollary}
+
+\begin{itemize}
+  \item Explain why the construction sometimes projects away the span of
+        both $\bm b$ and $\bm c$. Fixing $\bm b$ alone is sufficient to
+        preserve prediction. Fixing $\bm c$ as well preserves the
+        accentuation numerator and yields the cleanest causal dissection of
+        $G$.
+  \item Connect the gauge to anisotropy. If $\Sigma=I$, then
+        $G_Q=AA^{\top}$ is invariant and the nontrivial dissociation
+        disappears.
+\end{itemize}
+
+\subsection{Continuous top-PC-to-tail path used in the experiment}
+
+\begin{itemize}
+  \item Use the strong-gauge subspace so every moving component annihilates
+        both $\bm b$ and $\bm c$.
+  \item Decompose the whitened feature map into a fixed part $P$, a
+        well-behaved top-PC component $R$, and a matched tail component $V$:
+  \begin{equation}
+    A(t)=P+\sqrt{1-t}\,R+\sqrt t\,V,
+    \qquad
+    F(t)=A(t)\Sigma^{-1/2},
+    \qquad 0\le t\le1.
+    \label{eq:continuous-path}
+  \end{equation}
+  \item State the construction constraints:
+  \begin{equation}
+    R\bm b=V\bm b=0,
+    \qquad
+    R\bm c=V\bm c=0,
+    \qquad
+    RR^{\top}=VV^{\top},
+  \end{equation}
+  together with the required cross-orthogonality to $P$ and between the
+  rotating components. These conditions make $A(t)A(t)^{\top}$,
+  $A(t)\bm b$, and $A(t)\bm c$ invariant.
+  \item Parameterize $t=\sin^2\theta$, so that
+        $\sqrt{1-t}=\cos\theta$ and $\sqrt t=\sin\theta$. The path is an
+        ordinary continuous rotation in whitened coordinates.
+  \item Choose $t=0$ to be the unwhitened top-$p$ PC projector. Choose $V$
+        in very low-variance spectral directions, making $G(t)$ grow while
+        prediction remains fixed.
+\end{itemize}
+
+\begin{proposition}[Protected prediction can approach singular control]
+\label{prop:protected-singularity}
+Assume $C$ is positive definite on the effective feature support. The smallest
+excess natural-prediction loss among feature weights with zero true
+accentuation gain is
+\begin{equation}
+  \epsilon_{N=0}
+  =\min_{\bm\theta:\,\bm q^{\top}\bm\theta=0}
+     \lVert\bm\theta-\tstar\rVert_C^2
+  =\frac{(\bm q^{\top}\tstar)^2}
+         {\bm q^{\top}C^{-1}\bm q}.
+  \label{eq:cost-zero-gain}
+\end{equation}
+Thus nearly perfect natural prediction can lie arbitrarily close to the
+$R_{\rm acc}^{2}$ singularity when both $S_{\perp}/S$ and
+$\epsilon_{N=0}/S$ are small. The susceptibility
+$\bm q^{\top}C^{-1}\bm q$ is large when the control functional points into
+low-variance feature directions.
+\end{proposition}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.93\linewidth}{
+    \textbf{Figure 4 placeholder: main constructive result.}
+    Use the Van Hateren $p=500$ top-PC-to-tail rotation. Top row:
+    $\tr(FF^{\top})$, invariant $E_{\rm gen}$, and invariant
+    $R_{\rm gen}^{2}$. Bottom row: $E_{\rm acc}/S$, $R_{\rm acc}^{2}$, and
+    $b_{\rm acc}$ across $t=\sin^2\theta$, with noise levels encoded by color.
+    Pair this with selected feature-row spectra at $t=0,10^{-4},10^{-2},1$.
+  }}
+  \caption{A prediction-equivalent feature rotation moves from a controlled
+  top-PC endpoint to catastrophic pixel-space accentuation.}
+  \label{fig:gauge-construction}
+\end{figure}
+
+\section{Natural-image experiments}
+\label{sec:experiments}
+
+\subsection{Measured covariance and disk teacher}
+
+\begin{itemize}
+  \item Introduce the Van Hateren and FFHQ image ensembles, patch/image
+        dimensions, covariance estimation, retained rank, and circular disk
+        teacher.
+  \item Plot the image spectrum and teacher power in the population-PC basis.
+  \item Report response noise on two aligned axes: response standard deviation
+        $\sigma$ and noise-to-signal variance ratio $\sigma^2/S$.
+  \item Explain which experiments draw Gaussian samples with the measured
+        covariance and which use actual natural-image samples. Do not imply
+        exact Gaussian distributional theory for the latter.
+\end{itemize}
+
+\subsection{Cross-validated pixel ridge}
+
+\begin{itemize}
+  \item Compare fixed ridge and prediction-selected RidgeCV across noise.
+  \item Show that CV protects generalization substantially but does not make
+        accentuation an optimized objective.
+  \item Plot the selected $\alpha$ path beneath vertically aligned panels for
+        $E$, $R^2$, and slope so transitions can be related to regularization.
+  \item Use the leading DE for typical values and the second-order or
+        distributional treatment for nonlinear ratio averages.
+\end{itemize}
+
+\subsection{PCA, whitening, and top-PC truncation}
+
+\begin{center}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Feature map & feature loading & $C$ spectrum & $G$ spectrum & omitted signal\\
+\midrule
+Full PCA & $1$ & $s_j$ & $1$ & $0$\\
+Full whitening & $s_j^{-1/2}$ & $1$ & $s_j^{-1}$ & $0$\\
+Top-$K$ PCs & $1$, $j\le K$ & $s_j$ & $1$ & $\sum_{j>K}s_jb_j^2$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{itemize}
+  \item Full PCA is the direct pixel baseline in rotated coordinates.
+  \item Whitening makes regression isotropic in feature space but amplifies
+        low-variance directions by $1/s_j$ when gradients are mapped back to
+        pixels.
+  \item Top-PC truncation pays an irreducible prediction cost but removes
+        harmful low-variance control directions. When teacher signal is
+        concentrated in top PCs, this trade can improve accentuation greatly
+        at modest predictive cost.
+\end{itemize}
+
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.93\linewidth}{
+    \textbf{Figure 5 placeholder: representation comparison.}
+    Noise sweeps for full PCA, whitening, and top-PC truncation. Overlay
+    $R_{\rm gen}^{2}$ and $R_{\rm acc}^{2}$ in one panel, and
+    $b_{\rm gen}$ and $b_{\rm acc}$ in another. Include the top-PC cutoff
+    sweep if space permits.
+  }}
+  \caption{Feature conditioning for prediction can worsen pixel-space control;
+  spectral truncation can reverse the gap.}
+  \label{fig:feature-comparison}
+\end{figure}
+
+\section{Finite-size fluctuations of nonlinear control metrics}
+\label{sec:distributional-de}
+
+\begin{itemize}
+  \item Explain why a ratio of deterministic means can predict typical
+        accentuation while failing for an empirical mean near a singular
+        denominator.
+  \item Retain an approximate Gaussian distribution for the fitted feature
+        coefficient:
+  \begin{equation}
+    \that\ \dot\sim\ \mathcal N(\bm\mu,V),
+    \qquad V=v_0\Rcal C\Rcal.
+    \label{eq:gaussian-de}
+  \end{equation}
+\end{itemize}
+
+\begin{proposition}[Gaussian distributional deterministic equivalent]
+\label{prop:gaussian-de}
+Under Eq.~\eqref{eq:gaussian-de}, the linear--quadratic accentuation moments
+are
+\begin{align}
+  \E N_{\rm acc}&=\bm q^{\top}\bm\mu,
+  &\Var(N_{\rm acc})&=\bm q^{\top}V\bm q,\\
+  \E D_{\rm acc}&=\bm\mu^{\top}G\bm\mu+\tr(GV),
+  &\Var(D_{\rm acc})
+    &=2\tr[(GV)^2]+4\bm\mu^{\top}GVG\bm\mu,\\
+  &&\Cov(N_{\rm acc},D_{\rm acc})
+    &=2\bm q^{\top}VG\bm\mu.
+\end{align}
+Sampling $\that$ from this surrogate and applying the exact per-fit metric
+definitions yields approximate means, medians, intervals, and tail
+probabilities without replacing random ratios by ratios of means.
+\end{proposition}
+
+\begin{itemize}
+  \item Diagnose denominator concentration using
+  \begin{equation}
+    \mathrm{CV}_{N}
+      =\frac{\sqrt{\Var(N_{\rm acc})}}{|\E N_{\rm acc}|},
+    \qquad
+    \mathrm{CV}_{D}
+      =\frac{\sqrt{\Var(D_{\rm acc})}}{\E D_{\rm acc}}.
+  \end{equation}
+  \item Distinguish two questions: whether the leading DE is statistically
+        adequate, and whether control itself is good. Increasing $p$ can make
+        the leading DE more accurate while making accentuation worse.
+  \item Keep the full random-design $\Var(R)$ and CV-selection fluctuation
+        theory in the supplement. In the main paper, report medians/IQRs as
+        well as means/standard errors near ratio singularities.
+\end{itemize}
+
+\section{Peer review and cross-model asymmetry}
+\label{sec:peer-review}
+
+\begin{itemize}
+  \item Let generator and evaluator have pixel weights $\bhat_g$ and
+        $\bhat_e$. Along the generator path, define the teacher and evaluator
+        gains
+  \begin{equation}
+    T_g=(\bstar)^{\top}\bhat_g,
+    \qquad
+    D_{e\leftarrow g}=\bhat_e^{\top}\bhat_g.
+  \end{equation}
+  \item The peer-review coefficient of determination is
+  \begin{equation}
+    R_{e\leftarrow g}^{2}
+      =1-\left(1-\frac{D_{e\leftarrow g}}{T_g}\right)^2.
+    \label{eq:peer-r2}
+  \end{equation}
+  \item Explain the asymmetry geometrically: one generator can move along a
+        direction that remains legible to a good evaluator, while the reverse
+        direction has nearly zero teacher gain.
+  \item Treat peer review as a consequence and validation of the
+        prediction--control geometry, not as a second independent theoretical
+        spine.
+  \item Place the full joint-resolvent theory for correlated fits in the
+        supplement or future work.
+\end{itemize}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\begin{itemize}
+  \item Main conclusion: predictive equivalence is weaker than control
+        equivalence because intervention exposes geometry not identifiable
+        from natural prediction alone.
+  \item Cross-validation solves the objective it observes. It can select the
+        prediction-optimal ridge penalty while leaving substantial or
+        catastrophic control error.
+  \item Low-variance directions provide a shared mechanism for the pixel and
+        feature cases, but feature maps add an irreducible structural mismatch
+        between prediction-optimal and control-optimal projections.
+  \item Whitening illustrates that a representation can be statistically
+        well conditioned for regression while being ill conditioned for
+        pixel-space intervention.
+  \item Top-PC truncation illustrates a practical design principle: discard
+        directions that contribute little target signal but large intervention
+        gain.
+  \item Relate the linear theory cautiously to nonlinear neural networks:
+        local input gradients define an input-space control metric, while
+        representation covariance governs prediction on natural data.
+  \item State limitations: Gaussian or second-order input model, fixed linear
+        features, linear teacher, local gradient paths, and incomplete
+        unconditional fluctuation theory for nonlinear ratios and random CV.
+\end{itemize}
+
+\section*{Proposed supplementary organization}
+
+\begin{enumerate}
+  \item Exact generalization, accentuation, and peer-review metric derivations.
+  \item One- and two-resolvent deterministic-equivalent identities.
+  \item Per-PC bias and variance decomposition for direct ridge regression.
+  \item Derivation of the CV stationarity condition and
+        Eq.~\eqref{eq:pixel-z-cv}.
+  \item Arbitrary fixed-feature-map DE and aligned spectral specialization.
+  \item Proofs of Theorems~\ref{thm:summary-separation} and~\ref{thm:gauge},
+        including the continuous rotation construction.
+  \item Delta-method corrections, conditional $\Var(R)$, missing
+        random-design terms, and CV-selection variability.
+  \item Gaussian distributional DE and effective-rank diagnostics.
+  \item Additional dimensions, random null-space rotations, FFHQ replication,
+        and sensitivity analyses.
+\end{enumerate}
+
+\section*{Open author decisions before full drafting}
+
+\begin{itemize}
+  \item Choose whether the primary empirical opening is the original neural
+        control result or the natural-image disk-teacher demonstration.
+  \item Choose one primary natural-image ensemble for the main text; place the
+        second ensemble in the supplement as replication.
+  \item Decide whether peer review receives a main figure panel or only a
+        concise corollary plus supplementary validation.
+  \item Decide whether the main paper reports both $E_{\rm acc}/S$ and
+        $R_{\rm acc}^{2}$ throughout. Keeping both is theoretically useful
+        because they expose opposite ratio singularities.
+  \item Decide how much of the Gaussian distributional DE belongs in the main
+        Results versus Methods/Supplement.
+  \item Select a target venue and length before converting the bullets to
+        complete prose.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,628 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,bm,booktabs}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\bstar}{{\beta^{\star}}}
+\newcommand{\bhat}{\hat{\beta}}
+\newcommand{\x}{\mathbf{x}}
+\title{Accentuation from Nonzero and Multiple Seeds\\Uncentered Paths, Calibration Metrics, and the Required RMT Quantities}
+\author{Theory extension for AccentuationPredRMT}
+\date{\today}
+\begin{document}
+\maketitle
+\begin{abstract}
+The centered, zero-seed theory reduces own-gradient accentuation to the gain
+ratio $g=(\bstar)^\top\bhat/\|\bhat\|^2$. Nonzero seeds introduce baseline errors;
+uncentered steps introduce mean displacement. These are distinct effects.
+We derive exact conditional-on-fit MSE, coefficient of determination,
+true-on-predicted regression slope, and Pearson correlation, for one seed,
+multiple seeds, and seed-dependent target schedules. For independent natural
+seeds, pooled metrics combine ordinary prediction moments and the same
+control gain ratio. The additional RMT objects are seed-weighted bilinear
+and quadratic resolvent forms; finite-fit averages additionally require their
+joint fluctuations with the gain ratio.
+\end{abstract}
+
+\section{Scope, sources, and conventions}
+\begingroup\sloppy
+Notation follows the main manuscript
+\path{accentuation_rmt_main_iclr2026.tex} and its \path{math_commands.tex}
+in \href{https://github.com/Animadversio/AccentuationPredictionRMTDissociation}{AccentuationPredictionRMTDissociation}.
+This note extends the centered-$\alpha$ derivation in
+\path{~/Writings/AccentuationPredictionRMTDissociation/linear_reg_weight_deviation.tex},
+and the repository notes
+\path{notes/dissociation_prediction_control_feature_space.tex} and
+\path{notes/accentuation_varR_theory.tex}.
+The identities below are direct algebraic derivations; the RMT substitutions
+are explicitly separated from them. Training remains the centered linear
+ridge problem of those sources. A nonzero evaluation seed does not require
+noncentered training data.
+\par\endgroup
+
+Condition on one fitted pixel weight $\bhat$ (or
+$\bhat=F^\top\hat w$ for fixed linear features). Allow constant
+intercepts for completeness:
+\[
+ P(\x)=\widehat c+\bhat^\top\x,\qquad
+ Y(\x)=c_\star+(\bstar)^\top\x,\qquad
+ \bm e=\bhat-\bstar,\quad \delta c=\widehat c-c_\star.
+\]
+The existing centered theory sets both intercepts to zero. Define
+\[
+ \x=\x_0+\alpha\bhat,\qquad
+ D=\bhat^\top\bhat>0,\quad N=(\bstar)^\top\bhat,\quad g=N/D,\quad L=D-N.
+\]
+Here $\alpha$ is the accentuation step, \emph{not} the software ridge penalty;
+the latter is denoted $\alpha_{\mathrm{Ridge}}=n\lambda$. All evaluation expectations condition on
+the fit unless explicitly subscripted by ``fit.'' Teacher responses are
+noiseless. Slope always means regression of $Y$ on $P$ with a fitted intercept.
+Our metrics are
+\begin{equation}\label{eq:metrics}
+ E=\E(P-Y)^2,\quad R^2=1-\frac{E}{\Var Y},\quad
+ \mathrm{slope}_p=\frac{\Cov(P,Y)}{\Var P},\quad
+ r_p=\frac{\Cov(P,Y)}{\sqrt{\Var P\Var Y}}.
+\end{equation}
+Thus $R^2$ evaluates the original predictions, without post-hoc calibration;
+it is not $r_p^2$. Undefined zero-variance cases are not assigned a value.
+
+
+\paragraph{Notation aligned with the main manuscript.}
+We retain $\bstar,\bhat,\x,\Sigma,\hat\Sigma,n,d,\lambda,\kappa,N,D$
+and reserve $F,\Sigma_F,\hat w,w^\star$ for linear features.
+Here $P(\x)=f_{\bhat}(\x)$ and $Y(\x)=f_\star(\x)$ abbreviate the
+student and noiseless teacher responses; $p_0,y_0$ are their seed values.
+Intercepts are an optional extension and are zero in the main manuscript.
+We use $\mu_p,\Sigma_p$ for the evaluation input mean and covariance,
+and $\mu_0,\Sigma_0$ for seed moments. The generic loss $E$ is
+$E_{acc}$ on an accentuation distribution and $E_{gen}$ on natural inputs;
+likewise $R^2$ is $R^2_{acc}$ or $R^2_{gen}$. The subscript $p$ in
+$\mathrm{slope}_p,r_p$ identifies the evaluation distribution, with $r_p$
+reserved for Pearson correlation. Only for compact extension formulas we set
+\[
+ g:=N/D=\mathrm{slope}_{acc}^{\rm single\ path},\qquad
+ z_{acc}=D/N-1=g^{-1}-1\quad(N\ne0).
+\]
+Thus $g$ is a path gain, not Pearson $r_p$ or a pooled regression slope.
+The new seed-residual symbol $A_{\rm seed}$ is a scalar, not a feature map.
+All traces in this note are ordinary unnormalized $\Tr$; the main
+manuscript's normalized trace is $\mathrm{tr}(T)=\Tr(T)/\dim(T)$.
+
+\section{One nonzero seed and an uncentered step}
+Let $\x_0$ be fixed and set
+\[
+ p_0=P(\x_0),\quad y_0=Y(\x_0),\quad
+ \delta_0=p_0-y_0,\quad \E\alpha=m,\quad \Var\alpha=v>0.
+\]
+Since $P=p_0+D\alpha$ and $Y=y_0+N\alpha$,
+\begin{equation}\boxed{
+ E=vL^2+(\delta_0+mL)^2,\qquad
+ R^2=1-\frac{vL^2+(\delta_0+mL)^2}{vN^2}.}
+ \label{eq:single}
+\end{equation}
+For $N\ne0$,
+\begin{equation}\boxed{
+ \mathrm{slope}_p=g,\qquad a=y_0-g p_0,\qquad r_p=\operatorname{sign}(N),}
+\end{equation}
+where $a$ is the regression intercept. The means of the step and the seed
+change calibration error but not this slope or correlation. Pearson
+correlation is therefore blind to gain magnitude and baseline bias on a
+single noiseless linear path. For example, $g=0.1$ gives $r_p=1$ but,
+even with zero baseline and centered steps, $R^2=-80$.
+A through-origin fit instead gives
+\[
+ \mathrm{slope}_{\rm origin}=
+ \frac{vDN+(p_0+mD)(y_0+mN)}{vD^2+(p_0+mD)^2};
+\]
+it should not be confused with the gain ratio.
+
+\paragraph{Nonzero seed is not equivalent to uncentered $\alpha$.}
+Writing $\alpha=m+\widetilde\alpha$ replaces the seed by
+$\x_0+m\bhat$, so a mean shift can be absorbed into the component of the
+seed along $\bhat$. This is an exact reparameterization of the same generated images: every
+uncentered step can be absorbed into a shifted seed. A general seed, however,
+has a perpendicular component that cannot be absorbed into the scalar step. Conversely, a nonzero seed need not change
+$\E\alpha$. The expression $\delta_0+mL$ displays both effects explicitly.
+
+
+\paragraph{Does the shifted seed remain natural?}
+No natural-distribution assumption is needed for the exact path identities.
+It is an additional experimental assumption, useful when accentuation starts
+from independently held-out natural images. If
+$\x_0\sim\mathcal N(0,\Sigma)$ independently of the fit and the step, then,
+conditional on the fit,
+\[
+ \widetilde{\x}_0=\x_0+m\bhat
+ \sim\mathcal N(m\bhat,\Sigma).
+\]
+Unless $m\bhat=0$, this is not the original natural distribution. Unconditionally
+the shifted seed is also coupled to training through $\bhat$ (and through $m$
+if the schedule is fit-dependent). It cannot be treated as a fresh independent
+natural seed in an RMT substitution. For a general natural-image distribution,
+translation likewise need not preserve the distribution or its support.
+Thus centering $\alpha$ is always possible algebraically, but imposing both
+centered steps and independent seeds from the original natural distribution
+restricts the protocol. The mean-bias term in Eq.~\eqref{eq:single} is retained
+in the shifted baseline; it has not disappeared.
+
+For seed-dependent schedules one may instead center conditionally:
+$\widetilde\alpha=\alpha-\E[\alpha\mid\x_0,\bhat]$ and
+$\widetilde{\x}_0=\x_0+\E[\alpha\mid\x_0,\bhat]\bhat$.
+Then $\E[\widetilde\alpha\mid\x_0,\bhat]=0$ and hence the residual step is
+uncorrelated with the transformed seed conditional on the fit, but generally
+not independent of it. This pushforward of the seed distribution can change
+both its mean and covariance. The master moment formula below still applies.
+For natural-image experiments we therefore keep the original natural seed
+and explicitly retain the schedule mean; for algebraic analysis either
+parameterization is valid.
+
+\paragraph{Student-response normalization.}
+Let $u=D\alpha$, $\E u=\mu$, and $\Var u=\tau^2$.
+Choosing $\tau^2=S=(\bstar)^\top\Sigma\bstar$ reproduces the old range convention.
+Then
+\begin{align}
+ E&=\tau^2(1-g)^2+[\delta_0+(1-g)\mu]^2,\label{eq:single-normalized}\\
+ R^2&=1-\frac{(1-g)^2}{g^2}
+       -\frac{[\delta_0+(1-g)\mu]^2}{g^2\tau^2}.
+\end{align}
+Variance matching alone no longer fixes MSE when $\mu\ne0$.
+For increment scoring, $\Delta P=u$, $\Delta Y=g u$, so
+\[
+ E_\Delta=(\tau^2+\mu^2)(1-g)^2,\qquad
+ R^2_\Delta=1-\frac{(\tau^2+\mu^2)(1-g)^2}{g^2\tau^2}.
+\]
+Subtracting each path's own mean instead gives centered loss
+$\tau^2(1-g)^2$ and the old $R^2=1-(1-1/g)^2$.
+Absolute-response, increment, and centered-response scoring answer different
+questions. The previous formulas for arbitrary $\x_0$ require the latter
+convention, or suitable zero-baseline and zero-mean assumptions.
+
+\section{Master formula for multiple seeds and dependent schedules}
+Let $(\x_0,\alpha)$ have any joint evaluation distribution, with finite
+second moments conditional on the fitted model. Define
+\[
+ \mu_0=\E\x_0,\quad \Sigma_0=\Cov(\x_0),\quad
+ m=\E\alpha,\quad v=\Var\alpha,\quad
+ \bm c_{0\alpha}=\Cov(\x_0,\alpha).
+\]
+Here $\bm c_{0\alpha}$ is the seed--step covariance. The generated input mean and covariance are exactly
+\begin{equation}
+ \mu_p=\mu_0+m\bhat,\qquad
+ \Sigma_p=\Sigma_0+v\bhat\bhat^\top+\bm c_{0\alpha}\bhat^\top+\bhat\bm c_{0\alpha}^\top.
+ \label{eq:input-covariance}
+\end{equation}
+Define $V_P=\bhat^\top \Sigma_p\bhat$, $V_Y=(\bstar)^\top \Sigma_p\bstar$, and
+$C_{PY}=\bhat^\top \Sigma_p\bstar$. Then
+\begin{equation}\boxed{
+ E=\bm e^\top \Sigma_p\bm e+(\delta c+\bm e^\top\mu_p)^2,\quad
+ R^2=1-E/V_Y,\quad \mathrm{slope}_p=C_{PY}/V_P,\quad
+ r_p=C_{PY}/\sqrt{V_PV_Y}.}
+ \label{eq:master}
+\end{equation}
+Explicitly,
+\begin{align}
+ V_P&=\bhat^\top \Sigma_0\bhat+vD^2+2D\bhat^\top\bm c_{0\alpha},\\
+ V_Y&=(\bstar)^\top \Sigma_0\bstar+vN^2+2N(\bstar)^\top\bm c_{0\alpha},\\
+ C_{PY}&=\bhat^\top \Sigma_0\bstar+vDN+N\bhat^\top\bm c_{0\alpha}+D(\bstar)^\top\bm c_{0\alpha},\\
+ E&=\bm e^\top \Sigma_0\bm e+vL^2+2L\bm e^\top\bm c_{0\alpha}
+       +(\delta c+\bm e^\top\mu_0+mL)^2.
+\end{align}
+This includes adaptive schedules and seed selection; no Gaussian evaluation
+assumption is needed. However, $\Sigma_0$ or $\bm c_{0\alpha}$ depending on the training fit
+cannot automatically be treated as deterministic weights in an RMT limit.
+
+\paragraph{Finite seed collection.}
+For seeds $\x_j$ with weights $\pi_j$ summing to one, and conditional
+step means $m_j$ and variances $v_j$, use
+\begin{align}
+ \mu_0&=\sum_j\pi_j\x_j,&
+ \Sigma_0&=\sum_j\pi_j(\x_j-\mu_0)(\x_j-\mu_0)^\top,\\
+ m&=\sum_j\pi_jm_j,&
+ v&=\sum_j\pi_j[v_j+(m_j-m)^2],\\
+ \bm c_{0\alpha}&=\sum_j\pi_j(\x_j-\mu_0)(m_j-m).
+\end{align}
+With empirical step moments and observation-count weights, these formulas
+are exact for the finite pooled data (use variance divisor equal to the
+number of observations). Equal seed weighting differs from equal image
+weighting if paths have different lengths. Pooled $R^2$, slope, and
+correlation are generally not averages of per-seed metrics. All seeds share
+one fitted weight: adding seeds reduces evaluation sampling error, not
+training-fit uncertainty.
+
+\section{Independent seeds: the prediction--control mixture}
+Suppose $u=D\alpha$ is independent of the seed conditional on the fit, with
+mean $\mu$ and variance $\tau^2$. Introduce the seed moments
+\[
+ D_0=\bhat^\top \Sigma_0\bhat,\quad N_0=\bhat^\top \Sigma_0\bstar,\quad
+ S_0=(\bstar)^\top \Sigma_0\bstar,\quad
+ \delta_{\rm seed}=\delta c+\bm e^\top\mu_0.
+\]
+Equation~\eqref{eq:master} reduces to
+\begin{align}
+ E&=D_0-2N_0+S_0+\tau^2(1-g)^2
+           +[\delta_{\rm seed}+(1-g)\mu]^2,\label{eq:ind-mse}\\
+ R^2&=1-\frac{E}{S_0+g^2\tau^2},\\
+ \mathrm{slope}_p&=\frac{N_0+g\tau^2}{D_0+\tau^2},\qquad
+ r_p=\frac{N_0+g\tau^2}
+ {\sqrt{(D_0+\tau^2)(S_0+g^2\tau^2)}}.\label{eq:ind-corr}
+\end{align}
+When $D_0>0$, the pooled slope is the variance-weighted average
+\[
+ \mathrm{slope}_p=\frac{D_0}{D_0+\tau^2}\frac{N_0}{D_0}
+       +\frac{\tau^2}{D_0+\tau^2}g.
+\]
+The normalization $\tau^2=S$ matches the \emph{within-seed student variance};
+the pooled student variance is $D_0+S$, not $S$.
+If instead total student variance must equal $S$, one needs
+$\tau^2=S-D_0\geq0$ under this independent protocol.
+
+For centered natural seeds, $\Sigma_0=\Sigma$, $\mu_0=0$, zero intercepts,
+and centered increments, let $E_{\rm gen}=D_0-2N_0+S$. Then
+\begin{equation}\boxed{
+ E=E_{\rm gen}+\tau^2(1-g)^2,\qquad
+ R^2_{\rm pooled}=1-\frac{E_{\rm gen}+\tau^2(1-g)^2}{S+g^2\tau^2}.}
+\end{equation}
+At $\tau^2=S$, this is
+$R^2_{\rm pooled}=1-[E_{\rm gen}/S+(1-g)^2]/(1+g^2)$.
+Thus multiple natural seeds bring ordinary generalization error back into
+accentuation evaluation. At $\tau^2=0$, all metrics are seed-prediction
+metrics. For fixed $g\ne0$ and $\mu=0$, as $\tau^2$ dominates seed variance,
+slope tends to $g$, Pearson correlation tends to $\operatorname{sign}(g)$,
+and $R^2$ tends to the single-path value. At $g=0$, seed teacher variance
+can keep pooled $R^2$ defined even though per-path $R^2$ is undefined.
+
+\section{A common alternative: absolute student target levels}
+Suppose the experiment selects a target response $q$, independently of seeds,
+and moves until $P(\x)=q$. Then
+\[
+ \alpha=(q-p_0)/D,\qquad P=q,\qquad
+ Y=g q+a_0,\qquad a_0=y_0-g p_0.
+\]
+This makes the step seed-dependent, even for a centered target distribution.
+Let $\E q=\nu$, $\Var q=t^2>0$, $\E a_0=\bar a$,
+and $\Var a_0=v_a$. Direct calculation gives
+\begin{align}
+ E&=(1-g)^2t^2+v_a+[(1-g)\nu-\bar a]^2,\\
+ R^2&=1-\frac{E}{g^2t^2+v_a},\qquad \mathrm{slope}_p=g,\\
+ r_p&=\frac{g t}{\sqrt{g^2t^2+v_a}},\qquad
+ v_a=(\bstar-g\bhat)^\top \Sigma_0(\bstar-g\bhat).
+\end{align}
+Here $\bm c_{0\alpha}=-\Sigma_0\bhat/D$. Unlike independent increments, the pooled slope
+remains $g$, while Pearson correlation measures the variation of path
+intercepts as well. Consequently the experimental schedule must be specified
+before quoting a multi-seed metric formula.
+
+\section{A specific protocol: natural seeds and natural response matching}
+\label{sec:natural-matching}
+Take independent held-out natural seeds with mean $\bm m_{\rm nat}$ and
+covariance $\Sigma$, and condition throughout on one fitted model. Define
+\[
+ \nu_P=\widehat c+\bhat^\top\bm m_{\rm nat},\qquad
+ \nu_Y=c_\star+(\bstar)^\top\bm m_{\rm nat},\qquad
+ \delta=\nu_P-\nu_Y,
+\]
+\[
+ D_{gen}=\bhat^\top\Sigma\bhat,\quad N_{gen}=\bhat^\top\Sigma\bstar,\quad
+ S=(\bstar)^\top\Sigma\bstar>0,\quad g=N/D.
+\]
+The reference distribution is the \emph{noiseless natural teacher response},
+with mean $\nu_Y$ and variance $S$. We first require the generated
+\emph{student absolute response} to match these moments. This is the
+nonzero-seed analogue of the original student-range normalization; it does
+not assume that the generated teacher response is already calibrated.
+Matching two moments implies full distributional equality only in a Gaussian
+setting, or when we explicitly sample target responses from the reference law.
+
+\subsection{Match the natural response range separately from each seed}
+For every seed, draw an absolute target $q$ independently from the natural
+teacher response distribution and set
+\begin{equation}\boxed{
+ \alpha=\frac{q-P(\x_0)}{D}.}
+ \label{eq:matching-target}
+\end{equation}
+Then $P(\x_0+\alpha\bhat)=q$ exactly, so the entire student response
+distribution matches the reference, conditionally on \emph{each} seed.
+In particular,
+\begin{equation}\boxed{
+ \E[\alpha\mid\x_0,\bhat]=\frac{\nu_Y-p_0}{D},\qquad
+ \Var(\alpha\mid\x_0,\bhat)=\frac{S}{D^2}.}
+ \label{eq:matching-conditional}
+\end{equation}
+For Gaussian natural inputs these conditional steps are Gaussian. For a
+non-Gaussian response reference, use its actual quantiles or samples for $q$;
+mean and variance alone do not specify its law.
+
+A seed with a high predicted baseline needs a negative mean step; one with a
+low predicted baseline needs a positive mean step. Even if the global natural
+response is centered, the step is generally not centered for an individual
+seed. Averaging over natural seeds gives, by total expectation and variance,
+\begin{equation}\boxed{
+ \E\alpha=-\frac{\delta}{D},\qquad
+ \Var\alpha=\frac{S+D_{gen}}{D^2},\qquad
+ \Cov(\x_0,\alpha)=-\frac{\Sigma\bhat}{D}.}
+ \label{eq:matching-marginal}
+\end{equation}
+The marginal step variance is larger than the per-seed variance: it includes
+the variation of the baseline-canceling conditional means. For centered
+zero-intercept models, $\E\alpha=0$ marginally but
+$\E[\alpha\mid\x_0]=-p_0/D$ is usually nonzero.
+Ignoring this seed--step anticorrelation gives an incorrect pooled variance.
+Indeed,
+\[
+ \Var P_{\rm acc}=D_{gen}+D^2\Var\alpha
+                  +2D\Cov(p_0,\alpha)=D_{gen}+(S+D_{gen})-2D_{gen}=S.
+\]
+
+Conditionally centering the step produces the shifted seed
+\[
+ \widetilde{\x}_0=\x_0+\frac{\nu_Y-p_0}{D}\bhat,
+ \qquad P(\widetilde{\x}_0)=\nu_Y,
+\]
+with mean $\bm m_{\rm nat}-\delta\bhat/D$ and covariance
+$J\Sigma J^\top$, where $J=I-\bhat\bhat^\top/D$.
+Thus the shifted seeds lie on a common student-response hyperplane and are
+not independent samples from the original natural distribution. The original
+seeds are natural; the recentered mathematical seeds need not be.
+
+\subsection{Metrics and the remaining RMT quantity}
+Let $a_0=y_0-g p_0$ and
+\begin{equation}\boxed{
+ A_{\rm seed}=\Var(a_0)
+  =(\bstar-g\bhat)^\top\Sigma(\bstar-g\bhat)
+  =S-2g N_{gen}+g^2D_{gen}.}
+ \label{eq:matching-residual}
+\end{equation}
+The teacher response on the generated images is $Y_{\rm acc}=g q+a_0$.
+Since $q$ and $a_0$ are independent,
+\begin{align}
+ \E Y_{\rm acc}&=\nu_Y-g\delta,&
+ \Var Y_{\rm acc}&=g^2S+A_{\rm seed},\\
+ E&=(1-g)^2S+A_{\rm seed}+g^2\delta^2,\label{eq:matching-mse}\\
+ R^2&=1-\frac{(1-g)^2S+A_{\rm seed}+g^2\delta^2}
+                    {g^2S+A_{\rm seed}},\\
+ \mathrm{slope}_p&=g,&
+ r_p&=\frac{g\sqrt S}{\sqrt{g^2S+A_{\rm seed}}}.
+\end{align}
+The denominators must be nonzero. In the centered case, the compact dimensionless
+form is
+\[
+ \frac{E}{S}=(1-g)^2+\frac{A_{\rm seed}}S,\qquad
+ R^2=1-\frac{(1-g)^2+A_{\rm seed}/S}{g^2+A_{\rm seed}/S},\qquad
+ r_p=\frac{g}{\sqrt{g^2+A_{\rm seed}/S}}.
+\]
+Thus natural-response matching leaves two distinct sources of error: path gain
+miscalibration and variation of the teacher response across equal-student-response
+seed locations. Even though student responses have the correct marginal law,
+the teacher law generally does not match it.
+The pooled slope is still $g$, but Pearson correlation is no longer forced to
+be $\pm1$. The additional RMT summary is $A_{\rm seed}/S$, constructed from
+the existing natural-prediction moments $N_{gen},D_{gen}$ and the control ratio $g$.
+A leading concentrated-fit DE uses
+\[
+ A_{\rm seed}^{\rm DE}=S-2g_{\rm DE}N_{gen,DE}
+                         +g_{\rm DE}^2D_{gen,DE}.
+\]
+Its fit average instead requires $\E[g N_{gen}]$ and $\E[g^2D_{gen}]$, so joint fluctuations
+matter when these quantities do not concentrate. As a check, if
+$\bhat=k\bstar$ with $k\ne0$ and zero intercepts, $g=1/k$ and
+$A_{\rm seed}=0$: multi-seed correlation is still $\operatorname{sign}(k)$,
+while gain miscalibration remains. At $\bhat=\bstar$, all metrics are perfect even
+though the protocol can move images substantially.
+
+\subsection{Pooled matching alone does not identify a unique schedule}
+Suppose we only require the \emph{pooled} student responses to have mean
+$\nu_Y$ and variance $S$. Put $c_{p\alpha}=\Cov(p_0,\alpha)$. Then
+\begin{equation}
+ \E\alpha=-\delta/D,\qquad
+ D^2\Var\alpha+2D c_{p\alpha}=S-D_{gen}.
+ \label{eq:pooled-matching-constraint}
+\end{equation}
+Without specifying dependence on the seed, the variance is not uniquely
+identified. Under \emph{independent steps}, $c_{p\alpha}=0$, hence
+\[
+ \Var\alpha=(S-D_{gen})/D^2,
+\]
+which is feasible only for $D_{gen}\leq S$. In the centered case this adds only the
+missing student variance; if $D_{gen}=S$, it forces no motion. If $D_{gen}>S$, independent
+steps cannot reduce response variance. Independent Gaussian steps give exact
+Gaussian response matching when natural seeds are Gaussian, but only pooled
+matching, not matching separately from each seed.
+
+More generally, couple a target $q$ with the seed while keeping its desired
+marginal distribution, and let $c=\Cov(q,p_0)$. Equation~\eqref{eq:matching-target}
+gives
+\[
+ \Var\alpha=\frac{S+D_{gen}-2c}{D^2},\qquad |c|\leq\sqrt{S D_{gen}}.
+\]
+The independent-target protocol above chooses $c=0$. For Gaussian seeds with
+$D_{gen}>0$, the deterministic choice
+$q=\nu_Y+\sqrt{S/D_{gen}}(p_0-\nu_P)$ gives the same Gaussian pooled reference law
+with $c=\sqrt{S D_{gen}}$ and the smallest possible step variance
+$(\sqrt S-\sqrt{D_{gen}})^2/D^2$. It yields one point per seed rather than a full
+response range from every seed. The metrics in the previous subsection assume
+independent targets and must not be reused for this correlated-target protocol.
+
+\subsection{Which response is being matched?}
+Matching generated student responses to \emph{natural student} responses
+would use $(\nu_P,D_{gen})$ instead of $(\nu_Y,S)$. Independent-step pooled matching
+then forces $\alpha=0$ almost surely, whereas independent absolute targets
+still allow motion, with conditional variance $D_{gen}/D^2$ and marginal variance
+$2D_{gen}/D^2$.
+
+If the requirement instead concerns the \emph{true teacher} response after
+accentuation, its moments obey
+\[
+ \E Y_{\rm acc}=\nu_Y+N\E\alpha,\qquad
+ \Var Y_{\rm acc}=S+N^2\Var\alpha+2N\Cov(y_0,\alpha).
+\]
+For $N\ne0$, matching the natural teacher moments with seed-independent steps
+forces $\E\alpha=0$ and $\Var\alpha=0$. Nontrivial matching therefore needs
+seed-dependent steps, for example the oracle schedule
+$\alpha=(q-y_0)/N$ with an independent natural teacher target $q$.
+This is not the student-controlled protocol and requires teacher information.
+At $N=0$, every step leaves teacher responses unchanged, so teacher-distribution
+matching imposes no constraint on motion.
+
+Finally, exact moment matching can conflict with purely one-sided
+accentuation ($\alpha\geq0$). In the centered, equal-mean case it requires
+$\E\alpha=0$, which under that constraint forces $\alpha=0$ almost surely.
+A nontrivial matched-range experiment generally includes both accentuation
+and de-accentuation, or deliberately uses a shifted reference distribution.
+
+\section{The key RMT quantities}
+\subsection{Which scalars are sufficient?}
+For independent increments, the conditional metrics depend on
+\begin{equation}\boxed{
+ (N,D,\ N_0,D_0,\ \ell_0=\bhat^\top\mu_0),}
+ \label{eq:core}
+\end{equation}
+together with deterministic teacher moments, intercepts, and schedule
+moments. A single fixed seed has $\Sigma_0=0$, so the new object is
+$\ell_0=\bhat^\top\x_0$, or equivalently $\delta_0$.
+For centered natural seeds, $N_0,D_0$ are exactly the existing
+$N_{\rm gen},D_{\rm gen}$; no new leading-order scalar theory is needed.
+For general seeds, the new geometry is $\Sigma_0$, not necessarily $\Sigma$ or $I$.
+For dependent schedules add $\bhat^\top\bm c_{0\alpha}$ and $(\bstar)^\top\bm c_{0\alpha}$;
+when the schedule depends on the fit, express these through the actual
+protocol before applying a DE.
+
+\subsection{Ridge resolvents and leading deterministic equivalents}
+For direct pixel ridge let
+\[
+ \hat\Sigma=X^\top X/n,\quad Q=(\hat\Sigma+\lambda I)^{-1},\quad
+ \bhat=(I-\lambda Q)\bstar+\frac{\sigma}{n}QX^\top\eta.
+\]
+Conditional on $X$, write $\bhat=\bm m_X+\bm\xi$ with
+$\bm m_X=(I-\lambda Q)\bstar$ and
+$\Omega_X=(\sigma^2/n)Q\hat\Sigma Q$. For deterministic $\Sigma_0$ and
+$\bm a$, the exact conditional identities are
+\[
+ \E_\eta[\bm a^\top\bhat\mid X]=\bm a^\top\bm m_X,\qquad
+ \E_\eta[\bhat^\top \Sigma_0\bhat\mid X]
+ =\bm m_X^\top \Sigma_0\bm m_X+\Tr(\Sigma_0\Omega_X).
+\]
+Thus the required random-matrix objects are one-resolvent bilinear forms
+$\bm a^\top Q\bstar$, weighted two-resolvent forms
+$(\bstar)^\top Q\Sigma_0 Q\bstar$, and traces $\Tr(\Sigma_0 Q\hat\Sigma Q)$.
+Replacing $Q$ independently in each factor of $Q\Sigma_0 Q$ loses design variance.
+
+Using the same leading aggregate DE as the existing feature note, set
+\begin{align}
+ \kappa-\lambda&=\frac{\kappa}{n}\Tr[\Sigma(\Sigma+\kappa I)^{-1}],\\
+ H&=(\Sigma+\kappa I)^{-1},\qquad
+ \tilde\beta_\kappa=\Sigma H\bstar,\\
+ v_0&=\frac{\kappa^2(\bstar)^\top H\Sigma H\bstar+\sigma^2}
+ {n-\Tr(\Sigma^2H^2)},\qquad V_{\beta,DE}=v_0H\Sigma H.
+\end{align}
+In the main manuscript's spectral notation,
+\[
+ B_{a,b}(\kappa)=\sum_k\frac{s_k^a b_k^2}{(s_k+\kappa)^b},\qquad
+ \mathrm{df}_{a,b}(\kappa)=\sum_k\frac{s_k^a}{(s_k+\kappa)^b},\qquad
+ \mathrm{df}_2=\mathrm{df}_{2,2}.
+\]
+Hence $v_0=(\kappa^2B_{1,2}+\sigma^2)/(n-\mathrm{df}_2)
+=(E_{gen,DE}+\sigma^2)/n$. The manuscript's training-fit means
+$\mu_N=\E_{X,\eta}N$ and $\mu_D=\E_{X,\eta}D$ have leading equivalents
+$N_{\rm DE}=B_{1,1}$ and
+$D_{\rm DE}=B_{2,2}+v_0\mathrm{df}_{1,2}$, respectively;
+these DEs are not exact finite-sample means.
+
+Then the aggregate substitutions are
+\begin{align}
+ N_{\rm DE}&=(\bstar)^\top\tilde\beta_\kappa,&
+ D_{\rm DE}&=\|\tilde\beta_\kappa\|^2+\Tr V_{\beta,DE},\\
+ N_{0,DE}&=\tilde\beta_\kappa^\top \Sigma_0\bstar,&
+ D_{0,DE}&=\tilde\beta_\kappa^\top \Sigma_0\tilde\beta_\kappa+\Tr(\Sigma_0 V_{\beta,DE}),\\
+ \ell_{0,\rm DE}&=\mu_0^\top\tilde\beta_\kappa,&
+ g_{\rm DE}&=N_{\rm DE}/D_{\rm DE}.
+\end{align}
+These are leading aggregate equivalents under the same fixed-geometry,
+boundedness, and concentration assumptions as the source note. $V_{\beta,DE}$ is an
+aggregate second-moment prescription, not an exact finite-dimensional
+covariance or a full joint CLT. In particular, for a fixed finite number of
+seeds, baseline projections need not concentrate on the scale relevant to
+their squared errors. When they do not, retain the exact conditional
+Gaussian moments above or a justified joint fluctuation approximation.
+
+In a common eigenbasis of $\Sigma_0$ and $\Sigma$, with eigenvalues $s_{0,k}$
+and $s_k$, and teacher coordinates $b_k$, the new quadratic form reads
+\[
+ D_{0,DE}=
+ \sum_k s_{0,k}\left[
+ \left(\frac{s_kb_k}{s_k+\kappa}\right)^2
+ +v_0\frac{s_k}{(s_k+\kappa)^2}\right].
+\]
+This shows exactly how seed variability weights the same spectral quantities.
+Noncommuting $\Sigma_0$ requires the matrix form, not just its diagonal spectrum.
+
+\subsection{Linear features}
+Use the existing notation $\Sigma_F=F\Sigma F^\top$, $G=FF^\top$,
+$\bm q=F\bstar$, and population feature coefficient $w^\star$.
+With $m_{w,DE}$ and $V_{w,DE}$ from the feature-space DE, replace
+\[
+ \tilde\beta_\kappa=F^\top m_{w,DE},\qquad V_{\beta,DE}=F^\top V_{w,DE} F.
+\]
+Control uses $G$; seed prediction adds $\Sigma_{0,F}=F\Sigma_0 F^\top$ and
+$\bm q_0=F\Sigma_0\bstar$. In particular,
+\[
+ N_{0,DE}=m_{w,DE}^\top\bm q_0,\qquad
+ D_{0,DE}=m_{w,DE}^\top \Sigma_{0,F}m_{w,DE}+\Tr(\Sigma_{0,F}V_{w,DE}).
+\]
+Thus training covariance, control geometry, and seed covariance are three
+potentially different matrices. The teacher residual outside the feature
+span is already included by retaining the full teacher $S_0$ and $\bm q_0$.
+
+\subsection{Averaging over fitted models needs joint fluctuations}
+Even the one-seed normalized MSE is not determined by $\E g$ alone.
+For fixed $\mu,\tau^2$, exactly
+\begin{align}
+ \E_{\rm fit}E
+ &=\tau^2\{(1-\bar g)^2+\Var_{\rm fit}g\}
+   +[\bar\delta_0+\mu(1-\bar g)]^2\\
+ &\quad+\Var_{\rm fit}\delta_0+\mu^2\Var_{\rm fit}g
+       -2\mu\Cov_{\rm fit}(\delta_0,g).
+\end{align}
+Thus the new fluctuation object is the \emph{joint} law of baseline error and
+control gain, not only $\Var(g)$. Writing
+$\bm j_g=(\bstar-2g\bhat)/D$ gives the local differential $dg=\bm j_g^\top d\bhat$.
+At fixed $X$, a first-order Gaussian delta calculation around
+$\bm m_X$ (where its norm is nonzero) gives
+\[
+ \Var_\eta(\delta_0\mid X)=\x_0^\top\Omega_X\x_0,
+ \qquad
+ \Cov_\eta(\delta_0,g\mid X)\simeq
+ \x_0^\top\Omega_X\bm j_g\big|_{\bhat=\bm m_X}.
+\]
+This assumes fixed intercepts and small conditional fluctuations. Full
+unconditional covariance also contains variation of conditional means over
+$X$, as in the existing variance note. Pooled ratio metrics require the joint
+law of Eq.~\eqref{eq:core}; CV additionally randomizes $\lambda$.
+Neither ratios of means nor a Gaussian fitted-weight approximation are exact
+expectations of nonlinear metrics. Near $N=0$ or a small true-response
+variance, report distributions/quantiles and assess denominator concentration.
+
+\section{Practical reporting and limits}
+For each experiment specify: absolute responses versus increments versus
+within-path centering; independent increments versus absolute targets;
+step mean and variance; seed/observation weights; and pooled versus per-seed
+metrics. Report MSE and uncalibrated $R^2$ alongside slope and Pearson $r_p$.
+A high Pearson $r_p$ on a single linear path establishes monotonicity only.
+Pooling seed baselines can also yield high correlation even when the control
+gain is poor; within-seed gains make that failure visible.
+
+If independent evaluation noise of variance $\sigma_{\rm test}^2$ is added
+to each teacher response, add it to both MSE and $V_Y$, leaving $C_{PY}$ and
+$V_P$ unchanged. Slope is unchanged, correlation is attenuated, and the
+noiseless $\pm1$ single-path result no longer holds. Subtracting a noisy seed
+response creates shared noise across increments and needs its covariance
+explicitly included.
+
+All exact results assume a common, constant gradient $\bhat$. Nonlinear
+networks, clipping, or image constraints generally make gains seed- and
+step-dependent. A local linearization can apply per seed, but a pooled
+analysis then needs the distribution of those local gains and their
+covariance with baselines; the single ratio $N/D$ is no longer sufficient.
+\end{document}
