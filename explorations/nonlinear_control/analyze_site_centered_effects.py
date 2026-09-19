@@ -176,8 +176,8 @@ def predictor_benchmark_plot(results,endpoint,filename):
             for xvalue,subset in [(xa,'all_models'),(xr,'without_robust'),
                                   (xt,'without_robust_and_untrained')]:
                 if pair.loc[subset,'cluster_q_bh'] < .05:
-                    ax.text(xvalue,yi+.20,'*',color=color,ha='center',va='bottom',
-                            fontsize=15,fontweight='bold',zorder=6)
+                    ax.text(xvalue,yi+.20,'★',color=color,ha='center',va='bottom',
+                            fontsize=10,zorder=6)
             conventional=pair.loc['without_robust_and_untrained']
             if conventional.n < 175:
                 ax.text(max(xa,xr,xt)+.018,yi,f"n={int(conventional.n)}",color='.35',
@@ -194,7 +194,7 @@ def predictor_benchmark_plot(results,endpoint,filename):
                         color='.25',label='Without CLIPAG + robust RN50'),
              plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
                         color='.25',label='Also without untrained AlexNet'),
-             plt.Line2D([],[],marker='$*$',linestyle='',color='.25',markersize=10,
+             plt.Line2D([],[],marker='*',linestyle='',color='.25',markersize=9,
                         label='BH-FDR q < 0.05 above that marker')]
     group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
                    [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
