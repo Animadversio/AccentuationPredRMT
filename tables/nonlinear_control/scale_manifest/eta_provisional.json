@@ -1,0 +1,32 @@
+{
+  "design": {
+    "seed_images_per_geometry": 10,
+    "pcs": 750,
+    "tau_rgb_over_255": [0.5, 2.0, 8.0, 16.0],
+    "outer_directions": 64,
+    "inner_centers": 8,
+    "unique_geometries": 84,
+    "concurrent_model_jobs": 4
+  },
+  "model_estimates": [
+    {"model": "AlexNet_training_seed_01", "geometries": 11, "seconds_per_geometry": 6.6545400117, "task_compute_seconds": 73.1999401283, "source": "H100 benchmark"},
+    {"model": "clipag_vitb32", "geometries": 7, "seconds_per_geometry": 16.5015979763, "task_compute_seconds": 115.5111858342, "source": "H100 benchmark"},
+    {"model": "dinov2_vitb14_reg", "geometries": 9, "seconds_per_geometry": 73.2373907510, "task_compute_seconds": 659.1365167592, "source": "H100 benchmark"},
+    {"model": "radio_v2.5-b", "geometries": 8, "seconds_per_geometry": 73.2373907510, "task_compute_seconds": 585.8991260082, "source": "DINOv2 conservative proxy"},
+    {"model": "regnety_640", "geometries": 9, "seconds_per_geometry": 73.2373907510, "task_compute_seconds": 659.1365167592, "source": "DINOv2 conservative proxy"},
+    {"model": "resnet50", "geometries": 9, "seconds_per_geometry": 34.2432886362, "task_compute_seconds": 308.1895977259, "source": "complete legacy H100 forward-noise plus exact-VJP pilots"},
+    {"model": "resnet50_clip", "geometries": 9, "seconds_per_geometry": 34.2432886362, "task_compute_seconds": 308.1895977259, "source": "standard RN50 proxy"},
+    {"model": "resnet50_dino", "geometries": 6, "seconds_per_geometry": 34.2432886362, "task_compute_seconds": 205.4597318172, "source": "standard RN50 proxy"},
+    {"model": "resnet50_robust", "geometries": 6, "seconds_per_geometry": 29.0420836798, "task_compute_seconds": 174.2525020789, "source": "complete legacy H100 forward-noise plus exact-VJP pilots"},
+    {"model": "siglip2_vitb16", "geometries": 10, "seconds_per_geometry": 73.2373907510, "task_compute_seconds": 732.3739075102, "source": "DINOv2 conservative proxy"}
+  ],
+  "total_compute_seconds": 3821.3486223470,
+  "total_gpu_hours": 1.0614857284,
+  "gpu_hours_with_30pct_headroom": 1.3799314469,
+  "four_gpu_lpt_makespan_seconds": 980.1074344106,
+  "four_gpu_lpt_makespan_minutes": 16.3351239068,
+  "recommended_wall_clock_after_allocation_minutes": [20, 40],
+  "conservative_total_gpu_hour_range": [1, 3],
+  "excludes": ["Slurm queue time", "selective Monte Carlo sample increases", "cold-cache outliers"],
+  "status": "provisional until all ten model pilots finish"
+}

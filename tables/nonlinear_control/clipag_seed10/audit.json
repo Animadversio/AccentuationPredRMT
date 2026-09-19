@@ -1,0 +1,14 @@
+{
+  "cache": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Encoding_models/red_20250428-20250430/posthoc_model_predict_PCA_popul_unit/posthoc_prediction_NSDencimg_PCA_pop_unit_red_20250428-20250430_unit2_clipag_vitb32.pkl",
+  "model": "clipag_vitb32",
+  "layer": ".transformer.resblocks.ResidualAttentionBlock8",
+  "n_train": 774,
+  "n_total": 969,
+  "pcs": 750,
+  "covariance_ddof": 1,
+  "offdiag_relative_frobenius": 7.052179246405129e-06,
+  "training_mean_norm": 3.784999490442333e-06,
+  "spectrum_source": "training rows of cached unwhitened PCA scores",
+  "population_status": "empirical plug-in, not population truth",
+  "evaluation": "seeds"
+}

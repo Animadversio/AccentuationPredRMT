@@ -1,0 +1,73 @@
+{
+  "model": "resnet50_robust",
+  "layer": ".layer4.Bottleneck1",
+  "images": [
+    {
+      "row": 687,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0575_nsd43157.png",
+      "is_train": false
+    },
+    {
+      "row": 860,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0850_nsd61798.png",
+      "is_train": false
+    },
+    {
+      "row": 939,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0968_nsd70194.png",
+      "is_train": false
+    },
+    {
+      "row": 449,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0241_nsd20065.png",
+      "is_train": false
+    },
+    {
+      "row": 396,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0160_nsd13231.png",
+      "is_train": false
+    },
+    {
+      "row": 346,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0070_nsd07008.png",
+      "is_train": false
+    },
+    {
+      "row": 338,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0055_nsd05879.png",
+      "is_train": false
+    },
+    {
+      "row": 741,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0668_nsd48623.png",
+      "is_train": false
+    },
+    {
+      "row": 624,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0488_nsd36979.png",
+      "is_train": false
+    },
+    {
+      "row": 922,
+      "path": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Stimuli/shared1000/shared0940_nsd68312.png",
+      "is_train": false
+    }
+  ],
+  "tau_rgb": [
+    0.00196078431372549,
+    0.00784313725490196,
+    0.03137254901960784,
+    0.06274509803921569
+  ],
+  "directions": 64,
+  "centers": 8,
+  "seed": 20260920,
+  "kappa": 7.61571277229981,
+  "df2": 375.0,
+  "original_spectrum_held_fixed": true,
+  "coordinate": "post-resize RGB [0,1]; unbounded Gaussian noise, no clipping",
+  "preprocessing": "Compose(\n    ToTensor()\n    Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=True)\n    Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n)",
+  "tf32": false,
+  "xformers_disabled": true,
+  "h": 3e-05
+}

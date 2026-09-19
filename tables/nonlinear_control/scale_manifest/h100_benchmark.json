@@ -1,0 +1,50 @@
+[
+  {
+    "model": "AlexNet_training_seed_01",
+    "representative_geometry": "AlexNet_training_seed_01__.classifier.Conv2d0__c8a76de032",
+    "layer": ".classifier.Conv2d0",
+    "model_load_seconds": 3.1588548370637,
+    "pca_load_seconds": 0.029484129045158625,
+    "projected_forward_seconds_per_geometry": 3.7227252405136824,
+    "projected_exact_seconds_per_geometry": 2.931814771145582,
+    "projected_compute_seconds_per_geometry": 6.654540011659265,
+    "batch_size": 32,
+    "seconds_per_batch": 0.0025153548922389746,
+    "forward_peak_gpu_bytes": 655671808,
+    "vjp_block": 32,
+    "seconds_per_vjp_block": 0.01221589487977326,
+    "vjp_peak_gpu_bytes": 381156864
+  },
+  {
+    "model": "clipag_vitb32",
+    "representative_geometry": "clipag_vitb32__.transformer.resblocks.ResidualAttentionBlock3__cf2779a9b2",
+    "layer": ".transformer.resblocks.ResidualAttentionBlock3",
+    "model_load_seconds": 29.12031243997626,
+    "pca_load_seconds": 0.11604814883321524,
+    "projected_forward_seconds_per_geometry": 14.213151941075921,
+    "projected_exact_seconds_per_geometry": 2.2884460352361202,
+    "projected_compute_seconds_per_geometry": 16.50159797631204,
+    "batch_size": 32,
+    "seconds_per_batch": 0.009603481041267514,
+    "forward_peak_gpu_bytes": 618294272,
+    "vjp_block": 32,
+    "seconds_per_vjp_block": 0.009535191813483834,
+    "vjp_peak_gpu_bytes": 638039040
+  },
+  {
+    "model": "dinov2_vitb14_reg",
+    "representative_geometry": "dinov2_vitb14_reg__.blocks.NestedTensorBlock10__af4119c32e",
+    "layer": ".blocks.NestedTensorBlock10",
+    "model_load_seconds": 1.2084700698032975,
+    "pca_load_seconds": 0.10880082403309643,
+    "projected_forward_seconds_per_geometry": 60.075319381430745,
+    "projected_exact_seconds_per_geometry": 13.162071369588375,
+    "projected_compute_seconds_per_geometry": 73.23739075101912,
+    "batch_size": 32,
+    "seconds_per_batch": 0.04059143201448023,
+    "forward_peak_gpu_bytes": 1426212864,
+    "vjp_block": 32,
+    "seconds_per_vjp_block": 0.05484196403995156,
+    "vjp_peak_gpu_bytes": 1511020544
+  }
+]

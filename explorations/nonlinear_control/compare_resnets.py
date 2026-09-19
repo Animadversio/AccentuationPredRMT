@@ -87,7 +87,9 @@ def main():
     for ext in ['png', 'pdf']:
         fig.savefig(args.output/f'{args.filename_base}.{ext}', dpi=150)
     with (args.output/'matched_df2.csv').open('w') as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(
+            file, fieldnames=list(rows[0]), lineterminator='\n'
+        )
         writer.writeheader(); writer.writerows(rows)
     ratios = seed_traces[0]/seed_traces[1]
     np.savetxt(args.output/'paired_seed_traces.csv',

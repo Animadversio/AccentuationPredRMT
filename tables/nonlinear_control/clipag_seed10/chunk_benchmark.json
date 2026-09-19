@@ -1,0 +1,24 @@
+[
+  {
+    "chunk_size": 1,
+    "seconds_per_pc": 0.0023294750644708984
+  },
+  {
+    "chunk_size": 4,
+    "seconds_per_pc": 0.0012778450909536332,
+    "max_relative_difference": 3.527023597811021e-07,
+    "peak_memory_bytes": 561364992
+  },
+  {
+    "chunk_size": 16,
+    "seconds_per_pc": 0.0006415680036297999,
+    "max_relative_difference": 4.644372953794143e-07,
+    "peak_memory_bytes": 597527552
+  },
+  {
+    "chunk_size": 32,
+    "seconds_per_pc": 0.0006004935639793985,
+    "max_relative_difference": 3.30952097266807e-07,
+    "peak_memory_bytes": 645744640
+  }
+]

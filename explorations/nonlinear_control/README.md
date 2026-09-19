@@ -1,5 +1,11 @@
 # Nonlinear feature geometry: exploratory initialization
 
+Forward-only noise-scale extension: see `FORWARD_NOISE_RESULTS.md` for the
+four-model results and `forward_noise_math.md` for the distinction between
+smoothed Jacobian energy, neighborhood energy, noise covariance and mean drift.
+The complete Chinese formalism and interpretation is in
+`FORWARD_NOISE_FORMALISM_ZH.md`.
+
 ## What is exact, and what remains a conjecture
 
 Let centered features be φ(x) ∈ Rᵖ, C = Cov(φ), J(x) = ∂φ/∂x ∈ Rᵖˣᵈ,

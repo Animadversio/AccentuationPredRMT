@@ -1,0 +1,156 @@
+{
+  "site_model_pairs": 250,
+  "sites": 25,
+  "subjects": 5,
+  "models": 10,
+  "unique_geometries": 84,
+  "unique_split_hashes": 1,
+  "unique_seed_hashes": 1,
+  "per_model": {
+    "AlexNet_training_seed_01": {
+      "pairs": 25,
+      "unique_geometries": 11,
+      "layers": [
+        ".classifier.Conv2d0",
+        ".classifier.Conv2d3",
+        ".classifier.Conv2d6",
+        ".classifier.ReLU1",
+        ".classifier.ReLU4",
+        ".features.Conv2d3",
+        ".features.Conv2d8",
+        ".features.MaxPool2d12",
+        ".features.MaxPool2d5",
+        ".features.ReLU11",
+        ".features.ReLU7"
+      ]
+    },
+    "clipag_vitb32": {
+      "pairs": 25,
+      "unique_geometries": 7,
+      "layers": [
+        ".transformer.resblocks.ResidualAttentionBlock3",
+        ".transformer.resblocks.ResidualAttentionBlock4",
+        ".transformer.resblocks.ResidualAttentionBlock5",
+        ".transformer.resblocks.ResidualAttentionBlock6",
+        ".transformer.resblocks.ResidualAttentionBlock7",
+        ".transformer.resblocks.ResidualAttentionBlock8",
+        ".transformer.resblocks.ResidualAttentionBlock9"
+      ]
+    },
+    "dinov2_vitb14_reg": {
+      "pairs": 25,
+      "unique_geometries": 9,
+      "layers": [
+        ".blocks.NestedTensorBlock10",
+        ".blocks.NestedTensorBlock11",
+        ".blocks.NestedTensorBlock3",
+        ".blocks.NestedTensorBlock4",
+        ".blocks.NestedTensorBlock5",
+        ".blocks.NestedTensorBlock6",
+        ".blocks.NestedTensorBlock7",
+        ".blocks.NestedTensorBlock8",
+        ".blocks.NestedTensorBlock9"
+      ]
+    },
+    "radio_v2.5-b": {
+      "pairs": 25,
+      "unique_geometries": 8,
+      "layers": [
+        ".model.blocks.Block10",
+        ".model.blocks.Block11",
+        ".model.blocks.Block2",
+        ".model.blocks.Block3",
+        ".model.blocks.Block4",
+        ".model.blocks.Block5",
+        ".model.blocks.Block6",
+        ".model.blocks.Block7"
+      ]
+    },
+    "regnety_640": {
+      "pairs": 25,
+      "unique_geometries": 9,
+      "layers": [
+        ".s3.Bottleneckb11",
+        ".s3.Bottleneckb1",
+        ".s3.Bottleneckb3",
+        ".s3.Bottleneckb4",
+        ".s3.Bottleneckb5",
+        ".s3.Bottleneckb7",
+        ".s3.Bottleneckb8",
+        ".s3.Bottleneckb9",
+        ".s4.Bottleneckb1"
+      ]
+    },
+    "resnet50": {
+      "pairs": 25,
+      "unique_geometries": 9,
+      "layers": [
+        ".layer3.Bottleneck0",
+        ".layer3.Bottleneck1",
+        ".layer3.Bottleneck2",
+        ".layer3.Bottleneck3",
+        ".layer3.Bottleneck4",
+        ".layer3.Bottleneck5",
+        ".layer4.Bottleneck0",
+        ".layer4.Bottleneck1",
+        ".layer4.Bottleneck2"
+      ]
+    },
+    "resnet50_clip": {
+      "pairs": 25,
+      "unique_geometries": 9,
+      "layers": [
+        ".layer2.Bottleneck1",
+        ".layer3.Bottleneck0",
+        ".layer3.Bottleneck1",
+        ".layer3.Bottleneck2",
+        ".layer3.Bottleneck4",
+        ".layer3.Bottleneck5",
+        ".layer4.Bottleneck0",
+        ".layer4.Bottleneck1",
+        ".layer4.Bottleneck2"
+      ]
+    },
+    "resnet50_dino": {
+      "pairs": 25,
+      "unique_geometries": 6,
+      "layers": [
+        ".layer3.Bottleneck2",
+        ".layer3.Bottleneck4",
+        ".layer3.Bottleneck5",
+        ".layer4.Bottleneck0",
+        ".layer4.Bottleneck1",
+        ".layer4.Bottleneck2"
+      ]
+    },
+    "resnet50_robust": {
+      "pairs": 25,
+      "unique_geometries": 6,
+      "layers": [
+        ".layer3.Bottleneck1",
+        ".layer3.Bottleneck3",
+        ".layer3.Bottleneck4",
+        ".layer4.Bottleneck0",
+        ".layer4.Bottleneck1",
+        ".layer4.Bottleneck2"
+      ]
+    },
+    "siglip2_vitb16": {
+      "pairs": 25,
+      "unique_geometries": 10,
+      "layers": [
+        ".trunk.blocks.Block10",
+        ".trunk.blocks.Block11",
+        ".trunk.blocks.Block2",
+        ".trunk.blocks.Block3",
+        ".trunk.blocks.Block4",
+        ".trunk.blocks.Block5",
+        ".trunk.blocks.Block6",
+        ".trunk.blocks.Block7",
+        ".trunk.blocks.Block8",
+        ".trunk.blocks.Block9"
+      ]
+    }
+  },
+  "audit_note": "Geometry aliases have exact PCA-score hashes; verify exported PCA buffers before production deduplication."
+}
