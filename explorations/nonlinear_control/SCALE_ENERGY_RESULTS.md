@@ -2,20 +2,20 @@
 
 ## Definition and aggregation
 
-For PCA direction (u_k), the exact local RGB-coordinate energy is
+For PCA direction $u_k$, the exact local RGB-coordinate energy is
 
 \[
 q_k(x)=u_k^\top J(x)J(x)^\top u_k=\|J(x)^\top u_k\|_2^2.
 \]
 
-We report the raw retained-subspace energy (\sum_{k=1}^{750}q_k), but use
+We report the raw retained-subspace energy $\sum_{k=1}^{750}q_k$, but use
 the Proposition 13 trace as the primary comparison:
 
 \[
 T(\kappa)=\sum_{k=1}^{750}q_k\frac{s_k}{(s_k+\kappa)^2}.
 \]
 
-For each site geometry, (\kappa) is chosen separately so that
+For each site geometry, $\kappa$ is chosen separately so that
 
 \[
 df_2(\kappa)=\sum_k\left(\frac{s_k}{s_k+\kappa}\right)^2=375.
@@ -32,7 +32,7 @@ only five subjects.
 
 ## Exact local energy
 
-At matched (df_2=375), the model means are:
+At matched $df_2=375$, the model means are:
 
 | Model | Mean trace | ±2 subject SE |
 |---|---:|---:|
@@ -48,17 +48,50 @@ At matched (df_2=375), the model means are:
 | Robust RN50 | 42.4 | 2.69 |
 
 The highest and lowest means differ by about 1,913-fold. Raw
-(\sum_kq_k) gives a different ranking: DINOv2 and SigLIP2 are largest, while
+$\sum_kq_k$ gives a different ranking: DINOv2 and SigLIP2 are largest, while
 AlexNet and CLIPAG are smallest. The disagreement confirms that raw Jacobian
-norm is strongly affected by feature scale and spectrum; matched-(df_2)
-(T(\kappa)) is the relevant quantity for comparing the control-error term.
+norm is strongly affected by feature scale and spectrum; matched-$df_2$
+$T(\kappa)$ is the relevant quantity for comparing the control-error term.
+
+## Same energy view with smoothed Jacobians
+
+To isolate the effect of locality, the exact
+$q_k=\|J(x)^\top u_k\|^2$ in all three panels is replaced by
+
+\[
+q_{\tau,k}=\left\|\mathbb E_z[J(x+\tau z)^\top u_k]\right\|^2,
+\]
+
+using the debiased cross-center estimator. Separate triptychs use
+$\tau\times255\in\{0.5,2,8,16\}$. Model order, colors, subject aggregation,
+error bars and y limits are held fixed, so changes across figures are caused
+only by the Jacobian definition.
+
+At matched $df_2=375$, the leading model changes immediately. The exact trace
+ranks CLIP RN50 first at 81,135, but at $\tau\times255=0.5$, AlexNet and CLIP
+RN50 have smoothed traces 22,260 and 20,765. At scales 2, 8 and 16, AlexNet
+retains 17,205, 8,036 and 3,859. Its advantage over the second-ranked model
+grows from 1.07-fold at scale 0.5 to 5.60-, 15.6- and 21.6-fold.
+
+This separates two properties that were conflated in ratio-only plots.
+CLIPAG and Robust RN50 have the strongest *relative* stability under
+smoothing, but their absolute control traces start very low. AlexNet has much
+larger absolute coherent control energy and becomes dominant as gradients from
+the other models cancel across a neighborhood. CLIP RN50's smoothed values
+remain provisional because all nine of its finite-difference diagnostics are
+marginal; the exact bars are unaffected.
+
+The debiased cross-center estimator is intentionally signed before
+aggregation. Two of 10,000 site-seed-scale raw totals are negative at the
+largest scale; all subject means and both spectrum-weighted traces are
+positive. No value was clipped before forming the plotted summaries.
 
 ## Finite-noise geometry
 
 All finite-noise values below are divided by the exact local trace computed
-with the same site's matched-(df_2) weights.
+with the same site's matched-$df_2$ weights.
 
-At (\tau\times255=0.5), CLIPAG and Robust RN50 are nearly local-linear:
+At $\tau\times255=0.5$, CLIPAG and Robust RN50 are nearly local-linear:
 their response-covariance ratios are 0.993 and 0.981, and their smoothed
 Jacobian ratios are 0.993 and 0.973. Most other models already lose coherent
 smoothed-gradient energy even though their neighborhood gradient energy stays
@@ -67,7 +100,7 @@ neighborhood ratios 0.489 and 0.936. This gap is consistent with gradients
 remaining individually large while rotating or cancelling across nearby
 inputs.
 
-At (\tau\times255=16), CLIPAG remains unusually stable: its covariance,
+At $\tau\times255=16$, CLIPAG remains unusually stable: its covariance,
 smoothed-Jacobian and neighborhood ratios are 1.00, 0.932 and 1.08. Robust
 RN50 retains 0.710, 0.499 and 1.12. In most other models the covariance ratio
 falls below 0.1 and the smoothed-Jacobian ratio below 0.05; AlexNet is the main
@@ -87,9 +120,12 @@ hatched in the figures and should be treated as provisional.
 ## Outputs
 
 - `figures/nonlinear_control/scale_energy/model_exact_energy_bars.{png,pdf}`
+- `figures/nonlinear_control/scale_energy/model_smoothed_energy_bars_tau{0p5,2,8,16}.{png,pdf}`
+- `figures/nonlinear_control/scale_energy/model_smoothed_energy_overview.{png,pdf}`
 - `figures/nonlinear_control/scale_energy/model_finite_response_bars.{png,pdf}`
 - `figures/nonlinear_control/scale_energy/model_smoothed_gradient_bars.{png,pdf}`
 - `tables/nonlinear_control/scale_energy/model_exact_energy_summary.csv`
+- `tables/nonlinear_control/scale_energy/model_smoothed_energy_summary.csv`
 - `tables/nonlinear_control/scale_energy/model_finite_energy_summary.csv`
 - compressed site/seed tables and uncompressed subject-level plot-ready tables
   in the same table folder

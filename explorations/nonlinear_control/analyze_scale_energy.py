@@ -19,7 +19,7 @@ MODEL_LABELS = {
     'AlexNet_training_seed_01': 'AlexNet',
     'resnet50': 'RN50',
     'resnet50_robust': 'Robust\nRN50',
-    'resnet50_clip': 'CLIP\nRN50†',
+    'resnet50_clip': 'CLIP\nRN50',
     'resnet50_dino': 'DINO\nRN50',
     'regnety_640': 'RegNetY\n640',
     'clipag_vitb32': 'CLIPAG',
@@ -41,6 +41,12 @@ MODEL_COLORS = {
 }
 DF2_FRACTIONS = (.10, .25, .50, .75, .90)
 FINITE_METRICS = ('smooth', 'neighborhood', 'variance', 'step')
+GZIP_OPTIONS = {'method': 'gzip', 'compresslevel': 6, 'mtime': 0}
+TRIPTYCH_METRICS = [
+    ('raw_energy', r'Raw energy  $\sum_k q_k$'),
+    ('trace_df2_050', r'Control trace  $T(\kappa)$, matched $df_2=375$'),
+    ('unregularized_trace', r'Unregularized trace  $\sum_k q_k/s_k$'),
+]
 
 
 def df2_key(fraction):
@@ -83,29 +89,63 @@ def model_subject_summary(frame, value_column, metric_label):
     return pd.DataFrame(rows), subjects.assign(metric=metric_label)
 
 
+def summarize_smoothed(frame):
+    subject_frames = []
+    for metric, _ in TRIPTYCH_METRICS:
+        subjects = (
+            frame.groupby(['model', 'subject', 'noise_255'], as_index=False)[metric]
+            .mean().rename(columns={metric: 'value'})
+        )
+        subject_frames.append(subjects.assign(metric=metric))
+    subject_values = pd.concat(subject_frames, ignore_index=True)
+    summary = (
+        subject_values.groupby(['model', 'noise_255', 'metric'])
+        .agg(
+            mean=('value', 'mean'), subject_sd=('value', 'std'),
+            subject_sem=('value', 'sem'), subject_min=('value', 'min'),
+            subject_max=('value', 'max'), n_subjects=('value', 'count'),
+        ).reset_index()
+    )
+    return summary, subject_values
+
+
+def common_triptych_limits(*subject_frames):
+    limits = {}
+    for metric, _ in TRIPTYCH_METRICS:
+        values = np.concatenate([
+            frame.loc[frame.metric == metric, 'value'].to_numpy()
+            for frame in subject_frames
+        ])
+        if np.any(values <= 0) or not np.isfinite(values).all():
+            raise ValueError(f'Log-scale {metric} values must be positive and finite')
+        limits[metric] = (values.min() / 2, values.max() * 2)
+    return limits
+
+
 def style_axis(ax):
     ax.spines[['top', 'right']].set_visible(False)
     ax.grid(axis='y', color='#dddddd', linewidth=.6, alpha=.7)
     ax.set_axisbelow(True)
 
 
-def plot_exact_bars(exact, summary, subjects, output):
-    metrics = [
-        ('raw_energy', r'Raw local energy  $\sum_k q_k$'),
-        ('trace_df2_050', r'Control trace  $T(\kappa)$, matched $df_2=375$'),
-        ('unregularized_trace', r'Unregularized trace  $\sum_k q_k/s_k$'),
-    ]
+def plot_energy_triptych(
+    summary, subjects, output, filename, title, method_note, y_limits,
+    hatch_clip=False,
+):
+    """Render the same three energy summaries for any definition of q_k."""
     fig, axes = plt.subplots(1, 3, figsize=(17, 5.4))
     positions = np.arange(len(MODEL_ORDER))
     colors = [MODEL_COLORS[model] for model in MODEL_ORDER]
     labels = [MODEL_LABELS[model] for model in MODEL_ORDER]
     rng = np.random.default_rng(20260919)
-    for ax, (metric, title) in zip(axes, metrics):
+    for ax, (metric, panel_title) in zip(axes, TRIPTYCH_METRICS):
         model_summary = summary[summary.metric == metric].set_index('model').loc[MODEL_ORDER]
-        ax.bar(
+        bars = ax.bar(
             positions, model_summary['mean'], yerr=2 * model_summary.subject_sem,
             color=colors, edgecolor='white', linewidth=.7, capsize=3,
         )
+        if hatch_clip:
+            bars[MODEL_ORDER.index('resnet50_clip')].set_hatch('///')
         subject_values = subjects[subjects.metric == metric]
         for index, model in enumerate(MODEL_ORDER):
             values = subject_values.loc[subject_values.model == model, 'value'].to_numpy()
@@ -115,24 +155,74 @@ def plot_exact_bars(exact, summary, subjects, output):
                 linewidth=.6, zorder=3,
             )
         ax.set_yscale('log')
+        ax.set_ylim(*y_limits[metric])
         ax.set_xticks(positions, labels, rotation=40, ha='right')
-        ax.set_title(title, fontsize=11)
+        ax.set_title(panel_title, fontsize=11)
         ax.set_ylabel('RGB-coordinate energy (log scale)')
         style_axis(ax)
     fig.suptitle(
-        'Exact local feature-space energy across 10 encoding models\n'
+        f'{title}\n'
         'Bars: mean of 5 subject means; dots: subjects; error bars: ±2 subject-level SE',
         fontsize=13,
     )
     fig.text(
-        .99, .01,
-        'Each subject mean averages 5 selected sites × 10 fixed seed images.  '
-        '† CLIP RN50 finite-difference QC is marginal; exact VJP shown here is unaffected.',
+        .99, .01, method_note,
         ha='right', va='bottom', fontsize=8,
     )
     fig.tight_layout(rect=(0, .075, 1, .91))
     for extension in ('png', 'pdf'):
-        fig.savefig(output / f'model_exact_energy_bars.{extension}', dpi=180)
+        fig.savefig(output / f'{filename}.{extension}', dpi=180)
+    plt.close(fig)
+
+
+def plot_smoothed_overview(summary, subjects, output, y_limits):
+    """Four smoothing scales by the same three energy summaries."""
+    taus = sorted(summary.noise_255.unique())
+    fig, axes = plt.subplots(4, 3, figsize=(17, 17), sharex=True, sharey='col')
+    positions = np.arange(len(MODEL_ORDER))
+    colors = [MODEL_COLORS[model] for model in MODEL_ORDER]
+    labels = [MODEL_LABELS[model] for model in MODEL_ORDER]
+    rng = np.random.default_rng(20260919)
+    for row_index, tau in enumerate(taus):
+        tau_summary = summary[summary.noise_255 == tau]
+        tau_subjects = subjects[subjects.noise_255 == tau]
+        for column_index, (metric, panel_title) in enumerate(TRIPTYCH_METRICS):
+            ax = axes[row_index, column_index]
+            values = tau_summary[tau_summary.metric == metric].set_index('model').loc[MODEL_ORDER]
+            bars = ax.bar(
+                positions, values['mean'], yerr=2 * values.subject_sem,
+                color=colors, edgecolor='white', linewidth=.5, capsize=2,
+            )
+            bars[MODEL_ORDER.index('resnet50_clip')].set_hatch('///')
+            subject_values = tau_subjects[tau_subjects.metric == metric]
+            for model_index, model in enumerate(MODEL_ORDER):
+                points = subject_values.loc[subject_values.model == model, 'value'].to_numpy()
+                jitter = rng.uniform(-.13, .13, len(points))
+                ax.scatter(
+                    model_index + jitter, points, s=11, facecolor='white',
+                    edgecolor='#222222', linewidth=.45, zorder=3,
+                )
+            ax.set_yscale('log')
+            ax.set_ylim(*y_limits[metric])
+            if row_index == 0:
+                ax.set_title(panel_title, fontsize=11)
+            if column_index == 0:
+                ax.set_ylabel(rf'$\tau\times255={tau:g}$' + '\nRGB energy')
+            ax.set_xticks(positions, labels, rotation=40, ha='right')
+            style_axis(ax)
+    fig.suptitle(
+        r'Smoothed-Jacobian feature-space energy: '
+        r'$q_{\tau,k}=\|\mathbb{E}_z[J(x+\tau z)^\top u_k]\|^2$',
+        fontsize=14,
+    )
+    fig.text(
+        .99, .008,
+        'Common y limits within each column. Hatched CLIP RN50 bars have marginal finite-difference QC.',
+        ha='right', va='bottom', fontsize=8,
+    )
+    fig.tight_layout(rect=(0, .025, 1, .965))
+    for extension in ('png', 'pdf'):
+        fig.savefig(output / f'model_smoothed_energy_overview.{extension}', dpi=180)
     plt.close(fig)
 
 
@@ -202,10 +292,15 @@ def main():
         with np.load(path) as values:
             spectrum = values['spectrum'].astype(np.float64)
             exact = values['exact_by_seed'].astype(np.float64)
+            smoothed = values['smooth_mean_by_seed'].astype(np.float64)
             record = dict(
                 spectrum=spectrum, exact=exact, tau=values['tau'].astype(np.float64),
                 raw_energy=exact.sum(1),
                 unregularized_trace=(exact / spectrum[None, :]).sum(1),
+                smoothed_raw_energy=smoothed.sum(2),
+                smoothed_unregularized_trace=np.einsum(
+                    'itk,k->it', smoothed, 1 / spectrum,
+                ),
             )
             for fraction in DF2_FRACTIONS:
                 kappa = kappa_at_df2(spectrum, fraction * len(spectrum))
@@ -214,6 +309,9 @@ def main():
                 record[f'kappa_df2_{key}'] = kappa
                 record[f'trace_df2_{key}'] = exact @ weight
                 if fraction == .50:
+                    record['smoothed_trace_df2_050'] = np.einsum(
+                        'itk,k->it', smoothed, weight,
+                    )
                     for metric in FINITE_METRICS:
                         record[metric] = np.einsum(
                             'itk,k->it', values[f'{metric}_mean_by_seed'], weight,
@@ -221,7 +319,7 @@ def main():
                         )
         geometry_cache[geometry_id] = record
 
-    exact_rows, finite_rows = [], []
+    exact_rows, finite_rows, smoothed_rows = [], [], []
     for site in tqdm(site_manifest.itertuples(index=False), total=len(site_manifest), desc='Expanding sites'):
         record = geometry_cache[site.geometry_id]
         for seed_index in range(record['exact'].shape[0]):
@@ -239,6 +337,15 @@ def main():
             exact_rows.append(exact_row)
             exact_reference = record['trace_df2_050'][seed_index]
             for tau_index, tau in enumerate(record['tau']):
+                smoothed_rows.append(dict(
+                    model=site.model, subject=site.subject, unit=site.unit,
+                    geometry_id=site.geometry_id, layer=site.layer,
+                    fd_quality=site.fd_quality, seed=seed_index + 1,
+                    tau=tau, noise_255=tau * 255,
+                    raw_energy=record['smoothed_raw_energy'][seed_index, tau_index],
+                    trace_df2_050=record['smoothed_trace_df2_050'][seed_index, tau_index],
+                    unregularized_trace=record['smoothed_unregularized_trace'][seed_index, tau_index],
+                ))
                 for metric in FINITE_METRICS:
                     value = record[metric][seed_index, tau_index]
                     finite_rows.append(dict(
@@ -250,8 +357,16 @@ def main():
                     ))
     exact = pd.DataFrame(exact_rows)
     finite = pd.DataFrame(finite_rows)
-    exact.to_csv(args.tables / 'site_seed_exact_energy.csv.gz', index=False, compression='gzip')
-    finite.to_csv(args.tables / 'site_seed_finite_energy.csv.gz', index=False, compression='gzip')
+    smoothed = pd.DataFrame(smoothed_rows)
+    exact.to_csv(
+        args.tables / 'site_seed_exact_energy.csv.gz', index=False, compression=GZIP_OPTIONS
+    )
+    finite.to_csv(
+        args.tables / 'site_seed_finite_energy.csv.gz', index=False, compression=GZIP_OPTIONS
+    )
+    smoothed.to_csv(
+        args.tables / 'site_seed_smoothed_energy.csv.gz', index=False, compression=GZIP_OPTIONS
+    )
 
     exact_summaries, exact_subjects = [], []
     exact_metrics = ['raw_energy', 'unregularized_trace'] + [
@@ -265,6 +380,10 @@ def main():
     subject_exact = pd.concat(exact_subjects, ignore_index=True)
     exact_summary.to_csv(args.tables / 'model_exact_energy_summary.csv', index=False)
     subject_exact.to_csv(args.tables / 'subject_exact_energy.csv', index=False)
+
+    smoothed_summary, subject_smoothed = summarize_smoothed(smoothed)
+    smoothed_summary.to_csv(args.tables / 'model_smoothed_energy_summary.csv', index=False)
+    subject_smoothed.to_csv(args.tables / 'subject_smoothed_energy.csv', index=False)
 
     subject_finite = (
         finite.groupby(['model', 'subject', 'metric', 'noise_255'], as_index=False)
@@ -283,7 +402,25 @@ def main():
     finite_summary.to_csv(args.tables / 'model_finite_energy_summary.csv', index=False)
 
     plt.rcParams.update({'pdf.fonttype': 42, 'ps.fonttype': 42, 'font.size': 9})
-    plot_exact_bars(exact, exact_summary, subject_exact, args.figures)
+    y_limits = common_triptych_limits(subject_exact, subject_smoothed)
+    plot_energy_triptych(
+        exact_summary, subject_exact, args.figures, 'model_exact_energy_bars',
+        'Exact local feature-space energy across 10 encoding models',
+        'Each subject mean averages 5 selected sites × 10 fixed seed images. Exact VJP is independent of finite-difference QC.',
+        y_limits,
+    )
+    for tau in sorted(smoothed_summary.noise_255.unique()):
+        tau_label = f'{tau:g}'.replace('.', 'p')
+        plot_energy_triptych(
+            smoothed_summary[smoothed_summary.noise_255 == tau],
+            subject_smoothed[subject_smoothed.noise_255 == tau],
+            args.figures, f'model_smoothed_energy_bars_tau{tau_label}',
+            rf'Smoothed-Jacobian feature-space energy, $\tau\times255={tau:g}$',
+            r'$q_{\tau,k}=\|\mathbb{E}_z[J(x+\tau z)^\top u_k]\|^2$. '
+            'Hatched CLIP RN50 bars have marginal finite-difference QC.',
+            y_limits, hatch_clip=True,
+        )
+    plot_smoothed_overview(smoothed_summary, subject_smoothed, args.figures, y_limits)
     plot_finite_bars(
         finite_summary, args.figures, ('variance', 'step'),
         'model_finite_response_bars',
@@ -298,6 +435,9 @@ def main():
         'Smoothed = ||E[J]||²; neighborhood = E[||J||²]. Hatched CLIP RN50 bars use a marginal h diagnostic.',
     )
     print(exact_summary[exact_summary.metric == 'trace_df2_050'].sort_values('mean', ascending=False).to_string(index=False))
+    print(smoothed_summary[smoothed_summary.metric == 'trace_df2_050'].sort_values(
+        ['noise_255', 'mean'], ascending=[True, False]
+    ).to_string(index=False))
     print(finite_summary.to_string(index=False))
 
 
