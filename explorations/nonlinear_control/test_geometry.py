@@ -30,3 +30,15 @@ def test_rgb_chain_rule_and_nonlinear_gradient():
     np.testing.assert_allclose(q, np.sum(expected, axis=1), rtol=1e-6)
     qb = batched_pc_gradient_power(scores, x, [0, 1], std)
     np.testing.assert_allclose(qb, q, rtol=1e-6)
+
+
+def test_matched_df2_comparison_is_feature_scale_invariant():
+    from compare_resnets import kappa_at_df2
+    s, q = np.array([10., 2., .1]), np.array([5., 4., 3.])
+    k = kappa_at_df2(s, 1.5)
+    np.testing.assert_allclose(np.sum((s/(s+k))**2), 1.5)
+    scale = 49.  # Multiplying features and Jacobians by 7 scales s and q by 49.
+    k2 = kappa_at_df2(s*scale, 1.5)
+    np.testing.assert_allclose(k2, k*scale)
+    np.testing.assert_allclose(trace_contributions(s, q, [k]),
+                               trace_contributions(s*scale, q*scale, [k2]))
