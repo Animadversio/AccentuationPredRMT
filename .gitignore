@@ -17,6 +17,6 @@ logs/
 
 # Transient notebook execution caches. Curated summaries and final figures
 # belong under tables/ and figures/ instead.
-notebooks/outputs/pixel_ridge/[0-9a-f]*/
+notebooks/outputs/pixel_ridge/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]/
 notebooks/outputs/top_pc_rotation/
 notebooks/outputs/iso_error_geometry_explorer/
