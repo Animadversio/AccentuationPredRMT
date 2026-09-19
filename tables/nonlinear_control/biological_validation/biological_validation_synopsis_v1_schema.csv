@@ -38,6 +38,21 @@ encoding_session_gen_test_intercept,generalization_encoding_session,float64,Enco
 encoding_session_gen_test_refit_mse,generalization_encoding_session,float64,Encoding-session held-out natural-image refit mse.
 encoding_session_gen_test_r2_identity,generalization_encoding_session,float64,Encoding-session held-out natural-image r2 identity.
 encoding_session_gen_test_r2_refit,generalization_encoding_session,float64,Encoding-session held-out natural-image r2 refit.
+encoding_session_matched_gen_test_n,generalization_encoding_session_matched,int64,Encoding-session response on the exact held-out image subset re-presented during control n.
+encoding_session_matched_gen_test_mse,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control mse.
+encoding_session_matched_gen_test_rmse,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control rmse.
+encoding_session_matched_gen_test_mae,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control mae.
+encoding_session_matched_gen_test_bias_measured_minus_predicted,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control bias measured minus predicted.
+encoding_session_matched_gen_test_measured_mean,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control measured mean.
+encoding_session_matched_gen_test_predicted_mean,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control predicted mean.
+encoding_session_matched_gen_test_measured_variance,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control measured variance.
+encoding_session_matched_gen_test_predicted_variance,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control predicted variance.
+encoding_session_matched_gen_test_r,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control r.
+encoding_session_matched_gen_test_slope,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control slope.
+encoding_session_matched_gen_test_intercept,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control intercept.
+encoding_session_matched_gen_test_refit_mse,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control refit mse.
+encoding_session_matched_gen_test_r2_identity,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control r2 identity.
+encoding_session_matched_gen_test_r2_refit,generalization_encoding_session_matched,float64,Encoding-session response on the exact held-out image subset re-presented during control r2 refit.
 control_session_gen_test_n,generalization_control_session,int64,Control-session response on encoding-held-out natural-image n.
 control_session_gen_test_mse,generalization_control_session,float64,Control-session response on encoding-held-out natural-image mse.
 control_session_gen_test_rmse,generalization_control_session,float64,Control-session response on encoding-held-out natural-image rmse.
@@ -218,89 +233,133 @@ geom_variance_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample
 geom_variance_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
 geom_exact__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_exact__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_exact__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_local_mc__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_local_mc__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_local_mc__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_neighborhood_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_neighborhood_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_neighborhood_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_neighborhood_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_neighborhood_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_neighborhood_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_neighborhood_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_neighborhood_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_neighborhood_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_smooth_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_smooth_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_smooth_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_smooth_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_smooth_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_smooth_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_smooth_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_smooth_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_smooth_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_stein_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_stein_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_stein_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_stein_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_stein_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_step_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_step_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_step_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_step_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_step_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_step_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_step_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_step_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_step_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_variance_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_variance_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_variance_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_variance_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_variance_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_variance_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_variance_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_variance_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_variance_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
 geom_exact__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_exact__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_exact__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_local_mc__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_local_mc__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_local_mc__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_neighborhood_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_neighborhood_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_neighborhood_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_neighborhood_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_neighborhood_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_neighborhood_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_neighborhood_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_neighborhood_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_neighborhood_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_smooth_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_smooth_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_smooth_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_smooth_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_smooth_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_smooth_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_smooth_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_smooth_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_smooth_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_stein_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_stein_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_stein_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_stein_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_stein_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_stein_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_stein_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_stein_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_stein_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_step_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_step_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_step_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_step_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_step_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_step_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_step_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_step_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_step_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_0p5__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_variance_tau255_0p5__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_variance_tau255_0p5__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_16__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_variance_tau255_16__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_variance_tau255_16__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_2__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_variance_tau255_2__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_variance_tau255_2__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
 geom_variance_tau255_8__V_control_session_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session.
 geom_variance_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
+geom_variance_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.

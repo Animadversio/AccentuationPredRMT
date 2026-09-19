@@ -81,7 +81,7 @@ The product outperforms MSE-only in this basic comparison, but improves only sli
 
 `tables/nonlinear_control/biological_validation/biological_validation_synopsis_v1.parquet`
 is the maintained fast analysis table: one row per subject × unit × model, 250
-rows and 305 columns. It combines provenance, RidgeCV/DE quantities, held-out
+rows and 364 columns. It combines provenance, RidgeCV/DE quantities, held-out
 natural-image generalization, cross-phase anchor metrics, biological control
 metrics, error normalizations and all geometry estimator/noise summaries.
 
@@ -100,6 +100,12 @@ response correlation is 0.945 (red), 0.850 (paul), 0.636 (venus), 0.170
 (Leap), and 0.423 (Three0). These matched-image drift metrics are stored under
 `session_drift_response_*` and repeat identically across the ten model rows of
 each biological site.
+
+Synopsis v1.2 also stores `encoding_session_matched_gen_test_*` and the
+corresponding `V_encoding_session_matched`. This uses encoding-session responses
+on the exact 22/24/50-image control subset, separating finite image-set effects
+from recording-session response changes. Image-resampling results and the
+exclusion recommendation are documented in `SESSION_ENDPOINT_SENSITIVITY.md`.
 
 Using primary control-session V, exact V versus control slope gives Pearson
 `r=-0.044` on the raw V scale, Pearson `r=-0.285` on log10 V, and Spearman

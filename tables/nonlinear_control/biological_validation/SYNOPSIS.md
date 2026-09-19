@@ -17,6 +17,7 @@ levels; rebuild the synopsis rather than manually adding columns.
 | `ridge_` | original RidgeCV alpha, alpha/n, solved kappa, df2 and readout verification |
 | `control_session_gen_test_` | primary generalization metrics: encoding-held-out natural images evaluated with responses recorded during the control session |
 | `encoding_session_gen_test_` | the same held-out split evaluated with original encoding-session responses; retained for session-drift sensitivity |
+| `encoding_session_matched_gen_test_` | encoding-session responses restricted to the exact 22/24/50-image subset available in the control session; separates subset size/composition from session drift |
 | `session_drift_` | direct matched-image response drift between encoding and control sessions, plus the two generalization-MSE difference/ratio |
 | `crossphase_anchor_` | same metrics on natural-image anchors repeated in the control sessions |
 | `control_` | biological accentuation MSE, slope, within-seed slope, identity R², refit R², normalization and repeat-noise quantities |
@@ -82,3 +83,8 @@ The smoothing-level correlation figures are stored separately for
 other. The control-session endpoint matches the control recording state but
 has only 22–50 held-out anchors; the encoding-session endpoint has 195 images
 per row but may be affected by recording-session drift.
+
+`session_endpoint_image_bootstrap_*.csv*` quantify finite-image uncertainty by
+resampling held-out image identities jointly within each monkey. This preserves
+the shared-stimulus dependence among sites/models. It does not quantify animal,
+site, trial-response, Jacobian-probe or model-family uncertainty.

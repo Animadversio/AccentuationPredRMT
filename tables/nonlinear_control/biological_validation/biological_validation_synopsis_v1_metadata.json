@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "rows": 250,
-  "columns": 305,
+  "columns": 364,
   "key": [
     "subject",
     "monkey",
@@ -12,6 +12,7 @@
   "canonical_geometry_source": "variance_predictors_by_seed.csv.gz",
   "primary_generalization": "control_session_gen_test: encoding-held-out natural images evaluated with responses recorded during the control session",
   "secondary_generalization": "encoding_session_gen_test: original encoding-session responses; retained to quantify session drift",
+  "matched_generalization": "encoding_session_matched_gen_test: encoding-session responses restricted to the exact control-session held-out image subset",
   "primary_geometry_V": "V_control_session = control_session_gen_test_mse * trace / n_train",
   "normalization_note": "Theory S is latent natural teacher signal variance. Control-session observed held-out natural-response variance is primary because it matches the control recording session. Its repeat-noise correction is sensitivity-only: repeat coverage is complete for red/paul/venus but low for Leap/Three0. Encoding-session observed and fully repeat-noise-corrected versions are retained.",
   "robust_models": [

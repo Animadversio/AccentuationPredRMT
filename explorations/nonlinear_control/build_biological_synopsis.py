@@ -21,7 +21,7 @@ TABLE = REPO / 'tables/nonlinear_control/biological_validation'
 FIGURE = REPO / 'figures/nonlinear_control/biological_validation'
 KEY = ['subject', 'monkey', 'unit', 'model']
 ROBUST_MODELS = {'clipag_vitb32', 'resnet50_robust'}
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 sys.path.insert(0, str(HERE))
 from validate_biology import upstream_modules  # noqa: E402
@@ -117,6 +117,7 @@ def biological_metrics(manifest):
         calibration=brain['calibration']
         encoding_measured=dict(zip(calibration['stim'].astype(str),calibration['resp_z'][:,ui]))
         y_encoding_matched=np.asarray([encoding_measured[str(name)] for name in control_test_names],float)
+        encoding_matched_gen=regression_metrics(x_control_test,y_encoding_matched)
         drift=regression_metrics(y_encoding_matched,y_control_test)
         centered = cg[['predicted','measured']]-cg.groupby('seed')[['predicted','measured']].transform('mean')
         within_denom = float(np.square(centered.predicted).sum())
@@ -149,6 +150,7 @@ def biological_metrics(manifest):
             biology_reliability=float(brain['reliability'][ui]),
             firing_floor=float(brain['firing_floor'][ui]),
             **prefix(encoding_gen, 'encoding_session_gen_test'),
+            **prefix(encoding_matched_gen, 'encoding_session_matched_gen_test'),
             **prefix(control_gen, 'control_session_gen_test'),
             **prefix(drift, 'session_drift_response'),
             **prefix(cross, 'crossphase_anchor'), **prefix(ctl, 'control'))
@@ -216,13 +218,18 @@ def geometry_wide():
 def add_session_specific_V(synopsis):
     """Attach both generalization-error choices to every geometry trace."""
     trace_columns=synopsis.filter(regex=r'^geom_.*__trace_(mean|std)$').columns
+    endpoints={
+        'control_session':'control_session_gen_test_mse',
+        'encoding_session':'encoding_session_gen_test_mse',
+        'encoding_session_matched':'encoding_session_matched_gen_test_mse',
+    }
+    additions={}
     for trace_col in trace_columns:
         root_name,stat=trace_col.rsplit('__trace_',1)
-        synopsis[f'{root_name}__V_control_session_{stat}']=(
-            synopsis.control_session_gen_test_mse*synopsis[trace_col]/synopsis.n_train)
-        synopsis[f'{root_name}__V_encoding_session_{stat}']=(
-            synopsis.encoding_session_gen_test_mse*synopsis[trace_col]/synopsis.n_train)
-    return synopsis
+        for endpoint,mse_col in endpoints.items():
+            additions[f'{root_name}__V_{endpoint}_{stat}']=(
+                synopsis[mse_col]*synopsis[trace_col]/synopsis.n_train).to_numpy()
+    return pd.concat([synopsis,pd.DataFrame(additions,index=synopsis.index)],axis=1)
 
 
 def ridge_and_qc(manifest):
@@ -258,6 +265,7 @@ def schema_for(frame):
             group='geometry'
             desc='Across 10 image seeds: '+('mean' if col.endswith('_mean') else 'sample SD')+' of '+col.split('__',1)[1].rsplit('_',1)[0]+'.'
         elif col.startswith('encoding_session_gen_test_'): group,desc='generalization_encoding_session','Encoding-session held-out natural-image '+col.removeprefix('encoding_session_gen_test_').replace('_',' ')+'.'
+        elif col.startswith('encoding_session_matched_gen_test_'): group,desc='generalization_encoding_session_matched','Encoding-session response on the exact held-out image subset re-presented during control '+col.removeprefix('encoding_session_matched_gen_test_').replace('_',' ')+'.'
         elif col.startswith('control_session_gen_test_'): group,desc='generalization_control_session','Control-session response on encoding-held-out natural-image '+col.removeprefix('control_session_gen_test_').replace('_',' ')+'.'
         elif col.startswith('session_drift_'): group,desc='session_drift','Encoding-to-control recording-session drift '+col.removeprefix('session_drift_').replace('_',' ')+'.'
         elif col.startswith('crossphase_'): group,desc='crossphase','Control-session anchor '+col.removeprefix('crossphase_anchor_').replace('_',' ')+'.'
@@ -275,10 +283,15 @@ def correlation_table(synopsis):
     rows=[]
     for method,tau in configurations:
         label=method if method in ['exact','local_mc'] else f'{method}_tau255_{str(int(tau)) if tau.is_integer() else str(tau).replace(".","p")}'
-        for quantity in ['trace','V_control_session','V_encoding_session']:
+        for quantity in ['trace','V_control_session','V_encoding_session','V_encoding_session_matched']:
             predictor=f'geom_{label}__{quantity}_mean'
-            for subset,data in [('all_250',synopsis),
-                                ('without_CLIPAG_and_robust_RN50',synopsis[~synopsis.robust_model])]:
+            subsets=[('all_250',synopsis),
+                     ('without_CLIPAG_and_robust_RN50',synopsis[~synopsis.robust_model]),
+                     ('only_n50_monkeys',synopsis[synopsis.monkey.isin(['red','paul','venus'])]),
+                     ('without_robust_only_n50_monkeys',synopsis[(~synopsis.robust_model)&synopsis.monkey.isin(['red','paul','venus'])])]
+            subsets += [(f'without_robust_leaveout_{monkey}',synopsis[(~synopsis.robust_model)&(synopsis.monkey!=monkey)])
+                        for monkey in sorted(synopsis.monkey.unique())]
+            for subset,data in subsets:
                 for outcome in ['control_slope','control_slope_within_seed','control_mse',
                         'control_error_over_S_nat_control_session_observed',
                         'control_error_over_S_nat_control_session_noise_corrected',
@@ -339,14 +352,17 @@ def validate(synopsis, schema):
     assert synopsis.groupby(['subject','unit']).size().eq(10).all()
     assert synopsis.groupby('model').size().eq(25).all()
     assert len(schema)==len(synopsis.columns) and schema.column.is_unique
-    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==8
-    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==32
+    assert synopsis.filter(regex=r'^geom_exact__').shape[1]==10
+    assert synopsis.filter(regex=r'^geom_smooth_tau255_').shape[1]==40
     numeric=synopsis.select_dtypes(include=[np.number])
     assert not np.isinf(numeric.to_numpy()).any()
-    for session in ['control','encoding']:
-        mse=synopsis[f'{session}_session_gen_test_mse']
-        for v_col in synopsis.filter(regex=rf'^geom_.*__V_{session}_session_mean$').columns:
-            trace_col=v_col.replace(f'__V_{session}_session_mean','__trace_mean')
+    endpoints={'control_session':'control_session_gen_test_mse',
+               'encoding_session':'encoding_session_gen_test_mse',
+               'encoding_session_matched':'encoding_session_matched_gen_test_mse'}
+    for endpoint,mse_col in endpoints.items():
+        mse=synopsis[mse_col]
+        for v_col in synopsis.filter(regex=rf'^geom_.*__V_{endpoint}_mean$').columns:
+            trace_col=v_col.replace(f'__V_{endpoint}_mean','__trace_mean')
             np.testing.assert_allclose(synopsis[v_col],mse*synopsis[trace_col]/synopsis.n_train,
                                        rtol=2e-7,atol=1e-12)
     np.testing.assert_allclose(synopsis.control_error_over_S_control_observed,
@@ -384,6 +400,7 @@ def main():
         parquet_written=parquet,canonical_geometry_source='variance_predictors_by_seed.csv.gz',
         primary_generalization='control_session_gen_test: encoding-held-out natural images evaluated with responses recorded during the control session',
         secondary_generalization='encoding_session_gen_test: original encoding-session responses; retained to quantify session drift',
+        matched_generalization='encoding_session_matched_gen_test: encoding-session responses restricted to the exact control-session held-out image subset',
         primary_geometry_V='V_control_session = control_session_gen_test_mse * trace / n_train',
         normalization_note='Theory S is latent natural teacher signal variance. Control-session observed held-out natural-response variance is primary because it matches the control recording session. Its repeat-noise correction is sensitivity-only: repeat coverage is complete for red/paul/venus but low for Leap/Three0. Encoding-session observed and fully repeat-noise-corrected versions are retained.',
         robust_models=sorted(ROBUST_MODELS))
