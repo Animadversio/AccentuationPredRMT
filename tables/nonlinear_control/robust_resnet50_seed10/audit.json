@@ -1,0 +1,14 @@
+{
+  "cache": "/n/holylabs/LABS/alvarez_lab/Lab/VVS_Accentuation/Encoding_models/red_20250428-20250430/posthoc_model_predict_PCA_popul_unit/posthoc_prediction_NSDencimg_PCA_pop_unit_red_20250428-20250430_unit2_resnet50_robust.pkl",
+  "model": "resnet50_robust",
+  "layer": ".layer4.Bottleneck1",
+  "n_train": 774,
+  "n_total": 969,
+  "pcs": 750,
+  "covariance_ddof": 1,
+  "offdiag_relative_frobenius": 5.246966888650195e-05,
+  "training_mean_norm": 0.00054383685000388,
+  "spectrum_source": "training rows of cached unwhitened PCA scores",
+  "population_status": "empirical plug-in, not population truth",
+  "evaluation": "seeds"
+}

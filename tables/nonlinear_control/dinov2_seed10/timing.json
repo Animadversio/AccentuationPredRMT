@@ -1,0 +1,14 @@
+{
+  "forward_seconds": 0.011929319007322192,
+  "seconds_per_pc": 0.001712665063678287,
+  "projected_seconds": 12.964281167660374,
+  "requested_images": 10,
+  "requested_pcs": 750,
+  "coordinate": "RGB [0,1], after spatial preprocessing",
+  "channel_std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "chunk_size": 32
+}

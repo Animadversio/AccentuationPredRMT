@@ -1,0 +1,8 @@
+{
+  "relative_l2": 0.0008493530760084955,
+  "max_sd_error": 0.002084034381886072,
+  "rms_sd_error": 0.0006501280380600455,
+  "max_absolute_error": 0.0128021240234375,
+  "tf32": false,
+  "xformers_disabled": false
+}
