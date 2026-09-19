@@ -38,8 +38,10 @@ equivalents (DEs) give aggregate prediction and accentuation quantities for an
 arbitrary fixed linear map.  When the map is spectral and aligned with the
 eigenvectors of $\Sigma$, these results further resolve into per-mode weight
 bias and variance.  The same DE risk can also approximate cross-validation and
-select the ridge penalty.  Full PCA, whitening, and top-PC truncation emerge as
-transparent special cases.
+select the ridge penalty.  A Gaussian distributional DE propagates fitted-weight
+fluctuations through the nonlinear accentuation ratios when their quadratic
+denominators do not concentrate.  Full PCA, whitening, and top-PC truncation
+emerge as transparent special cases.
 \end{abstract}
 
 \section{Teacher, features, and ridge student}
@@ -521,6 +523,112 @@ $V_{\rm gen}\ll S$ but
 $V_{\rm acc}$ is comparable to $|N_{\rm acc}|$; a large
 $\mathcal A_{G/C}(\kappa)$ makes these inequalities compatible.
 
+\subsection{An exact DE identity linking generalization risk to control
+variance}
+
+The same scalar $v_0$ that controls fitted-weight fluctuations has a direct
+interpretation in terms of generalization error.  Since
+\begin{equation}
+  \bm\mu-\tstar=-\kappa\mathcal R\tstar,
+\end{equation}
+Eq.~\eqref{eq:general-feature-gen-de} gives
+\begin{equation}
+  E_{\rm gen}^{\rm DE}+\sigma^2
+  =S_{\perp}+\sigma^2
+   +\kappa^2(\tstar)^{\top}\mathcal R C\mathcal R\tstar
+   +v_0\tr(C^2\mathcal R^2).
+\end{equation}
+Using the definition of $v_0$ in Eq.~\eqref{eq:general-v0}, the right side
+simplifies exactly to
+\begin{equation}
+  \boxed{E_{\rm gen}^{\rm DE}+\sigma^2=n v_0.}
+  \label{eq:egen-v0-identity}
+\end{equation}
+Here $E_{\rm gen}$ is error against the noiseless teacher and already includes
+$S_{\perp}$; consequently only the observation noise $\sigma^2$, rather than
+$\sigma_{\rm eff}^2$, is added on the left.  The sum
+$E_{\rm gen}^{\rm DE}+\sigma^2$ is the DE test risk against a newly observed
+noisy response.
+
+Substituting Eq.~\eqref{eq:egen-v0-identity} into the second moments yields
+\begin{align}
+  D_{\rm gen}^{\rm DE}
+    &=\bm\mu^{\top}C\bm\mu
+      +\frac{E_{\rm gen}^{\rm DE}+\sigma^2}{n}
+       \tr(C^2\mathcal R^2),\\
+  \boxed{
+  D_{\rm acc}^{\rm DE}
+    =\bm\mu^{\top}G\bm\mu
+      +\frac{E_{\rm gen}^{\rm DE}+\sigma^2}{n}
+       \tr(G\mathcal R C\mathcal R).}
+  \label{eq:dacc-egen-identity}
+\end{align}
+Thus generalization risk fixes the global fluctuation amplitude, but the
+evaluation geometry decides how strongly those fluctuations enter a given
+quadratic statistic.
+
+For direct pixel regression, set $C=\Sigma$, $G=I$, and
+$\tstar=\bstar$.  With
+\begin{align}
+  B_{a,b}
+    &=(\bstar)^{\top}\Sigma^a(\Sigma+\kappa I)^{-b}\bstar,\\
+  \mathrm{df}_{a,b}
+    &=\tr[\Sigma^a(\Sigma+\kappa I)^{-b}],
+\end{align}
+Eq.~\eqref{eq:dacc-egen-identity} becomes
+\begin{equation}
+  \boxed{
+  \mu_D^{\rm DE}
+    =B_{2,2}
+     +\frac{\mathrm{df}_{1,2}}{n}
+       (E_{\rm gen}^{\rm DE}+\sigma^2).}
+  \label{eq:pixel-d-egen-identity}
+\end{equation}
+For a feature model, this same unweighted expression is valid only if
+$G=I_p$ or if $D$ denotes feature-coefficient norm.  Pixel-space
+back-propagation requires the $G$-weighted form in
+Eq.~\eqref{eq:dacc-egen-identity}; for commuting $C$ and $G$ it reads
+\begin{equation}
+  D_{\rm acc}^{\rm DE}
+    =B_{2,2}^{G}
+     +\frac{d_{1,2}^{G}}{n}
+       (E_{\rm gen}^{\rm DE}+\sigma^2).
+  \label{eq:aligned-feature-d-egen-identity}
+\end{equation}
+
+Combining this identity with $N_{\rm acc}^{\rm DE}=\bm q^{\top}\bm\mu$
+gives the useful decomposition
+\begin{equation}
+  \boxed{
+  z_{\rm acc}^{\rm DE}
+  =\frac{\bm\mu^{\top}G\bm\mu-\bm q^{\top}\bm\mu}
+         {\bm q^{\top}\bm\mu}
+   +\frac{E_{\rm gen}^{\rm DE}+\sigma^2}{n}
+    \frac{\tr(G\mathcal R C\mathcal R)}
+         {\bm q^{\top}\bm\mu}.}
+  \label{eq:z-egen-decomposition}
+\end{equation}
+The first term is structural mismatch plus shrinkage; the second is
+generalization-linked variance inflation.  Therefore small
+$E_{\rm gen}^{\rm DE}$ does not by itself protect accentuation: the second
+term can still be large if the weighted trace is large or the signed true
+path gain $\bm q^{\top}\bm\mu$ is small.  Conversely, if the first term is
+small and the multiplier
+\begin{equation}
+  \frac{\tr(G\mathcal R C\mathcal R)}
+       {n|\bm q^{\top}\bm\mu|}
+\end{equation}
+is controlled, low generalization risk does protect own-path calibration.
+For positive $N_{\rm acc}^{\rm DE}$, the leading DE predicts negative
+$R^2_{\rm acc}$ exactly when
+\begin{equation}
+  \bm\mu^{\top}G\bm\mu
+  +\frac{E_{\rm gen}^{\rm DE}+\sigma^2}{n}
+       \tr(G\mathcal R C\mathcal R)
+  >2\bm q^{\top}\bm\mu.
+  \label{eq:negative-r2-threshold-egen}
+\end{equation}
+
 \subsection{CV-selected simplification of the accentuation ratio}
 
 Let
@@ -603,6 +711,133 @@ its denominator.  Precisely in the catastrophic regime where
 $N_{\rm acc}$ approaches or crosses zero, that expansion is nonuniform and
 rare realizations can dominate the empirical mean.  Medians, quantiles, and a
 joint fluctuation theory for $(N_{\rm acc},D_{\rm acc})$ are then essential.
+
+\subsection{Gaussian distributional DE for nonlinear control metrics}
+\label{sec:gaussian-distributional-de}
+
+The leading DE determines the first moments of $N_{\rm acc}$ and
+$D_{\rm acc}$, but own-path statistics are nonlinear functions of these two
+random quantities.  A useful intermediate theory keeps the DE mean and
+covariance of the fitted feature weight rather than immediately substituting
+their aggregate expectations.  Write
+\begin{equation}
+  \that\ \dot\sim\ \mathcal N(\bm\mu,V),
+  \qquad
+  V=v_0\mathcal R C\mathcal R,
+  \label{eq:gaussian-weight-de}
+\end{equation}
+where $\bm\mu$, $v_0$, and $\mathcal R$ are defined in
+Section~\ref{sec:fixed-feature-de}.  This Gaussian approximation gives the
+joint linear--quadratic moments
+\begin{align}
+  \mu_N&=\E[N_{\rm acc}]=\bm q^{\top}\bm\mu,
+  &\Var(N_{\rm acc})&=\bm q^{\top}V\bm q,\\
+  \mu_D&=\E[D_{\rm acc}]
+       =\bm\mu^{\top}G\bm\mu+\tr(GV),
+  &\Var(D_{\rm acc})
+       &=2\tr[(GV)^2]+4\bm\mu^{\top}GVG\bm\mu,\\
+  &&\Cov(N_{\rm acc},D_{\rm acc})
+       &=2\bm q^{\top}VG\bm\mu.
+  \label{eq:gaussian-nd-moments}
+\end{align}
+The leading formulas in Eq.~\eqref{eq:general-feature-acc-de} use
+$\mu_N/\mu_D$ and $\mu_D/\mu_N$.  They approximate per-fit nonlinear
+statistics only when the relevant random denominators concentrate.  Two
+direct diagnostics are
+\begin{equation}
+  \mathrm{CV}_D
+  =\frac{\sqrt{\Var(D_{\rm acc})}}{\mu_D},
+  \qquad
+  \mathrm{CV}_N
+  =\frac{\sqrt{\Var(N_{\rm acc})}}{|\mu_N|}.
+  \label{eq:nd-concentration-diagnostics}
+\end{equation}
+For example, a second-order delta expansion gives
+\begin{equation}
+  \E\left[\frac{N_{\rm acc}}{D_{\rm acc}}\right]
+  \approx
+  \frac{\mu_N}{\mu_D}
+  -\frac{\Cov(N_{\rm acc},D_{\rm acc})}{\mu_D^2}
+  +\frac{\mu_N\Var(D_{\rm acc})}{\mu_D^3}.
+  \label{eq:delta-slope-acc}
+\end{equation}
+This is informative for small $\mathrm{CV}_D$, but is not a controlled
+expansion when $\mathrm{CV}_D=O(1)$.  In that regime one should instead draw
+\begin{equation}
+  \that^{(b)}=\bm\mu+L\bm z^{(b)},
+  \qquad LL^{\top}=V,
+  \qquad \bm z^{(b)}\sim\mathcal N(0,I_p),
+  \label{eq:gaussian-de-sampling}
+\end{equation}
+and propagate every draw through the exact per-fit definitions
+\begin{align}
+  b_{\rm acc}^{(b)}
+    &=\frac{\bm q^{\top}\that^{(b)}}
+            {(\that^{(b)})^{\top}G\that^{(b)}},\\
+  \frac{E_{\rm acc}^{(b)}}{S}
+    &=(1-b_{\rm acc}^{(b)})^2,\\
+  R_{\rm acc}^{2,(b)}
+    &=1-\left(
+      1-\frac{(\that^{(b)})^{\top}G\that^{(b)}}
+               {\bm q^{\top}\that^{(b)}}\right)^2.
+  \label{eq:gaussian-de-control-metrics}
+\end{align}
+Means, medians, intervals, and tail probabilities of
+Eq.~\eqref{eq:gaussian-de-control-metrics} define the \emph{Gaussian
+distributional DE}.  It is not primarily a new correction to $\mu_N$ or
+$\mu_D$; it retains the already-derived fitted-weight fluctuations while
+respecting the nonlinear order of operations.
+
+A useful summary of quadratic-form concentration is the effective rank
+\begin{equation}
+  r_{\rm eff}(V^{1/2}GV^{1/2})
+  =\frac{\tr(GV)^2}{\tr[(GV)^2]}.
+  \label{eq:control-effective-rank}
+\end{equation}
+When the random part dominates $D_{\rm acc}$,
+$\mathrm{CV}_D\simeq\sqrt{2/r_{\rm eff}}$.  Thus feature dimension $p$ is
+not itself the concentration parameter.  Increasing $p$ helps only if it adds
+enough comparable control directions to increase effective rank; one enormous
+low-variance direction can keep $r_{\rm eff}$ near one even in a nominally
+wide feature space.
+
+\paragraph{Van Hateren dimension-scaling check.}
+We tested the same prediction-equivalent Givens rotation at
+$p\in\{16,128,500,1000\}$ with $n=1000$.  The original $p=16$ map was kept
+exactly, and larger maps appended disjoint directions orthogonal to both
+$\Sigma^{1/2}\bstar$ and $\Sigma^{-1/2}\bstar$.  Hence $C$, the realizable
+teacher, and the fixed DE-CV prediction problem were invariant along every
+rotation.  At the low-variance endpoint and $\sigma^2/S=0.01$, the effective
+rank increased from $1.08$ to $34.4$, $272$, and $657$, while
+$\mathrm{CV}_D$ decreased from $1.20$ to $0.237$, $0.086$, and $0.055$.
+The relative leading-DE discrepancies for the accentuation slope were
+$60.7\%$, $4.6\%$, $0.9\%$, and $0.5\%$; for median
+$R^2_{\rm acc}$ they were $342\%$, $10.3\%$, $1.0\%$, and $0.1\%$.
+The Gaussian distributional DE matched the exact finite-$n$ ridge Monte Carlo
+throughout the low-effective-rank regime.
+
+Crucially, concentration restored the \emph{accuracy of the leading DE}, not
+the quality of control.  As $p$ grew, many prediction-null directions added
+pixel-gradient energy: the accentuation slope became smaller and
+$R^2_{\rm acc}$ became more negative even though the leading DE became nearly
+exact.  This separates two questions that should not be conflated:
+\begin{enumerate}
+  \item Is the leading ratio-of-moments DE statistically sufficient?  This is
+        controlled by $\mathrm{CV}_D$, $\mathrm{CV}_N$, and effective rank.
+  \item Is accentuation well calibrated?  This is controlled by the relative
+        geometry of $C$, $G$, $\bm h$, and $\bm q$.
+\end{enumerate}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/null_rotations/vanhateren_null_leading_de_adequacy.png}
+  \caption{Low-variance endpoint of the Van Hateren prediction-null rotation.
+  As feature dimension adds comparable control directions, the effective rank
+  rises and the Gaussian distributional DE, leading DE, and exact finite-$n$
+  ridge Monte Carlo converge.  Simultaneously, the control slope approaches
+  zero and $R^2_{\rm acc}$ becomes increasingly negative.}
+  \label{fig:null-dimension-leading-de}
+\end{figure}
 
 \section{Spectral feature maps and deterministic equivalents}
 \label{sec:spectral-de}
@@ -809,7 +1044,7 @@ more signal-focused feature space.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/ffhq_linear_feature_gen_acc_gap.png}
+  \includegraphics[width=\textwidth]{figures/feature_space/ffhq_linear_feature_gen_acc_gap.png}
   \caption{Measured-spectrum FFHQ disk-teacher experiment.  Curves are the
   leading DE; points are Monte Carlo ridge fits.  Full PCA develops a
   generalization--accentuation gap, top-100-PC truncation suppresses the
@@ -869,7 +1104,10 @@ The main conclusions are:
         fit.
   \item $R^2_{\rm acc}$ and peer $R^2$ are nonlinear ratios.  Near-zero true
         path gain creates heavy tails, so empirical medians/IQRs and
-        means/standard errors should both be reported.
+        means/standard errors should both be reported.  When the numerator or
+        quadratic denominator does not concentrate, the Gaussian
+        distributional DE in Section~\ref{sec:gaussian-distributional-de}
+        should replace a direct ratio-of-moments plug-in.
 \end{enumerate}
 
 The aggregate first-order formulas in
