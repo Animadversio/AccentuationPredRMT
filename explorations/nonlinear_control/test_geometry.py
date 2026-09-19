@@ -30,6 +30,10 @@ def test_rgb_chain_rule_and_nonlinear_gradient():
     np.testing.assert_allclose(q, np.sum(expected, axis=1), rtol=1e-6)
     qb = batched_pc_gradient_power(scores, x, [0, 1], std)
     np.testing.assert_allclose(qb, q, rtol=1e-6)
+    shaped_std = torch.as_tensor(std).reshape(1, 3, 1, 1)
+    np.testing.assert_allclose(
+        batched_pc_gradient_power(scores, x, [0, 1], shaped_std), q, rtol=1e-6
+    )
 
 
 def test_matched_df2_comparison_is_feature_scale_invariant():

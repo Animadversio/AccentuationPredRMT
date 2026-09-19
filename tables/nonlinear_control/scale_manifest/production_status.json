@@ -1,0 +1,37 @@
+{
+  "expected": 84,
+  "complete": 84,
+  "incomplete": 0,
+  "per_model": {
+    "AlexNet_training_seed_01": {
+      "complete": 11
+    },
+    "clipag_vitb32": {
+      "complete": 7
+    },
+    "dinov2_vitb14_reg": {
+      "complete": 9
+    },
+    "radio_v2.5-b": {
+      "complete": 8
+    },
+    "regnety_640": {
+      "complete": 9
+    },
+    "resnet50": {
+      "complete": 9
+    },
+    "resnet50_clip": {
+      "complete": 9
+    },
+    "resnet50_dino": {
+      "complete": 6
+    },
+    "resnet50_robust": {
+      "complete": 6
+    },
+    "siglip2_vitb16": {
+      "complete": 10
+    }
+  }
+}

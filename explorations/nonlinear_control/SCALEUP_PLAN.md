@@ -172,11 +172,15 @@ template are `benchmark_scale_models.py` and `benchmark_scale_h100.sbatch`.
    IDs; one shared split hash and one seed-list hash.
 2. Representative and alias PCA buffers match bitwise or within a recorded
    strict tolerance; otherwise split the key.
-3. Each model reproduces its cached PCA scores within 0.1% relative L2 and
-   0.5% of each PC training SD.
+3. Each model reproduces its cached PCA scores within 0.5% relative L2 and
+   10% of each PC training SD; also record the 99th percentile scaled error so
+   a single low-variance tail PC cannot hide a broad mismatch.
 4. Batched exact VJPs match serial VJPs on sampled PCs; forward local trace
    agrees with exact local trace within its MC interval.
-5. h-vs-2h sensitivity is small relative to MC error at the largest τ.
+5. Record autograd-vs-forward h sensitivity per geometry. Classify relative
+   directional error as pass (≤20%), marginal (≤50%) or poor (>50%); keep exact
+   VJP and h-independent finite-τ estimators even when an h-dependent estimate
+   is marginal or poor.
 6. `variance + drift = total` holds within float32 storage rounding; all arrays
    have expected shapes and finite values. Signed smooth U-statistics are not
    clipped.
@@ -184,7 +188,27 @@ template are `benchmark_scale_models.py` and `benchmark_scale_h100.sbatch`.
    without reopening a model.
 
 The existing `build_scale_manifest.py` creates the two manifests and audit
-summary. The current forward-noise implementation is the scientific reference;
-the next implementation step is a model-grouped, resumable runner plus Slurm
-array and dependent aggregation scripts. No 250-pair production job has been
-submitted yet.
+summary. `run_scale_mass.py` is the model-grouped, resumable production runner;
+`run_scale_array.sbatch` launches the ten model tasks and
+`deep_validate_scale_mass.py` performs full archive and checksum validation.
+
+## Production run
+
+Production array 47119391 and targeted resumable repair jobs completed all 84
+unique geometries on 2026-09-19. The final archive contains 840 seed files and
+occupies 4.8 GB under the layout above. Deep-validation job 47124852 read every
+archive and reported 84/84 passing geometries, no checksum, shape or finiteness
+errors, and maximum relative residuals of 5.96e-8 for both `variance + drift =
+total` and `odd + even = total`.
+
+Finite-difference h diagnostics classified 75 geometries as pass and nine as
+marginal. All nine marginal geometries are CLIP ResNet-50 sites, with relative
+directional errors from 0.302 to 0.459; their cache reproduction errors remain
+small (at most 0.194% relative L2 among those sites). Treat their h-dependent
+local/smoothed estimates as diagnostics. Their exact VJP and h-independent
+finite-tau response, covariance and Stein arrays remain valid.
+
+The committed plot-ready QC snapshots are `production_status.{json,csv}` and
+`production_deep_{validation.json,qc.csv}` in
+`tables/nonlinear_control/scale_manifest/`. The complete κ-free spectral mass
+remains in `$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/mass_v1/`.

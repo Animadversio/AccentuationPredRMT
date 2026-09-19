@@ -1,0 +1,18 @@
+{
+  "expected": 84,
+  "passed": 84,
+  "failed": 0,
+  "seed_archives": 840,
+  "fd_quality": {
+    "pass": 75,
+    "marginal": 9
+  },
+  "max_cache_relative_l2": 0.004371174225169537,
+  "max_cache_p99_sd_error": 0.03220448760213086,
+  "max_cache_sd_error": 0.07024208372408142,
+  "max_variance_identity_error": 32.0,
+  "max_step_identity_error": 32.0,
+  "max_variance_identity_relative": 5.960464477539063e-08,
+  "max_step_identity_relative": 5.960464477539063e-08,
+  "errors": []
+}

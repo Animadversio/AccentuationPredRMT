@@ -15,8 +15,10 @@ def pc_gradient_power(scores, inputs, indices, channel_std=None):
     for k in indices:
         grad, = torch.autograd.grad(scores[0, k], inputs, retain_graph=True)
         if channel_std is not None:
-            grad = grad / torch.as_tensor(channel_std, device=grad.device,
-                                           dtype=grad.dtype)[None, :, None, None]
+            std = torch.as_tensor(channel_std, device=grad.device, dtype=grad.dtype)
+            if std.numel() != grad.shape[1]:
+                raise ValueError('channel_std must contain one value per input channel')
+            grad = grad / std.reshape(1, -1, 1, 1)
         powers.append(grad.double().square().sum().item())
     return np.asarray(powers)
 
@@ -37,6 +39,8 @@ def batched_pc_gradient_power(scores, inputs, indices, channel_std=None):
     grad, = torch.autograd.grad(scores[0], inputs, grad_outputs=seeds,
                                is_grads_batched=True, retain_graph=True)
     if channel_std is not None:
-        grad = grad / torch.as_tensor(channel_std, device=grad.device,
-                                     dtype=grad.dtype)[None, None, :, None, None]
+        std = torch.as_tensor(channel_std, device=grad.device, dtype=grad.dtype)
+        if std.numel() != grad.shape[2]:
+            raise ValueError('channel_std must contain one value per input channel')
+        grad = grad / std.reshape(1, 1, -1, 1, 1)
     return grad.double().flatten(1).square().sum(1).detach().cpu().numpy()
