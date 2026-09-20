@@ -51,8 +51,10 @@ def association(data,predictor,outcome):
     fit=sm.OLS(y,sm.add_constant(x)).fit(cov_type='cluster',cov_kwds={'groups':d.site_id})
     xs=x/x.std(ddof=0);ys=y/y.std(ddof=0)
     standardized=sm.OLS(ys,sm.add_constant(xs)).fit(cov_type='cluster',cov_kwds={'groups':d.site_id})
-    return dict(n=len(d),n_sites=d.site_id.nunique(),pearson=pearsonr(x,y).statistic,
-                spearman=spearmanr(x,y).statistic,beta_per_log10_V=fit.params[1],
+    pearson_result=pearsonr(x,y);spearman_result=spearmanr(x,y)
+    return dict(n=len(d),n_sites=d.site_id.nunique(),pearson=pearson_result.statistic,
+                pearson_p=pearson_result.pvalue,spearman=spearman_result.statistic,
+                spearman_p=spearman_result.pvalue,beta_per_log10_V=fit.params[1],
                 cluster_se=fit.bse[1],cluster_p=fit.pvalues[1],standardized_beta=standardized.params[1])
 
 
@@ -151,24 +153,37 @@ def level_plot(results,method,filename):
     fig.tight_layout();fig.savefig(FIGURE/filename,dpi=180);plt.close(fig)
 
 
-def predictor_benchmark_plot(results,endpoint,filename,significance='raw',include_groups=None,save_pdf=False):
+def predictor_benchmark_plot(results,endpoint,filename,significance='raw',include_groups=None,
+                             save_pdf=False,correlation='spearman'):
     assert significance in {'raw','fdr'}
+    assert correlation in {'spearman','pearson'}
     d=results[results.endpoint==endpoint].copy()
     if include_groups is not None:
         d=d[d.group.isin(include_groups)].copy()
+    value_column=f'direction_aligned_{correlation}'
+    # Preserve the established cluster-aware inference for the Spearman-view
+    # benchmark.  The Pearson comparison deliberately uses the conventional
+    # two-sided Pearson correlation test to match the reference analysis.
+    p_column='pearson_p' if correlation=='pearson' else 'cluster_p'
     d['plot_q_bh']=np.nan
     for _,idx in d.groupby(['subset','outcome_role']).groups.items():
-        idx=list(idx);d.loc[idx,'plot_q_bh']=multipletests(d.loc[idx,'cluster_p'],method='fdr_bh')[1]
-    significance_column='cluster_p' if significance=='raw' else 'plot_q_bh'
-    significance_label=('Raw site-clustered p < 0.05' if significance=='raw'
-                        else f'BH-FDR q < 0.05 across {d.predictor_id.nunique()} predictors')
+        idx=list(idx);d.loc[idx,'plot_q_bh']=multipletests(d.loc[idx,p_column],method='fdr_bh')[1]
+    significance_column=p_column if significance=='raw' else 'plot_q_bh'
+    if significance=='raw':
+        significance_label=('Raw Pearson p < 0.05' if correlation=='pearson'
+                            else 'Raw site-clustered p < 0.05')
+    else:
+        significance_label=(f'Pearson BH-FDR q < 0.05 ({d.predictor_id.nunique()} tests)'
+                            if correlation=='pearson' else
+                            f'BH-FDR q < 0.05 across {d.predictor_id.nunique()} predictors')
     meta=(d[['predictor_id','label','group','display_order']].drop_duplicates()
           .sort_values('display_order'))
     y=np.arange(len(meta))[::-1]
     ymap=dict(zip(meta.predictor_id,y))
     fig,axs=plt.subplots(1,2,figsize=(12.8,max(7.6,.34*len(meta)+2)),sharey=True)
-    outcomes=[('control_slope','Control slope',r'$-\rho$'),
-              ('control_mse','Direct control MSE',r'$+\rho$')]
+    symbol='r' if correlation=='pearson' else r'\rho'
+    outcomes=[('control_slope','Control slope',f'$-{symbol}$'),
+              ('control_mse','Direct control MSE',f'$+{symbol}$')]
     for ax,(outcome,title,sign) in zip(axs,outcomes):
         panel=d[d.outcome_role==outcome]
         for _,row in meta.iterrows():
@@ -176,17 +191,16 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw',includ
             required={'all_models','without_robust','without_robust_and_untrained'}
             if not required.issubset(pair.index):
                 continue
-            xa=pair.loc['all_models','direction_aligned_spearman']
-            xr=pair.loc['without_robust','direction_aligned_spearman']
-            xt=pair.loc['without_robust_and_untrained','direction_aligned_spearman']
+            xa=pair.loc['all_models',value_column]
+            xr=pair.loc['without_robust',value_column]
+            xt=pair.loc['without_robust_and_untrained',value_column]
             yi=ymap[row.predictor_id];color=METHOD_COLORS[row.group]
             ax.plot([xa,xr,xt],[yi,yi,yi],color='.76',lw=2,zorder=1)
             ax.scatter(xa,yi,s=62,color=color,edgecolor=color,zorder=3)
             ax.scatter(xr,yi,s=62,facecolor='white',edgecolor=color,lw=2,zorder=4)
             ax.scatter(xt,yi,s=62,marker='D',facecolor='white',edgecolor=color,lw=2,zorder=5)
             # Mark significance separately for each model subset. A star sits
-            # directly above the marker whose clustered linear effect survives
-            # BH correction within this endpoint/outcome/subset panel.
+            # directly above the marker whose selected association test passes.
             for xvalue,subset in [(xa,'all_models'),(xr,'without_robust'),
                                   (xt,'without_robust_and_untrained')]:
                 if pair.loc[subset,significance_column] < .05:
@@ -198,7 +212,8 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw',includ
                         va='center',fontsize=7)
         ax.axvline(0,color='.55',lw=.9)
         ax.grid(axis='x',color='.91',lw=.8)
-        ax.set_xlabel(f'Direction-aligned site-residual Spearman {sign}')
+        statistic_label='Pearson' if correlation=='pearson' else 'Spearman'
+        ax.set_xlabel(f'Direction-aligned site-residual {statistic_label} {sign}')
         ax.set_title(title)
         ax.spines[['top','right','left']].set_visible(False)
         ax.tick_params(axis='y',length=0)
@@ -273,6 +288,20 @@ def main():
     predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
                              'site_centered_predictor_benchmark_control_session_export_fdr.png',
                              significance='fdr',include_groups=core_groups,save_pdf=True)
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_pearson.png',
+                             significance='raw',correlation='pearson')
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_pearson_fdr.png',
+                             significance='fdr',correlation='pearson')
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_export_pearson.png',
+                             significance='raw',include_groups=core_groups,save_pdf=True,
+                             correlation='pearson')
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_export_pearson_fdr.png',
+                             significance='fdr',include_groups=core_groups,save_pdf=True,
+                             correlation='pearson')
     predictor_benchmark_plot(benchmark,'control_session_identity_reference',
                              'site_centered_predictor_benchmark_control_session_identity_reference.png',
                              significance='raw')

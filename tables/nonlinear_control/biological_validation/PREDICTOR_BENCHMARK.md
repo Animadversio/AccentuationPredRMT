@@ -30,12 +30,21 @@ Each endpoint benchmark contains 28 predictors:
 
 The figures show Spearman correlation because model rankings are the primary
 question and the predictors span very different scales. The CSV also stores
-Pearson correlation and a linear standardized coefficient with site-clustered
-standard error. In the default exploratory figures, a filled five-point star
+Pearson correlation, its conventional two-sided p value, and a linear
+standardized coefficient with site-clustered standard error. In the default
+Spearman exploratory figures, a filled five-point star
 directly above a marker denotes an unadjusted site-clustered linear-effect
 `p < 0.05` for that model subset. The separately named `_fdr` figure instead
 uses Benjamini-Hochberg `q < 0.05` across the 28 predictors in that panel. The
 stars do not represent a clustered significance test of Spearman correlation.
+
+The separately named `_pearson` figures use site-residual Pearson `r` for the
+marker position and the conventional two-sided Pearson correlation p value for
+the star. Their `_pearson_fdr` counterparts apply BH-FDR to those Pearson p
+values within outcome and model subset. This exactly matches a conventional
+Pearson benchmark but treats residual rows as observations; the original
+site-clustered inference remains the safer view when accounting for the ten
+models repeated within each biological site.
 
 The original one-sided Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
@@ -52,6 +61,10 @@ PNG/PDF pair removes finite step, one-sided Stein and antithetic Stein, leaving
 the four baseline/local rows plus smooth, neighborhood and variance families.
 Its `_export_fdr` counterpart recomputes BH-FDR over the 16 predictors actually
 shown in that reduced panel.
+The full `_pearson`/`_pearson_fdr` figures and reduced
+`_export_pearson`/`_export_pearson_fdr` figures provide parallel Pearson
+versions without replacing any Spearman output. The reduced Pearson versions
+are also saved as PDF.
 `site_centered_predictor_benchmark_control_session_identity_reference.png`
 preserves the previous direct identity-scale comparison. The encoding-session
 figure remains an explicitly labeled identity reference because the
