@@ -94,6 +94,7 @@ def build_benchmark_table(data):
             configs.append(config)
         benchmark_subsets=[
             ('all_models',data),
+            ('without_untrained',data[data.model!='AlexNet_training_seed_01']),
             ('without_robust',data[~data.robust_model]),
             ('without_robust_and_untrained',
              data[(~data.robust_model)&(data.model!='AlexNet_training_seed_01')])]
@@ -154,9 +155,11 @@ def level_plot(results,method,filename):
 
 
 def predictor_benchmark_plot(results,endpoint,filename,significance='raw',include_groups=None,
-                             save_pdf=False,correlation='spearman'):
+                             save_pdf=False,correlation='spearman',
+                             marker_convention='three_way'):
     assert significance in {'raw','fdr'}
     assert correlation in {'spearman','pearson'}
+    assert marker_convention in {'three_way','trained_vs_conventional'}
     d=results[results.endpoint==endpoint].copy()
     if include_groups is not None:
         d=d[d.group.isin(include_groups)].copy()
@@ -184,31 +187,52 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw',includ
     symbol='r' if correlation=='pearson' else r'\rho'
     outcomes=[('control_slope','Control slope',f'$-{symbol}$'),
               ('control_mse','Direct control MSE',f'$+{symbol}$')]
+    if marker_convention=='trained_vs_conventional':
+        marker_specs=[
+            ('without_untrained',dict(marker='o',face='color',zorder=3)),
+            ('without_robust_and_untrained',dict(marker='o',face='white',zorder=4))]
+        marker_handles=[
+            plt.Line2D([],[],marker='o',linestyle='',color='.25',
+                       label='Trained models (9 models; n=225)'),
+            plt.Line2D([],[],marker='o',linestyle='',markerfacecolor='white',markeredgewidth=2,
+                       color='.25',label='Conventionally trained (7 models; n=175)')]
+    else:
+        marker_specs=[
+            ('all_models',dict(marker='o',face='color',zorder=3)),
+            ('without_robust',dict(marker='o',face='white',zorder=4)),
+            ('without_robust_and_untrained',dict(marker='D',face='white',zorder=5))]
+        marker_handles=[
+            plt.Line2D([],[],marker='o',linestyle='',color='.25',label='All 10 models'),
+            plt.Line2D([],[],marker='o',linestyle='',markerfacecolor='white',markeredgewidth=2,
+                       color='.25',label='Without CLIPAG + robust RN50'),
+            plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
+                       color='.25',label='Also without untrained AlexNet')]
     for ax,(outcome,title,sign) in zip(axs,outcomes):
         panel=d[d.outcome_role==outcome]
         for _,row in meta.iterrows():
             pair=panel[panel.predictor_id==row.predictor_id].set_index('subset')
-            required={'all_models','without_robust','without_robust_and_untrained'}
+            required={subset for subset,_ in marker_specs}
             if not required.issubset(pair.index):
                 continue
-            xa=pair.loc['all_models',value_column]
-            xr=pair.loc['without_robust',value_column]
-            xt=pair.loc['without_robust_and_untrained',value_column]
+            xvalues=[pair.loc[subset,value_column] for subset,_ in marker_specs]
             yi=ymap[row.predictor_id];color=METHOD_COLORS[row.group]
-            ax.plot([xa,xr,xt],[yi,yi,yi],color='.76',lw=2,zorder=1)
-            ax.scatter(xa,yi,s=62,color=color,edgecolor=color,zorder=3)
-            ax.scatter(xr,yi,s=62,facecolor='white',edgecolor=color,lw=2,zorder=4)
-            ax.scatter(xt,yi,s=62,marker='D',facecolor='white',edgecolor=color,lw=2,zorder=5)
+            ax.plot(xvalues,[yi]*len(xvalues),color='.76',lw=2,zorder=1)
+            for xvalue,(_,style) in zip(xvalues,marker_specs):
+                facecolor=color if style['face']=='color' else style['face']
+                scatter_kwargs=dict(s=62,marker=style['marker'],facecolor=facecolor,
+                                    edgecolor=color,zorder=style['zorder'])
+                if style['face']=='white':
+                    scatter_kwargs['linewidths']=2
+                ax.scatter(xvalue,yi,**scatter_kwargs)
             # Mark significance separately for each model subset. A star sits
             # directly above the marker whose selected association test passes.
-            for xvalue,subset in [(xa,'all_models'),(xr,'without_robust'),
-                                  (xt,'without_robust_and_untrained')]:
+            for xvalue,(subset,_) in zip(xvalues,marker_specs):
                 if pair.loc[subset,significance_column] < .05:
                     ax.text(xvalue,yi+.20,'★',color=color,ha='center',va='bottom',
                             fontsize=10,zorder=6)
             conventional=pair.loc['without_robust_and_untrained']
             if conventional.n < 175:
-                ax.text(max(xa,xr,xt)+.018,yi,f"n={int(conventional.n)}",color='.35',
+                ax.text(max(xvalues)+.018,yi,f"n={int(conventional.n)}",color='.35',
                         va='center',fontsize=7)
         ax.axvline(0,color='.55',lw=.9)
         ax.grid(axis='x',color='.91',lw=.8)
@@ -218,13 +242,8 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw',includ
         ax.spines[['top','right','left']].set_visible(False)
         ax.tick_params(axis='y',length=0)
     axs[0].set_yticks(y,[row.label for _,row in meta.iterrows()],fontsize=9)
-    handles=[plt.Line2D([],[],marker='o',linestyle='',color='.25',label='All 10 models'),
-             plt.Line2D([],[],marker='o',linestyle='',markerfacecolor='white',markeredgewidth=2,
-                        color='.25',label='Without CLIPAG + robust RN50'),
-             plt.Line2D([],[],marker='D',linestyle='',markerfacecolor='white',markeredgewidth=2,
-                        color='.25',label='Also without untrained AlexNet'),
-             plt.Line2D([],[],marker='*',linestyle='',color='.25',markersize=9,
-                        label=significance_label+' above that marker')]
+    handles=marker_handles+[plt.Line2D([],[],marker='*',linestyle='',color='.25',markersize=9,
+                                      label=significance_label+' above that marker')]
     group_labels=[('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),
                     ('step','Finite step'),('stein','Stein'),
@@ -302,6 +321,10 @@ def main():
                              'site_centered_predictor_benchmark_control_session_export_pearson_fdr.png',
                              significance='fdr',include_groups=core_groups,save_pdf=True,
                              correlation='pearson')
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_export_pearson_9v7.png',
+                             significance='raw',include_groups=core_groups,save_pdf=True,
+                             correlation='pearson',marker_convention='trained_vs_conventional')
     predictor_benchmark_plot(benchmark,'control_session_identity_reference',
                              'site_centered_predictor_benchmark_control_session_identity_reference.png',
                              significance='raw')

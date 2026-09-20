@@ -65,6 +65,11 @@ The full `_pearson`/`_pearson_fdr` figures and reduced
 `_export_pearson`/`_export_pearson_fdr` figures provide parallel Pearson
 versions without replacing any Spearman output. The reduced Pearson versions
 are also saved as PDF.
+The `_export_pearson_9v7` PNG/PDF pair reproduces the marker convention of the
+earlier benchmark: the filled circle contains the nine trained models
+(`n=225`, untrained AlexNet removed), and the open circle contains the seven
+conventionally trained models (`n=175`, with CLIPAG and robust RN50 additionally
+removed). Its stars use the raw two-sided Pearson p value.
 `site_centered_predictor_benchmark_control_session_identity_reference.png`
 preserves the previous direct identity-scale comparison. The encoding-session
 figure remains an explicitly labeled identity reference because the
