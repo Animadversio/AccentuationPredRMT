@@ -34,7 +34,8 @@ BENCHMARK_SPECS=[
          mse_outcome='control_mse',endpoint_label='Encoding session, all 195 images; identity reference')]
 MONKEY_COLORS={'red':'#cc3311','paul':'#4477aa','venus':'#009988','leap':'#aa4499','three0':'#997700'}
 METHOD_COLORS={'baseline':'#666666','local':'#0072b2','smooth':'#cc79a7',
-               'neighborhood':'#009e73','variance':'#e69f00','step':'#56b4e9','stein':'#d55e00'}
+               'neighborhood':'#009e73','variance':'#e69f00','step':'#56b4e9',
+               'stein':'#d55e00','stein_antithetic':'#332288'}
 
 
 def center_within_site(data,column):
@@ -70,6 +71,10 @@ def geometry_configs():
             configs.append(dict(predictor_id=f'{method}_{tau_tag(tau)}',
                                 label=f'{labels[method]}  {tau:g}/255',group=method,
                                 base=f'geom_{method}_tau255_{tau_tag(tau)}',quantity='V',tau_255=tau))
+    for tau in TAUS:
+        configs.append(dict(predictor_id=f'stein_antithetic_{tau_tag(tau)}',
+            label=f'Antithetic Stein  {tau:g}/255',group='stein_antithetic',
+            base=f'geom_stein_antithetic_R512_tau255_{tau_tag(tau)}',quantity='V',tau_255=tau))
     return configs
 
 
@@ -148,15 +153,15 @@ def level_plot(results,method,filename):
 
 def predictor_benchmark_plot(results,endpoint,filename,significance='raw'):
     assert significance in {'raw','fdr'}
+    d=results[results.endpoint==endpoint].copy()
     significance_column='cluster_p' if significance=='raw' else 'cluster_q_bh'
     significance_label=('Raw site-clustered p < 0.05' if significance=='raw'
-                        else 'BH-FDR q < 0.05 across 24 predictors')
-    d=results[results.endpoint==endpoint].copy()
+                        else f'BH-FDR q < 0.05 across {d.predictor_id.nunique()} predictors')
     meta=(d[['predictor_id','label','group','display_order']].drop_duplicates()
           .sort_values('display_order'))
     y=np.arange(len(meta))[::-1]
     ymap=dict(zip(meta.predictor_id,y))
-    fig,axs=plt.subplots(1,2,figsize=(12.8,9.8),sharey=True)
+    fig,axs=plt.subplots(1,2,figsize=(12.8,11.2),sharey=True)
     outcomes=[('control_slope','Control slope',r'$-\rho$'),
               ('control_mse','Direct control MSE',r'$+\rho$')]
     for ax,(outcome,title,sign) in zip(axs,outcomes):
@@ -203,7 +208,8 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw'):
     group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
                    [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),
-                    ('step','Finite step'),('stein','Stein')]]
+                    ('step','Finite step'),('stein','Stein'),
+                    ('stein_antithetic','Antithetic Stein')]]
     fig.legend(handles=handles+group_handles,ncol=6,loc='lower center',frameon=False,fontsize=8)
     fig.suptitle('Benchmark of control-geometry predictors of biological outcomes\n'
                  f'{d.endpoint_label.iloc[0]}; site means removed; stars: {significance_label}',y=.985)

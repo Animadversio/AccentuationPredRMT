@@ -7,7 +7,9 @@ one row per subject × unit × encoding model: 25 biological sites × 10 models 
 The compressed CSV is a portable mirror. The schema CSV gives the group, dtype
 and definition of every column. The long-format `variance_predictors*.csv.gz`
 tables remain the canonical source for adding geometry estimators or noise
-levels; rebuild the synopsis rather than manually adding columns.
+levels. Nested antithetic Stein traces come from
+`stein_nested_site_estimates.csv.gz`; rebuild the synopsis rather than
+manually adding columns.
 
 ## Column groups
 
@@ -109,9 +111,9 @@ geometry. The maintained figures show the smoothing paths and the direct
 control-MSE computation/scatter separately.
 
 `predictor_benchmark_site_centered.csv` applies that same transformation to a
-fixed benchmark of 24 predictors: held-out generalization MSE, exact trace,
+fixed benchmark of 28 predictors: held-out generalization MSE, exact trace,
 exact/local-MC V, and four noise levels for smooth, neighborhood, variance,
-finite-step and Stein V. It stores both raw and direction-aligned Pearson and
+finite-step, one-sided Stein and R=512 antithetic Stein V. It stores both raw and direction-aligned Pearson and
 Spearman correlations for all ten models, after removing CLIPAG and robust
 RN50, and after additionally removing the untrained AlexNet. Direction
 alignment multiplies slope correlations by -1 and leaves MSE
@@ -120,10 +122,11 @@ predicted control-error term accompanies worse biological control. The
 clustered regression p value and within-panel Benjamini-Hochberg q value refer
 to the linear site-residual coefficient; they are not p values for Spearman's
 rho. Stein rows retain their actual positive-V sample counts because the
-large-noise estimators can be nonpositive.
+large-noise one-sided estimators can be nonpositive. Antithetic Stein has full
+250-row support at R=512.
 
 The default benchmark figures mark unadjusted site-clustered `p < 0.05`. The
-separate `_fdr` control-session figure marks BH-FDR `q < 0.05` across the 24
+separate `_fdr` control-session figure marks BH-FDR `q < 0.05` across the 28
 predictors. Both statistics remain in the plot-ready CSV.
 
 The `control_session_anchor_affine` rows are the default benchmark: outcomes

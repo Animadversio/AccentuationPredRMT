@@ -19,12 +19,13 @@ RN50. The open diamond additionally removes the untrained AlexNet, leaving the
 seven conventionally trained models. Their connecting segment exposes
 sensitivity to these three model-family outliers.
 
-Each endpoint benchmark contains 24 predictors:
+Each endpoint benchmark contains 28 predictors:
 
 - held-out natural-image generalization MSE and exact control trace as
   baselines;
 - exact Jacobian V and local Monte-Carlo V;
-- smooth, neighborhood, finite-difference variance, finite-step and Stein V at
+- smooth, neighborhood, finite-difference variance, finite-step, original
+  one-sided Stein and R=512 antithetic Stein V at
   noise SD 0.5, 2, 8 and 16 on the 0–255 image scale.
 
 The figures show Spearman correlation because model rankings are the primary
@@ -33,13 +34,15 @@ Pearson correlation and a linear standardized coefficient with site-clustered
 standard error. In the default exploratory figures, a filled five-point star
 directly above a marker denotes an unadjusted site-clustered linear-effect
 `p < 0.05` for that model subset. The separately named `_fdr` figure instead
-uses Benjamini-Hochberg `q < 0.05` across the 24 predictors in that panel. The
+uses Benjamini-Hochberg `q < 0.05` across the 28 predictors in that panel. The
 stars do not represent a clustered significance test of Spearman correlation.
 
-The Stein estimates at large noise can be zero or negative and therefore
+The original one-sided Stein estimates at large noise can be zero or negative and therefore
 cannot enter the log analysis. Their actual effective sample sizes are printed
 next to the markers. These small-n correlations are unstable and should not be
-ranked directly against the full-coverage subset estimates.
+ranked directly against the full-coverage subset estimates. Antithetic Stein
+uses all 250 rows at every noise level; it cancels the even response component
+and is the maintained forward-only Stein estimator.
 
 `site_centered_predictor_benchmark_control_session.png` is the calibrated
 default with raw-p stars. `site_centered_predictor_benchmark_control_session_fdr.png`

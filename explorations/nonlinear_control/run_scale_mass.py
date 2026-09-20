@@ -90,9 +90,9 @@ def preprocessing_adapter(transform, device):
     return mean_tensor, std_tensor, mean_values, std_values
 
 
-def stein_pseudovalues(plus, baseline, directions_gram, tau):
-    """Jackknife pseudovalues for ||E[(f(x+tau*z)-f(x))z/tau]||^2."""
-    delta = np.asarray(plus, dtype=np.float64) - np.asarray(baseline, dtype=np.float64)
+def stein_pseudovalues_from_delta(delta, directions_gram, tau):
+    """Jackknife pseudovalues for ||E[delta(z) z/tau]||^2."""
+    delta = np.asarray(delta, dtype=np.float64)
     gram = np.asarray(directions_gram, dtype=np.float64).copy()
     np.fill_diagonal(gram, 0.)
     count = len(delta)
@@ -103,6 +103,18 @@ def stein_pseudovalues(plus, baseline, directions_gram, tau):
     estimate = total / (count * (count - 1))
     leave_one_out = (total[None, :] - 2 * cross) / ((count - 1) * (count - 2))
     return count * estimate[None, :] - (count - 1) * leave_one_out
+
+
+def stein_pseudovalues(plus, baseline, directions_gram, tau):
+    """One-sided Stein estimate using f(x+tau*z)-f(x)."""
+    delta = np.asarray(plus, dtype=np.float64) - np.asarray(baseline, dtype=np.float64)
+    return stein_pseudovalues_from_delta(delta, directions_gram, tau)
+
+
+def antithetic_stein_pseudovalues(plus, minus, directions_gram, tau):
+    """Antithetic Stein estimate using [f(x+tau*z)-f(x-tau*z)]/2."""
+    delta = (np.asarray(plus, dtype=np.float64)-np.asarray(minus, dtype=np.float64))/2
+    return stein_pseudovalues_from_delta(delta, directions_gram, tau)
 
 
 def validate_seed_archive(path, directions, levels, pcs):

@@ -59,7 +59,13 @@ All four noise SDs (×255 = 0.5, 2, 8, 16) are reported; none is selected as an 
 | variance | 8 | -0.365 | -0.529 |
 | variance | 16 | -0.379 | -0.539 |
 
-Stein is presently unstable: negative site-level trace estimates at 60/250, 77/250, 210/250, and 217/250 site/model pairs as noise increases. All signed estimates are preserved. Log analyses exclude nonpositive values and must not be interpreted as unbiased evidence on the full cohort. CV candidates use the same positive subset within each estimator/noise condition.
+The original R=64 one-sided Stein estimator is unstable: negative site-level
+trace estimates occur at 60/250, 77/250, 210/250, and 217/250 pairs as noise
+increases. The replacement R=512 antithetic estimator cancels even response
+variation and is positive on all 250 pairs at every noise level. Its median
+absolute discrepancy from the independent-center smooth trace is 2.2--3.4%.
+See `STEIN_ANTITHETIC_RESULTS.md` for nested-R validation and selection-bias
+analysis.
 
 CLIP RN50 directional finite-difference QC was marginal in the preceding production run. Smooth/neighborhood/local MC results involving it remain provisional; exclusion sensitivity is provided. Exact VJP and finite response covariance do not use that small finite-difference step.
 
@@ -81,7 +87,7 @@ The product outperforms MSE-only in this basic comparison, but improves only sli
 
 `tables/nonlinear_control/biological_validation/biological_validation_synopsis_v1.parquet`
 is the maintained fast analysis table: one row per subject × unit × model, 250
-rows and 364 columns. It combines provenance, RidgeCV/DE quantities, held-out
+rows and 654 columns (synopsis v1.4). It combines provenance, RidgeCV/DE quantities, held-out
 natural-image generalization, cross-phase anchor metrics, biological control
 metrics, error normalizations and all geometry estimator/noise summaries.
 

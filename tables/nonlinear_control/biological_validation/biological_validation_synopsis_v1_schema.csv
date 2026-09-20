@@ -381,6 +381,38 @@ geom_variance_tau255_0p5__trace_std,geometry,float64,Across 10 image seeds: samp
 geom_variance_tau255_16__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
 geom_variance_tau255_2__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
 geom_variance_tau255_8__trace_std,geometry,float64,Across 10 image seeds: sample SD of trace.
+geom_stein_antithetic_R128_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R128_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R128_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R128_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R256_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R256_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R256_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R256_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R512_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R512_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R512_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R512_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R64_tau255_0p5__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R64_tau255_16__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R64_tau255_2__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R64_tau255_8__trace_mean,geometry,float64,Across 10 image seeds: mean of trace.
+geom_stein_antithetic_R128_tau255_0p5__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R128_tau255_16__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R128_tau255_2__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R128_tau255_8__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R256_tau255_0p5__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R256_tau255_16__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R256_tau255_2__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R256_tau255_8__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R512_tau255_0p5__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R512_tau255_16__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R512_tau255_2__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R512_tau255_8__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R64_tau255_0p5__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R64_tau255_16__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R64_tau255_2__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
+geom_stein_antithetic_R64_tau255_8__trace_mc_se,geometry,float64,Across 10 image seeds: Monte Carlo SE of trace_mc.
 geom_exact__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
 geom_exact__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
 geom_exact__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
@@ -557,3 +589,67 @@ geom_variance_tau255_8__V_control_session_std,geometry,float64,Across 10 image s
 geom_variance_tau255_8__V_control_session_site_train_anchor_affine_std,geometry,float64,Across 10 image seeds: sample SD of V_control_session_site_train_anchor_affine.
 geom_variance_tau255_8__V_encoding_session_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session.
 geom_variance_tau255_8__V_encoding_session_matched_std,geometry,float64,Across 10 image seeds: sample SD of V_encoding_session_matched.
+geom_stein_antithetic_R128_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R128_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R128_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R128_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R128_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R128_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R128_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R128_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R128_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R128_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R128_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R128_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R128_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R128_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R128_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R128_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R256_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R256_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R256_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R256_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R256_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R256_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R256_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R256_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R256_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R256_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R256_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R256_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R256_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R256_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R256_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R256_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R512_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R512_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R512_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R512_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R512_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R512_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R512_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R512_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R512_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R512_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R512_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R512_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R512_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R512_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R512_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R512_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R64_tau255_0p5__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R64_tau255_0p5__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R64_tau255_0p5__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R64_tau255_0p5__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R64_tau255_16__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R64_tau255_16__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R64_tau255_16__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R64_tau255_16__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R64_tau255_2__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R64_tau255_2__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R64_tau255_2__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R64_tau255_2__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.
+geom_stein_antithetic_R64_tau255_8__V_control_session_mean,geometry,float64,Across 10 image seeds: mean of V_control_session.
+geom_stein_antithetic_R64_tau255_8__V_control_session_site_train_anchor_affine_mean,geometry,float64,Across 10 image seeds: mean of V_control_session_site_train_anchor_affine.
+geom_stein_antithetic_R64_tau255_8__V_encoding_session_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session.
+geom_stein_antithetic_R64_tau255_8__V_encoding_session_matched_mean,geometry,float64,Across 10 image seeds: mean of V_encoding_session_matched.

@@ -21,7 +21,7 @@ TABLE = REPO / 'tables/nonlinear_control/biological_validation'
 FIGURE = REPO / 'figures/nonlinear_control/biological_validation'
 KEY = ['subject', 'monkey', 'unit', 'model']
 ROBUST_MODELS = {'clipag_vitb32', 'resnet50_robust'}
-VERSION = '1.3.0'
+VERSION = '1.4.0'
 
 sys.path.insert(0, str(HERE))
 from validate_biology import upstream_modules  # noqa: E402
@@ -284,6 +284,26 @@ def geometry_wide():
     return wide.reset_index()
 
 
+def nested_stein_wide():
+    """Optional full-coverage nested antithetic Stein traces and MC errors."""
+    path=TABLE/'stein_nested_site_estimates.csv.gz'
+    if not path.exists(): return None
+    data=pd.read_csv(path)
+    data=data[data.method=='antithetic'].copy()
+    data['monkey']=data.subject.str.split('_').str[0]
+    if data[KEY].drop_duplicates().shape[0]!=250:
+        print('Skipping partial nested Stein pilot in maintained synopsis')
+        return None
+    data['tau_token']=data.tau_255.map(
+        lambda x:str(int(x)) if float(x).is_integer() else str(x).replace('.','p'))
+    data['label']='stein_antithetic_R'+data.directions.astype(str)+'_tau255_'+data.tau_token
+    assert not data.duplicated(KEY+['label']).any()
+    wide=data.pivot(index=KEY,columns='label',values=['estimate','mc_se'])
+    quantity={'estimate':'trace_mean','mc_se':'trace_mc_se'}
+    wide.columns=[f'geom_{label}__{quantity[value]}' for value,label in wide.columns]
+    return wide.reset_index()
+
+
 def add_session_specific_V(synopsis):
     """Attach both generalization-error choices to every geometry trace."""
     trace_columns=synopsis.filter(regex=r'^geom_.*__trace_(mean|std)$').columns
@@ -334,7 +354,9 @@ def schema_for(frame):
     for col,dtype in frame.dtypes.items():
         if col.startswith('geom_'):
             group='geometry'
-            desc='Across 10 image seeds: '+('mean' if col.endswith('_mean') else 'sample SD')+' of '+col.split('__',1)[1].rsplit('_',1)[0]+'.'
+            stat=('mean' if col.endswith('_mean') else
+                  'Monte Carlo SE' if col.endswith('_mc_se') else 'sample SD')
+            desc='Across 10 image seeds: '+stat+' of '+col.split('__',1)[1].rsplit('_',1)[0]+'.'
         elif col.startswith('encoding_session_gen_test_'): group,desc='generalization_encoding_session','Encoding-session held-out natural-image '+col.removeprefix('encoding_session_gen_test_').replace('_',' ')+'.'
         elif col.startswith('encoding_session_matched_gen_test_'): group,desc='generalization_encoding_session_matched','Encoding-session response on the exact held-out image subset re-presented during control '+col.removeprefix('encoding_session_matched_gen_test_').replace('_',' ')+'.'
         elif col.startswith('control_session_gen_test_'): group,desc='generalization_control_session','Control-session response on encoding-held-out natural-image '+col.removeprefix('control_session_gen_test_').replace('_',' ')+'.'
@@ -460,7 +482,9 @@ def main():
     manifest=manifest[KEY+['geometry_id','layer','n_total','n_pcs','n_train']]
     base=ridge_and_qc(manifest)
     bio=biological_metrics(manifest)
-    synopsis=base.merge(bio,on=KEY+['geometry_id'],validate='one_to_one').merge(geometry_wide(),on=KEY,validate='one_to_one')
+    geometry=geometry_wide();nested=nested_stein_wide()
+    if nested is not None: geometry=geometry.merge(nested,on=KEY,validate='one_to_one')
+    synopsis=base.merge(bio,on=KEY+['geometry_id'],validate='one_to_one').merge(geometry,on=KEY,validate='one_to_one')
     synopsis=add_session_specific_V(synopsis)
     synopsis=synopsis.sort_values(KEY).reset_index(drop=True)
     schema=schema_for(synopsis)
@@ -477,6 +501,7 @@ def main():
     plot_smoothing(corr)
     metadata=dict(version=VERSION,rows=len(synopsis),columns=len(synopsis.columns),key=KEY,
         parquet_written=parquet,canonical_geometry_source='variance_predictors_by_seed.csv.gz',
+        nested_antithetic_stein_source=('stein_nested_site_estimates.csv.gz' if nested is not None else None),
         primary_generalization='control_session_site_train_anchor_affine_gen_test: encoding-heldout natural predictions mapped by the site-level affine fitted on encoding-training anchors',
         identity_generalization_reference='control_session_gen_test: encoding-heldout natural predictions compared directly with control-session responses',
         secondary_generalization='encoding_session_gen_test: original encoding-session responses; retained to quantify session drift',

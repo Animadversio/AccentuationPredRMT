@@ -1,7 +1,7 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "rows": 250,
-  "columns": 558,
+  "columns": 654,
   "key": [
     "subject",
     "monkey",
@@ -10,6 +10,7 @@
   ],
   "parquet_written": true,
   "canonical_geometry_source": "variance_predictors_by_seed.csv.gz",
+  "nested_antithetic_stein_source": "stein_nested_site_estimates.csv.gz",
   "primary_generalization": "control_session_site_train_anchor_affine_gen_test: encoding-heldout natural predictions mapped by the site-level affine fitted on encoding-training anchors",
   "identity_generalization_reference": "control_session_gen_test: encoding-heldout natural predictions compared directly with control-session responses",
   "secondary_generalization": "encoding_session_gen_test: original encoding-session responses; retained to quantify session drift",
