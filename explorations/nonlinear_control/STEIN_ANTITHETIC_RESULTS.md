@@ -119,3 +119,7 @@ Plot-ready outputs are `stein_nested_summary.csv`,
 `stein_nested_biological_correlations.csv`, and
 `stein_nested_full_validation.png`. Bulk per-seed deltas and Gram matrices are
 stored under `$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/stein_antithetic_full_v1`.
+
+Development provenance: commit `e3f2d5e` introduced the one-sided instability
+and support-selection audit; commit `a1e2fc9` added the antithetic estimator,
+full GPU validation, synopsis v1.4 and updated method benchmark.

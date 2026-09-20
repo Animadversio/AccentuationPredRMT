@@ -51,6 +51,15 @@ For every unique geometry and each of the ten fixed seeds, retain the full
    `||J_tau(x)^T u_k||^2`, but its variance grows badly with input dimension,
    so report its uncertainty and do not use it as the primary estimate.
 
+Post-production update: the one-sided version above was empirically unstable
+and is retained only as a historical diagnostic. The replacement uses the
+antithetic odd response `[f(x+tau*z)-f(x-tau*z)]/2`, which has the same
+population score target and cancels the dominant even-response variance. A
+common-prefix R=64/128/256/512 run over all 84 geometries achieved complete
+positive support at R=512 and 2.2--3.4% median discrepancy from the smooth
+reference. See `STEIN_ANTITHETIC_RESULTS.md`; its bulk cache is
+`$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/stein_antithetic_full_v1/`.
+
 These form three independent checks of the local limit: exact reverse-mode
 VJP, forward-only randomized directional finite differences, and the Stein
 cross-estimator as tau approaches zero. The finite-tau U-statistic remains the
@@ -212,3 +221,8 @@ The committed plot-ready QC snapshots are `production_status.{json,csv}` and
 `production_deep_{validation.json,qc.csv}` in
 `tables/nonlinear_control/scale_manifest/`. The complete κ-free spectral mass
 remains in `$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/mass_v1/`.
+
+The follow-up antithetic Stein array and resumable RegNet split completed all
+84 geometries and 840 seed archives. The compact nested-R site estimates are
+integrated into synopsis v1.4; raw response deltas and direction Gram matrices
+remain in the separate STORE_DIR cache documented above.

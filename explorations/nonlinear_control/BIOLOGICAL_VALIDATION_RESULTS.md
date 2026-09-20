@@ -139,10 +139,18 @@ held-out anchor repeat coverage is low. See
 ## Outputs and rerun
 
 - Figures: `figures/nonlinear_control/biological_validation/` (22 bar variants and six scatter figures).
+- `stein_nested_site_estimates.csv.gz`, `stein_nested_summary.csv` and
+  `stein_nested_biological_correlations.csv`: full-coverage antithetic Stein
+  nested-R estimates, stability diagnostics and biological associations.
+- `stein_nested_full_validation.png`: one-sided versus antithetic positivity,
+  MC uncertainty and convergence to the smooth trace.
 - `biological_outcomes.csv`: MSE, direct-prediction control R², control MSE, observed-variance normalized Eacc, pooled and within-seed slopes.
 - `variance_predictors.csv`: 5,500 site/estimator rows; `variance_predictors_by_seed.csv.gz`: 55,000 seed rows. Full PC mass remains in the existing mass_v1 cache.
 - `descriptive_associations.csv`, `heldout_slope_comparison.csv`, `heldout_slope_predictions.csv.gz`, `robust_pair_and_normalization_sensitivity.csv`: comparisons and sensitivity results.
 - `control_clouds.csv.gz`, `preprocessing_audit.csv`, `ridge_metadata.csv`, `analysis_provenance.json`: plot-ready stimulus responses and QC/provenance.
 - Main driver: `explorations/nonlinear_control/validate_biology.py`; reproducible CPU entry point: `run_biological_validation.sbatch`.
+- Antithetic Stein drivers: `run_stein_nested_pilot.py`,
+  `run_stein_nested_pilot.sbatch` and `analyze_stein_nested_pilot.py`; rebuild
+  the synopsis and site-centered benchmark after the nested analysis.
 - Run `validate_biology.py validate` for cardinality, finite-value and product-identity checks. Kappa solver was independently checked against the analytic one-eigenvalue quadratic.
 - HDF5 source files are opened read-only; the batch script disables file locking because shared-filesystem locks stalled the initial pilot. Numerical preprocessing is unchanged.

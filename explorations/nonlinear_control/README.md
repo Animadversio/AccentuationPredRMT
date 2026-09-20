@@ -6,6 +6,53 @@ smoothed Jacobian energy, neighborhood energy, noise covariance and mean drift.
 The complete Chinese formalism and interpretation is in
 `FORWARD_NOISE_FORMALISM_ZH.md`.
 
+## Current analysis map
+
+The scaled geometry and biological-validation line now has four maintained
+documents:
+
+- `SCALEUP_PLAN.md`: 25 sites × 10 models, 84 unique geometry caches, spectral
+  storage and cluster execution design.
+- `SCALE_ENERGY_RESULTS.md`: exact, smooth and neighborhood energy comparisons
+  across encoding models.
+- `BIOLOGICAL_VALIDATION_RESULTS.md`: cross-session calibration, maintained
+  250-row synopsis and biological endpoint benchmarks.
+- `STEIN_ANTITHETIC_RESULTS.md`: instability audit, nested-direction GPU
+  validation and the final antithetic Stein estimator. The preceding failure
+  analysis is retained in `STEIN_STABILITY_RESULTS.md`.
+
+The original one-sided score estimator
+`[f(x+tau*z)-f(x)]z/tau` is no longer used for method ranking. In 150,528 input
+dimensions its finite-sample off-diagonal U-statistic was often negative and
+created estimator-dependent benchmark support. The maintained forward-only
+score estimator is
+
+\[
+{f(x+\tau z)-f(x-\tau z)\over2\tau}z,
+\]
+
+with common nested direction prefixes. The full 84-geometry validation uses
+R=512 as the benchmark: all 250 traces are positive, median MC SE is 5.3--6.2%
+of the independent-center smooth trace, and median absolute trace discrepancy
+is 2.2--3.4%. Synopsis v1.4 stores R=64, 128, 256 and 512 estimates and MC SEs.
+
+Reproduce the GPU estimator and CPU integration with:
+
+```bash
+sbatch --export=ALL,STEIN_PILOT_IMAGES=10,STEIN_PILOT_DIRECTIONS=512,\
+STEIN_PILOT_GEOMETRIES=100,\
+STEIN_PILOT_OUTPUT="$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/stein_antithetic_full_v1" \
+  explorations/nonlinear_control/run_stein_nested_pilot.sbatch
+
+python -u explorations/nonlinear_control/analyze_stein_nested_pilot.py \
+  --input "$STORE_DIR/Projects/AccentuationPredRMT/nonlinear_control/stein_antithetic_full_v1"
+python -u explorations/nonlinear_control/build_biological_synopsis.py
+python -u explorations/nonlinear_control/analyze_site_centered_effects.py
+```
+
+The full per-seed deltas and Gram matrices remain in STORE_DIR. Plot-ready
+summaries, the 250-row synopsis and final figures are committed to this repo.
+
 ## What is exact, and what remains a conjecture
 
 Let centered features be φ(x) ∈ Rᵖ, C = Cov(φ), J(x) = ∂φ/∂x ∈ Rᵖˣᵈ,
