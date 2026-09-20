@@ -63,7 +63,7 @@ def tau_tag(tau):
 def geometry_configs():
     configs=[dict(predictor_id='exact_trace',label=r'Exact trace $T(\kappa)$',group='baseline',base='geom_exact',quantity='trace'),
              dict(predictor_id='exact_V',label='Exact local V',group='local',base='geom_exact',quantity='V'),
-             dict(predictor_id='local_mc_V',label='Local MC V',group='local',base='geom_local_mc',quantity='V')]
+             dict(predictor_id='local_mc_V',label='Local FinDiff V',group='local',base='geom_local_mc',quantity='V')]
     labels={'smooth':'Smooth','neighborhood':'Neighborhood','variance':'Variance',
             'step':'Finite step','stein':'Stein'}
     for method in labels:
@@ -151,17 +151,22 @@ def level_plot(results,method,filename):
     fig.tight_layout();fig.savefig(FIGURE/filename,dpi=180);plt.close(fig)
 
 
-def predictor_benchmark_plot(results,endpoint,filename,significance='raw'):
+def predictor_benchmark_plot(results,endpoint,filename,significance='raw',include_groups=None,save_pdf=False):
     assert significance in {'raw','fdr'}
     d=results[results.endpoint==endpoint].copy()
-    significance_column='cluster_p' if significance=='raw' else 'cluster_q_bh'
+    if include_groups is not None:
+        d=d[d.group.isin(include_groups)].copy()
+    d['plot_q_bh']=np.nan
+    for _,idx in d.groupby(['subset','outcome_role']).groups.items():
+        idx=list(idx);d.loc[idx,'plot_q_bh']=multipletests(d.loc[idx,'cluster_p'],method='fdr_bh')[1]
+    significance_column='cluster_p' if significance=='raw' else 'plot_q_bh'
     significance_label=('Raw site-clustered p < 0.05' if significance=='raw'
                         else f'BH-FDR q < 0.05 across {d.predictor_id.nunique()} predictors')
     meta=(d[['predictor_id','label','group','display_order']].drop_duplicates()
           .sort_values('display_order'))
     y=np.arange(len(meta))[::-1]
     ymap=dict(zip(meta.predictor_id,y))
-    fig,axs=plt.subplots(1,2,figsize=(12.8,11.2),sharey=True)
+    fig,axs=plt.subplots(1,2,figsize=(12.8,max(7.6,.34*len(meta)+2)),sharey=True)
     outcomes=[('control_slope','Control slope',r'$-\rho$'),
               ('control_mse','Direct control MSE',r'$+\rho$')]
     for ax,(outcome,title,sign) in zip(axs,outcomes):
@@ -205,16 +210,19 @@ def predictor_benchmark_plot(results,endpoint,filename,significance='raw'):
                         color='.25',label='Also without untrained AlexNet'),
              plt.Line2D([],[],marker='*',linestyle='',color='.25',markersize=9,
                         label=significance_label+' above that marker')]
-    group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l) for g,l in
-                   [('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
+    group_labels=[('baseline','Baseline'),('local','Local'),('smooth','Smooth'),
                     ('neighborhood','Neighborhood'),('variance','Variance'),
                     ('step','Finite step'),('stein','Stein'),
-                    ('stein_antithetic','Antithetic Stein')]]
+                    ('stein_antithetic','Antithetic Stein')]
+    present=set(meta.group)
+    group_handles=[plt.Line2D([],[],color=METHOD_COLORS[g],lw=5,label=l)
+                   for g,l in group_labels if g in present]
     fig.legend(handles=handles+group_handles,ncol=6,loc='lower center',frameon=False,fontsize=8)
     fig.suptitle('Benchmark of control-geometry predictors of biological outcomes\n'
                  f'{d.endpoint_label.iloc[0]}; site means removed; stars: {significance_label}',y=.985)
     fig.subplots_adjust(left=.23,right=.98,top=.91,bottom=.12,wspace=.08)
     fig.savefig(FIGURE/filename,dpi=200)
+    if save_pdf: fig.savefig((FIGURE/filename).with_suffix('.pdf'))
     plt.close(fig)
 
 
@@ -258,6 +266,13 @@ def main():
                              'site_centered_predictor_benchmark_control_session.png',significance='raw')
     predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
                              'site_centered_predictor_benchmark_control_session_fdr.png',significance='fdr')
+    core_groups={'baseline','local','smooth','neighborhood','variance'}
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_export.png',
+                             significance='raw',include_groups=core_groups,save_pdf=True)
+    predictor_benchmark_plot(benchmark,'control_session_anchor_affine',
+                             'site_centered_predictor_benchmark_control_session_export_fdr.png',
+                             significance='fdr',include_groups=core_groups,save_pdf=True)
     predictor_benchmark_plot(benchmark,'control_session_identity_reference',
                              'site_centered_predictor_benchmark_control_session_identity_reference.png',
                              significance='raw')

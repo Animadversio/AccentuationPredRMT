@@ -23,7 +23,7 @@ Each endpoint benchmark contains 28 predictors:
 
 - held-out natural-image generalization MSE and exact control trace as
   baselines;
-- exact Jacobian V and local Monte-Carlo V;
+- exact Jacobian V and local finite-difference V (`Local FinDiff V` in figures);
 - smooth, neighborhood, finite-difference variance, finite-step, original
   one-sided Stein and R=512 antithetic Stein V at
   noise SD 0.5, 2, 8 and 16 on the 0–255 image scale.
@@ -47,6 +47,11 @@ and is the maintained forward-only Stein estimator.
 `site_centered_predictor_benchmark_control_session.png` is the calibrated
 default with raw-p stars. `site_centered_predictor_benchmark_control_session_fdr.png`
 is the identical benchmark with BH-FDR stars.
+The paper-facing `site_centered_predictor_benchmark_control_session_export`
+PNG/PDF pair removes finite step, one-sided Stein and antithetic Stein, leaving
+the four baseline/local rows plus smooth, neighborhood and variance families.
+Its `_export_fdr` counterpart recomputes BH-FDR over the 16 predictors actually
+shown in that reduced panel.
 `site_centered_predictor_benchmark_control_session_identity_reference.png`
 preserves the previous direct identity-scale comparison. The encoding-session
 figure remains an explicitly labeled identity reference because the
